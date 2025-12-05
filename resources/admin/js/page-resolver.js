@@ -33,11 +33,21 @@ const localAtlasPackagePages = import.meta.glob('../../../../Atlas*/resources/ad
 }) || {};
 
 // Auto-discover all Vue packages in node_modules (stable/production npm packages)
-// Static path: ../../../../../node_modules/@devcats*/*-vue/resources/admin/Pages/**/*.vue
-// npm packages are typically installed as @devcats-atlas/atlas-cms-vue, @devcats-atlas/atlas-shop-vue, etc.
-const npmVuePackagePages = import.meta.glob('../../../../../node_modules/@devcats*/*-vue/resources/admin/Pages/**/*.vue', { 
+// Note: Vite's import.meta.glob doesn't support wildcards in the middle of paths,
+// so we need to explicitly list both @devcats/ and @devcats-atlas/ scopes
+const npmVuePackagePagesDevcats = import.meta.glob('../../../../../node_modules/@devcats/*-vue/resources/admin/Pages/**/*.vue', { 
     eager: false 
 }) || {};
+
+const npmVuePackagePagesAtlas = import.meta.glob('../../../../../node_modules/@devcats-atlas/*-vue/resources/admin/Pages/**/*.vue', { 
+    eager: false 
+}) || {};
+
+// Merge both scopes
+const npmVuePackagePages = {
+    ...npmVuePackagePagesDevcats,
+    ...npmVuePackagePagesAtlas,
+};
 
 // Merge all local package pages (deduplicate)
 const localPackagePages = {
