@@ -33,41 +33,14 @@ const localAtlasPackagePages = import.meta.glob('../../../../Atlas*/resources/ad
 }) || {};
 
 // Auto-discover all Vue packages in node_modules (stable/production npm packages)
-// Note: Vite's import.meta.glob doesn't support wildcards in the middle of paths,
-// so we need to explicitly list both @devcats/ and @devcats-atlas/ scopes
-// Also need to handle both cases: when resolver is in packages/ (local) or node_modules/ (Git install)
-
-// Path from packages/AtlasCMS-Vue/resources/admin/js/ (5 levels up to root)
-const npmVuePackagePagesDevcatsLocal = import.meta.glob('../../../../../node_modules/@devcats/*-vue/resources/admin/Pages/**/*.vue', { 
-    eager: false 
-}) || {};
-
-const npmVuePackagePagesAtlasLocal = import.meta.glob('../../../../../node_modules/@devcats-atlas/*-vue/resources/admin/Pages/**/*.vue', { 
-    eager: false 
-}) || {};
-
-// Path from node_modules/@devcats-atlas/atlas-cms-vue/resources/admin/js/ (4 levels up to @devcats-atlas, then to sibling packages)
-// From: node_modules/@devcats-atlas/atlas-cms-vue/resources/admin/js/
-// Up 4: ../../../../ -> node_modules/@devcats-atlas/
-// Note: Vite resolves symlinks, so we need to explicitly list each package
-// Explicitly list known packages (wildcards don't work well with symlinks)
-const npmVuePackagePagesAtlasNpm = {
-    ...(import.meta.glob('../../../../atlas-shop-vue/resources/admin/Pages/**/*.vue', { eager: false }) || {}),
-    ...(import.meta.glob('../../../../atlas-cms-vue/resources/admin/Pages/**/*.vue', { eager: false }) || {}),
-    // Add more packages as needed
-};
-
-// Also check @devcats/ scope (if any packages use that) - go up 5 levels to node_modules
-const npmVuePackagePagesDevcatsNpm = import.meta.glob('../../../../../@devcats/*-vue/resources/admin/Pages/**/*.vue', { 
-    eager: false 
-}) || {};
-
-// Merge all scopes and locations
+// Since we're already in node_modules/@devcats-atlas/atlas-cms-vue/, we go up to @devcats-atlas/ then match other packages
+// Static path: ../../../../*-vue/resources/admin/Pages/**/*.vue
+// npm packages are typically installed as @devcats-atlas/atlas-cms-vue, @devcats-atlas/atlas-shop-vue, etc.
+// Note: Vite glob doesn't support wildcards in middle of path, so we use multiple specific patterns
 const npmVuePackagePages = {
-    ...npmVuePackagePagesDevcatsLocal,
-    ...npmVuePackagePagesAtlasLocal,
-    ...npmVuePackagePagesDevcatsNpm,
-    ...npmVuePackagePagesAtlasNpm,
+    ...import.meta.glob('../../../../atlas-shop-vue/resources/admin/Pages/**/*.vue', { eager: false }) || {},
+    ...import.meta.glob('../../../../atlas-cms-vue/resources/admin/Pages/**/*.vue', { eager: false }) || {},
+    // Add more packages as needed
 };
 
 // Merge all local package pages (deduplicate)
@@ -142,9 +115,6 @@ export async function resolvePage(name) {
         console.error(`Page not found: ${name}`);
         console.log('Available CMS pages:', Object.keys(cmsPages).slice(0, 5));
         console.log('Available package pages:', Object.keys(allPackagePages).slice(0, 10));
-        console.log('npmVuePackagePagesAtlasLocal keys:', Object.keys(npmVuePackagePagesAtlasLocal).slice(0, 5));
-        console.log('npmVuePackagePagesAtlasNpm keys:', Object.keys(npmVuePackagePagesAtlasNpm).slice(0, 5));
-        console.log('Total npmVuePackagePages keys:', Object.keys(npmVuePackagePages).length);
     }
     
     throw new Error(`Page not found: ${name}`);
