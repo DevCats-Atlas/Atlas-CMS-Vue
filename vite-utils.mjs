@@ -138,9 +138,12 @@ export async function loadAllPackages(projectRoot) {
 
             const packageConfig = await loadPackageConfig(packagePath);
             if (packageConfig) {
-                // Add resources
+                // Add resources - use paths relative to project root for consistent resolution
                 packageConfig.resources.forEach(resource => {
-                    inputs.push(path.join(packagePath, resource.file));
+                    const absolutePath = path.join(packagePath, resource.file);
+                    const relativePath = path.relative(projectRoot, absolutePath);
+                    // Normalize path separators for cross-platform compatibility
+                    inputs.push(relativePath.split(path.sep).join('/'));
                 });
 
                 // Add aliases
