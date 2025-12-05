@@ -1,0 +1,20 @@
+{
+    "$schema": "https://www.schemastore.org/package.json",
+    "name": "@devcats/atlas-cms-vue",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "description": "AtlasCMS Vue components and frontend assets",
+    "files": [
+        "resources/**/*",
+        "vite.config.mjs",
+        "vite-utils.mjs"
+    ],
+    "dependencies": {
+        "@ckeditor/ckeditor5-vue": "^7.3.0",
+        "@inertiajs/vue3": "^2.2.15",
+        "ckeditor5": "^47.2.0",
+        "vue": "^3.5.24"
+    }
+}
+
