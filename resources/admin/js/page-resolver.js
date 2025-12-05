@@ -49,13 +49,16 @@ const npmVuePackagePagesAtlasLocal = import.meta.glob('../../../../../node_modul
 // Path from node_modules/@devcats-atlas/atlas-cms-vue/resources/admin/js/ (4 levels up to @devcats-atlas, then to sibling packages)
 // From: node_modules/@devcats-atlas/atlas-cms-vue/resources/admin/js/
 // Up 4: ../../../../ -> node_modules/@devcats-atlas/
-// Then: ../../../../*-vue/ -> matches all packages in @devcats-atlas/
-const npmVuePackagePagesAtlasNpm = import.meta.glob('../../../../*-vue/resources/admin/Pages/**/*.vue', { 
-    eager: false 
-}) || {};
+// Note: Vite resolves symlinks, so we need to explicitly list each package
+// Explicitly list known packages (wildcards don't work well with symlinks)
+const npmVuePackagePagesAtlasNpm = {
+    ...(import.meta.glob('../../../../atlas-shop-vue/resources/admin/Pages/**/*.vue', { eager: false }) || {}),
+    ...(import.meta.glob('../../../../atlas-cms-vue/resources/admin/Pages/**/*.vue', { eager: false }) || {}),
+    // Add more packages as needed
+};
 
-// Also check @devcats/ scope (if any packages use that)
-const npmVuePackagePagesDevcatsNpm = import.meta.glob('../../../../@devcats/*-vue/resources/admin/Pages/**/*.vue', { 
+// Also check @devcats/ scope (if any packages use that) - go up 5 levels to node_modules
+const npmVuePackagePagesDevcatsNpm = import.meta.glob('../../../../../@devcats/*-vue/resources/admin/Pages/**/*.vue', { 
     eager: false 
 }) || {};
 
@@ -139,6 +142,9 @@ export async function resolvePage(name) {
         console.error(`Page not found: ${name}`);
         console.log('Available CMS pages:', Object.keys(cmsPages).slice(0, 5));
         console.log('Available package pages:', Object.keys(allPackagePages).slice(0, 10));
+        console.log('npmVuePackagePagesAtlasLocal keys:', Object.keys(npmVuePackagePagesAtlasLocal).slice(0, 5));
+        console.log('npmVuePackagePagesAtlasNpm keys:', Object.keys(npmVuePackagePagesAtlasNpm).slice(0, 5));
+        console.log('Total npmVuePackagePages keys:', Object.keys(npmVuePackagePages).length);
     }
     
     throw new Error(`Page not found: ${name}`);
