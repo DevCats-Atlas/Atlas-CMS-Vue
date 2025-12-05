@@ -35,18 +35,36 @@ const localAtlasPackagePages = import.meta.glob('../../../../Atlas*/resources/ad
 // Auto-discover all Vue packages in node_modules (stable/production npm packages)
 // Note: Vite's import.meta.glob doesn't support wildcards in the middle of paths,
 // so we need to explicitly list both @devcats/ and @devcats-atlas/ scopes
-const npmVuePackagePagesDevcats = import.meta.glob('../../../../../node_modules/@devcats/*-vue/resources/admin/Pages/**/*.vue', { 
+// Also need to handle both cases: when resolver is in packages/ (local) or node_modules/ (Git install)
+
+// Path from packages/AtlasCMS-Vue/resources/admin/js/ (5 levels up to root)
+const npmVuePackagePagesDevcatsLocal = import.meta.glob('../../../../../node_modules/@devcats/*-vue/resources/admin/Pages/**/*.vue', { 
     eager: false 
 }) || {};
 
-const npmVuePackagePagesAtlas = import.meta.glob('../../../../../node_modules/@devcats-atlas/*-vue/resources/admin/Pages/**/*.vue', { 
+const npmVuePackagePagesAtlasLocal = import.meta.glob('../../../../../node_modules/@devcats-atlas/*-vue/resources/admin/Pages/**/*.vue', { 
     eager: false 
 }) || {};
 
-// Merge both scopes
+// Path from node_modules/@devcats-atlas/atlas-cms-vue/resources/admin/js/ (4 levels up to @devcats-atlas, then to sibling packages)
+// From: node_modules/@devcats-atlas/atlas-cms-vue/resources/admin/js/
+// Up 4: ../../../../ -> node_modules/@devcats-atlas/
+// Then: ../../../../*-vue/ -> matches all packages in @devcats-atlas/
+const npmVuePackagePagesAtlasNpm = import.meta.glob('../../../../*-vue/resources/admin/Pages/**/*.vue', { 
+    eager: false 
+}) || {};
+
+// Also check @devcats/ scope (if any packages use that)
+const npmVuePackagePagesDevcatsNpm = import.meta.glob('../../../../@devcats/*-vue/resources/admin/Pages/**/*.vue', { 
+    eager: false 
+}) || {};
+
+// Merge all scopes and locations
 const npmVuePackagePages = {
-    ...npmVuePackagePagesDevcats,
-    ...npmVuePackagePagesAtlas,
+    ...npmVuePackagePagesDevcatsLocal,
+    ...npmVuePackagePagesAtlasLocal,
+    ...npmVuePackagePagesDevcatsNpm,
+    ...npmVuePackagePagesAtlasNpm,
 };
 
 // Merge all local package pages (deduplicate)
