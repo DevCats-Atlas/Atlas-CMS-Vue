@@ -5,6 +5,11 @@
     "private": true,
     "type": "module",
     "description": "AtlasCMS Vue components and frontend assets",
+    "main": "./vite-utils.mjs",
+    "exports": {
+        "./vite-utils.mjs": "./vite-utils.mjs",
+        "./vite.config.mjs": "./vite.config.mjs"
+    },
     "files": [
         "resources/**/*",
         "vite.config.mjs",
