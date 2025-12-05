@@ -41,6 +41,10 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    primaryKeyColumn: {
+        type: String,
+        default: 'id',
+    },
 });
 
 const baseUrl = computed(() => `/admin/${props.moduleHandle}`);
@@ -91,21 +95,9 @@ const formatValue = (value, column) => {
 };
 
 
-const getPrimaryKeyColumn = () => {
-    // Try to find 'id' column first
-    const idColumn = props.columns.find(col => col.name === 'id');
-    if (idColumn) {
-        return 'id';
-    }
-    
-    // Otherwise use the first column
-    return props.columns[0]?.name || 'id';
-};
-
 const confirmDelete = async (item) => {
-    // Get the primary key column and record ID
-    const primaryKey = getPrimaryKeyColumn();
-    const recordId = item[primaryKey] ?? item.id;
+    // Use the primary key column passed from backend
+    const recordId = item[props.primaryKeyColumn];
     
     // Try to find a meaningful label for the record
     let recordLabel = `Record #${recordId}`;
@@ -219,7 +211,7 @@ const confirmDelete = async (item) => {
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 <tr
                                     v-for="item in items"
-                                    :key="item[getPrimaryKeyColumn()]"
+                                    :key="item[props.primaryKeyColumn]"
                                     class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
                                 >
                                     <td
@@ -232,7 +224,7 @@ const confirmDelete = async (item) => {
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div class="btn-group" role="group">
                                             <Link
-                                                :href="`${baseUrl}/edit?id=${item[getPrimaryKeyColumn()]}`"
+                                                :href="`${baseUrl}/edit?id=${item[props.primaryKeyColumn]}`"
                                                 class="btn-group-item-edit"
                                                 preserve-scroll
                                                 @click.stop
