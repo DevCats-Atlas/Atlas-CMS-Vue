@@ -7,7 +7,7 @@ Vue.js frontend package for AtlasCMS admin panel. Provides Vue components, Inert
 ### Option 1: npm Package (Production)
 
 ```bash
-npm install @devcats/atlas-cms-vue
+npm install @devcats-atlas/atlas-cms-vue
 ```
 
 ### Option 2: Local Development
@@ -21,7 +21,7 @@ Or add to your `package.json`:
 ```json
 {
   "dependencies": {
-    "@devcats/atlas-cms-vue": "file:./packages/AtlasCMS-Vue"
+    "@devcats-atlas/atlas-cms-vue": "file:./packages/AtlasCMS-Vue"
   }
 }
 ```
@@ -55,7 +55,7 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 
 // Import AtlasCMS-Vue utilities
-const utils = await import('@devcats/atlas-cms-vue/vite-utils.mjs');
+const utils = await import('@devcats-atlas/atlas-cms-vue/vite-utils.mjs');
 const { loadAllPackages } = utils;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -108,12 +108,12 @@ export default defineConfig(({ mode }) => {
 
 ### Step 2: Ensure Package is in `package.json`
 
-Make sure `@devcats/atlas-cms-vue` is listed in your `package.json` dependencies:
+Make sure `@devcats-atlas/atlas-cms-vue` is listed in your `package.json` dependencies:
 
 ```json
 {
   "dependencies": {
-    "@devcats/atlas-cms-vue": "file:./packages/AtlasCMS-Vue"
+    "@devcats-atlas/atlas-cms-vue": "file:./packages/AtlasCMS-Vue"
   }
 }
 ```
@@ -171,19 +171,19 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue';
 
 ## Adding Additional Vue Packages
 
-To add more Vue packages (e.g., `@devcats/atlas-shop-vue`):
+To add more Vue packages (e.g., `@devcats-atlas/atlas-shop-vue`):
 
 1. **Install the package**:
    ```bash
-   npm install @devcats/atlas-shop-vue
+   npm install @devcats-atlas/atlas-shop-vue
    ```
 
 2. **Add to `package.json`**:
    ```json
    {
      "dependencies": {
-       "@devcats/atlas-cms-vue": "file:./packages/AtlasCMS-Vue",
-       "@devcats/atlas-shop-vue": "file:./packages/AtlasShop-Vue"
+       "@devcats-atlas/atlas-cms-vue": "file:./packages/AtlasCMS-Vue",
+       "@devcats-atlas/atlas-shop-vue": "file:./packages/AtlasShop-Vue"
      }
    }
    ```
@@ -224,7 +224,7 @@ export default {
 
 If you see an error that the package is not found:
 
-1. **Check `package.json`**: Ensure `@devcats/atlas-cms-vue` is listed in dependencies
+1. **Check `package.json`**: Ensure `@devcats-atlas/atlas-cms-vue` is listed in dependencies
 2. **Run `npm install`**: Make sure dependencies are installed
 3. **Check path**: If using `file:` protocol, verify the path is correct
 4. **Environment variable**: You can override the path with `ATLASCMSVUE_PATH`
@@ -254,7 +254,7 @@ For local development, use the `file:` protocol in `package.json`:
 ```json
 {
   "dependencies": {
-    "@devcats/atlas-cms-vue": "file:./packages/AtlasCMS-Vue"
+    "@devcats-atlas/atlas-cms-vue": "file:./packages/AtlasCMS-Vue"
   }
 }
 ```

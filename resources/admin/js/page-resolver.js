@@ -33,9 +33,9 @@ const localAtlasPackagePages = import.meta.glob('../../../../Atlas*/resources/ad
 }) || {};
 
 // Auto-discover all Vue packages in node_modules (stable/production npm packages)
-// Static path: ../../../../../node_modules/@devcats/*-vue/resources/admin/Pages/**/*.vue
-// npm packages are typically installed as @devcats/atlas-cms-vue, @devcats/atlas-shop-vue, etc.
-const npmVuePackagePages = import.meta.glob('../../../../../node_modules/@devcats/*-vue/resources/admin/Pages/**/*.vue', { 
+// Static path: ../../../../../node_modules/@devcats*/*-vue/resources/admin/Pages/**/*.vue
+// npm packages are typically installed as @devcats-atlas/atlas-cms-vue, @devcats-atlas/atlas-shop-vue, etc.
+const npmVuePackagePages = import.meta.glob('../../../../../node_modules/@devcats*/*-vue/resources/admin/Pages/**/*.vue', { 
     eager: false 
 }) || {};
 

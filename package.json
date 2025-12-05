@@ -1,6 +1,6 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
-    "name": "@devcats/atlas-cms-vue",
+    "name": "@devcats-atlas/atlas-cms-vue",
     "version": "1.0.0",
     "private": true,
     "type": "module",

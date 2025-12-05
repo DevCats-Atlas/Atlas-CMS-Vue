@@ -13,7 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Resolve package path with fallback strategies
- * @param {string} npmPackage - npm package name (e.g., '@devcats/atlas-cms-vue')
+ * @param {string} npmPackage - npm package name (e.g., '@devcats-atlas/atlas-cms-vue')
  * @param {string} packagePathFromJson - Path from package.json (e.g., 'file:./packages/AtlasCMS-Vue')
  * @param {string} envVar - Environment variable name (e.g., 'ATLASCMSVUE_PATH')
  * @param {string} projectRoot - Path to project root directory
@@ -48,7 +48,7 @@ export function resolvePackage(npmPackage, packagePathFromJson, envVar, projectR
         `\n❌ Package not found: ${npmPackage}\n\n` +
         `Installation options:\n` +
         `  1. npm install ${npmPackage}\n` +
-        `  2. Add to package.json: "${npmPackage}": "file:./packages/${npmPackage.replace('@devcats/', '')}"\n` +
+        `  2. Add to package.json: "${npmPackage}": "file:./packages/${npmPackage.replace(/@devcats(-atlas)?\//, '')}"\n` +
         `  3. export ${envVar}=/path/to/package\n\n` +
         `Expected locations:\n` +
         `  • node_modules/${npmPackage}\n` +
@@ -93,9 +93,9 @@ export function getVuePackagesFromPackageJson(projectRoot) {
             ...packageJson.devDependencies,
         };
 
-        // Filter for @devcats/*-vue packages
+        // Filter for @devcats/*-vue and @devcats-atlas/*-vue packages
         const vuePackages = Object.entries(allDeps)
-            .filter(([name]) => name.startsWith('@devcats/') && name.includes('-vue'))
+            .filter(([name]) => (name.startsWith('@devcats/') || name.startsWith('@devcats-atlas/')) && name.includes('-vue'))
             .map(([name, version]) => ({
                 name,
                 path: version, // This will be the version or file: path
@@ -121,12 +121,12 @@ export async function loadAllPackages(projectRoot) {
     const vuePackages = getVuePackagesFromPackageJson(projectRoot);
 
     if (vuePackages.length === 0) {
-        console.warn('⚠️  No @devcats/*-vue packages found in package.json');
+        console.warn('⚠️  No @devcats/*-vue or @devcats-atlas/*-vue packages found in package.json');
     }
 
     // Load each package
     for (const pkg of vuePackages) {
-        const envVar = `${pkg.name.replace('@devcats/', '').replace(/-/g, '_').toUpperCase()}_PATH`;
+        const envVar = `${pkg.name.replace(/@devcats(-atlas)?\//, '').replace(/-/g, '_').toUpperCase()}_PATH`;
         
         try {
             const packagePath = resolvePackage(
@@ -155,7 +155,7 @@ export async function loadAllPackages(projectRoot) {
             }
         } catch (error) {
             // Skip optional packages, but warn
-            if (pkg.name === '@devcats/atlas-cms-vue') {
+            if (pkg.name === '@devcats/atlas-cms-vue' || pkg.name === '@devcats-atlas/atlas-cms-vue') {
                 // AtlasCMS-Vue is required
                 console.error(`⚠️  ${pkg.name}:`, error.message);
                 throw error;
