@@ -31,6 +31,7 @@ const { toasts, showToast, dismissToast } = useToast();
 
 const activeTab = ref(0);
 const relationshipData = ref({});
+const relationshipPagination = ref({}); // Store pagination info for each relationship
 const relationshipErrors = ref({}); // Store errors for each relationship
 const loading = ref({});
 const editingRelationships = ref({});
@@ -42,22 +43,39 @@ const getRelationshipName = (relationship) => {
 };
 
 // Load relationship data
-const loadRelationship = async (relationship, index) => {
+const loadRelationship = async (relationship, index, page = 1) => {
     const name = getRelationshipName(relationship);
     loading.value[name] = true;
     relationshipErrors.value[name] = null; // Clear previous error
     
     try {
+        const params = {
+            record_id: props.recordId,
+        };
+        
+        // Add pagination for hasMany relationships (always include page param, backend will decide if pagination is needed)
+        if (relationship.type === 'hasMany') {
+            params.page = page;
+            params.per_page = 50; // 50 records per page
+        }
+        
         const response = await axios.get(`/admin/${props.moduleHandle}/relationships/${name}`, {
-            params: {
-                record_id: props.recordId,
-            },
+            params,
         });
         relationshipData.value[name] = response.data.records || [];
+        
+        // Store pagination info if available
+        if (response.data.pagination) {
+            relationshipPagination.value[name] = response.data.pagination;
+        } else {
+            relationshipPagination.value[name] = null;
+        }
+        
         relationshipErrors.value[name] = null; // Clear error on success
     } catch (error) {
         console.error(`Error loading relationship ${name}:`, error);
         relationshipData.value[name] = [];
+        relationshipPagination.value[name] = null;
         
         // Extract error message from response
         const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to load relationship';
@@ -289,11 +307,13 @@ const handleRecordCreated = async (newRecordId, relationship) => {
                     <RelationshipList
                         :relationship="relationship"
                         :records="relationshipData[getRelationshipName(relationship)] || []"
+                        :pagination="relationshipPagination[getRelationshipName(relationship)]"
                         :primary-key-column="primaryKeyColumn"
                         :related-table-name="getRelatedTableName(relationship)"
                         :module-handle="moduleHandle"
                         :record-id="recordId"
                         @removed="() => loadRelationship(relationship, 0)"
+                        @page-change="(page) => loadRelationship(relationship, 0, page)"
                     />
                 </div>
 

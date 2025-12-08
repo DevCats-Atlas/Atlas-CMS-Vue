@@ -14,6 +14,10 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    pagination: {
+        type: Object,
+        default: null,
+    },
     primaryKeyColumn: {
         type: String,
         default: 'id',
@@ -36,7 +40,50 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['removed', 'edit']);
+const emit = defineEmits(['removed', 'edit', 'pageChange']);
+
+const isHasMany = computed(() => {
+    return props.relationship.type === 'hasMany';
+});
+
+const hasPagination = computed(() => {
+    return isHasMany.value && props.pagination !== null;
+});
+
+const goToPage = (page) => {
+    if (props.pagination && page >= 1 && page <= props.pagination.last_page) {
+        emit('pageChange', page);
+    }
+};
+
+const getPageNumbers = () => {
+    if (!props.pagination) {
+        return [];
+    }
+    
+    const current = props.pagination.current_page;
+    const last = props.pagination.last_page;
+    const pages = [];
+    
+    // Show max 5 page numbers
+    let start = Math.max(1, current - 2);
+    let end = Math.min(last, current + 2);
+    
+    // Adjust if we're near the start or end
+    if (end - start < 4) {
+        if (start === 1) {
+            end = Math.min(last, start + 4);
+        } else {
+            start = Math.max(1, end - 4);
+        }
+    }
+    
+    for (let i = start; i <= end; i++) {
+        pages.push(i);
+    }
+    
+    return pages;
+};
 
 const editingRecordId = ref(null);
 const selectedRelatedId = ref(null);
@@ -562,6 +609,49 @@ const canRemove = computed(() => {
                     </div>
                 </div>
             </template>
+        </div>
+        
+        <!-- Pagination for hasMany relationships -->
+        <div v-if="hasPagination && props.pagination" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Showing {{ props.pagination.from }} to {{ props.pagination.to }} of {{ props.pagination.total }} records
+                </div>
+                <div class="flex items-center gap-2">
+                    <button
+                        type="button"
+                        @click.prevent="goToPage(props.pagination.current_page - 1)"
+                        :disabled="props.pagination.current_page === 1"
+                        class="btn btn-sm btn-outline"
+                        :class="{ 'opacity-50 cursor-not-allowed': props.pagination.current_page === 1 }"
+                    >
+                        Previous
+                    </button>
+                    <div class="flex items-center gap-1">
+                        <button
+                            v-for="page in getPageNumbers()"
+                            :key="page"
+                            type="button"
+                            @click.prevent="goToPage(page)"
+                            class="px-3 py-1 text-sm rounded"
+                            :class="page === props.pagination.current_page
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'"
+                        >
+                            {{ page }}
+                        </button>
+                    </div>
+                    <button
+                        type="button"
+                        @click.prevent="goToPage(props.pagination.current_page + 1)"
+                        :disabled="props.pagination.current_page === props.pagination.last_page"
+                        class="btn btn-sm btn-outline"
+                        :class="{ 'opacity-50 cursor-not-allowed': props.pagination.current_page === props.pagination.last_page }"
+                    >
+                        Next
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </template>
