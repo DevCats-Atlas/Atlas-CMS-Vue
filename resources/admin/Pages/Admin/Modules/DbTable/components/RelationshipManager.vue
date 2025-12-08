@@ -39,6 +39,8 @@ const relationshipErrors = ref({}); // Store errors for each relationship
 const loading = ref({});
 const editingRelationships = ref({});
 const showSelector = ref({});
+const createModalOpen = ref({}); // { [relationshipName]: boolean }
+const creatingRelationship = ref(null);
 
 // Get relationship name (use name or fallback to related_table)
 const getRelationshipName = (relationship) => {
@@ -126,6 +128,15 @@ const getRelatedTableName = (relationship) => {
 // Open selector to add records
 const toggleSelector = (relationship) => {
     const name = getRelationshipName(relationship);
+    
+    // For hasMany and hasOne, open modal instead of inline form
+    if (shouldShowCreateForm(relationship)) {
+        creatingRelationship.value = relationship;
+        createModalOpen.value[name] = true;
+        return;
+    }
+    
+    // For other relationship types, show inline selector
     showSelector.value[name] = true;
     
     // Initialize with currently selected IDs
@@ -139,7 +150,6 @@ const toggleSelector = (relationship) => {
                 ? [relationshipData.value[name][0][props.primaryKeyColumn] ?? relationshipData.value[name][0].id]
                 : [];
         }
-        // hasMany and hasOne don't need initialization here - they use create form
     }
 };
 
@@ -190,6 +200,15 @@ const cancelEditing = (relationship) => {
     const name = getRelationshipName(relationship);
     showSelector.value[name] = false;
     editingRelationships.value[name] = null;
+    createModalOpen.value[name] = false;
+    creatingRelationship.value = null;
+};
+
+// Close create modal
+const closeCreateModal = (relationship) => {
+    const name = getRelationshipName(relationship);
+    createModalOpen.value[name] = false;
+    creatingRelationship.value = null;
 };
 
 // Handle record created from RelationshipCreateForm
@@ -198,12 +217,18 @@ const handleRecordCreated = async (newRecordId, relationship) => {
     const targetRelationship = relationship || props.relationships[activeTab.value];
     
     if (targetRelationship) {
-        // Reload relationship data to show the new record
-        await loadRelationship(targetRelationship, activeTab.value);
+        // Find the relationship index
+        const index = props.relationships.findIndex(r => getRelationshipName(r) === getRelationshipName(targetRelationship));
+        const relationshipIndex = index >= 0 ? index : activeTab.value;
         
-        // Close the form
+        // Reload relationship data to show the new record
+        await loadRelationship(targetRelationship, relationshipIndex);
+        
+        // Close the modal/form
         const name = getRelationshipName(targetRelationship);
         showSelector.value[name] = false;
+        createModalOpen.value[name] = false;
+        creatingRelationship.value = null;
         
         // Show success toast
         showToast({
@@ -296,7 +321,7 @@ const handleRecordCreated = async (newRecordId, relationship) => {
                             @click.prevent="toggleSelector(relationship)"
                             class="btn btn-sm btn-primary"
                         >
-                            {{ showSelector[getRelationshipName(relationship)] ? t('admin.common.cancel') : t('admin.relationships.add') }}
+                            {{ (shouldShowCreateForm(relationship) && createModalOpen[getRelationshipName(relationship)]) || (!shouldShowCreateForm(relationship) && showSelector[getRelationshipName(relationship)]) ? t('admin.common.cancel') : t('admin.relationships.add') }}
                         </button>
                     </div>
 
@@ -309,59 +334,87 @@ const handleRecordCreated = async (newRecordId, relationship) => {
                         :related-table-name="getRelatedTableName(relationship)"
                         :module-handle="moduleHandle"
                         :record-id="recordId"
-                        @removed="() => loadRelationship(relationship, 0)"
-                        @page-change="(page) => loadRelationship(relationship, 0, page)"
+                        @removed="() => loadRelationship(relationship, index)"
+                        @updated="() => {
+                            // Preserve current page for paginated relationships
+                            const currentPage = relationshipPagination[getRelationshipName(relationship)]?.current_page || 1;
+                            loadRelationship(relationship, index, currentPage);
+                        }"
+                        @page-change="(page) => loadRelationship(relationship, index, page)"
                     />
                 </div>
 
-                <!-- Add mode - Show create form for hasMany and hasOne, selector for others -->
-                <div v-if="showSelector[getRelationshipName(relationship)]" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 space-y-4">
+                <!-- Add mode - Show selector for belongsToMany and belongsTo (hasMany and hasOne use modal) -->
+                <div v-if="!shouldShowCreateForm(relationship) && showSelector[getRelationshipName(relationship)]" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 space-y-4">
                     <div class="flex items-center justify-between mb-4">
                         <h5 class="text-sm font-medium text-gray-900 dark:text-white">
-                            {{ shouldShowCreateForm(relationship) ? t('admin.relationships.create_new_record') : (relationship.type === 'belongsTo' ? t('admin.relationships.add') : t('admin.relationships.add_records')) }}
+                            {{ relationship.type === 'belongsTo' ? t('admin.relationships.add') : t('admin.relationships.add_records') }}
                         </h5>
                     </div>
 
-                    <!-- Create form for hasMany and hasOne -->
+                    <div class="flex gap-2 mb-4">
+                        <button
+                            type="button"
+                            @click.prevent="saveRelationship(relationship)"
+                            class="btn btn-sm btn-primary"
+                            :disabled="loading[getRelationshipName(relationship)]"
+                        >
+                            {{ t('admin.common.save') }}
+                        </button>
+                        <button
+                            type="button"
+                            @click.prevent="cancelEditing(relationship)"
+                            class="btn btn-sm btn-outline"
+                        >
+                            {{ t('admin.common.cancel') }}
+                        </button>
+                    </div>
+
+                    <RelationshipSelector
+                        :relationship="relationship"
+                        :selected-ids="editingRelationships[getRelationshipName(relationship)] || []"
+                        :related-table-name="getRelatedTableName(relationship)"
+                        :primary-key-column="primaryKeyColumn"
+                        :module-handle="moduleHandle"
+                        @update:selected-ids="(ids) => editingRelationships[getRelationshipName(relationship)] = ids"
+                    />
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Create Modal for hasMany and hasOne -->
+    <div
+        v-for="(relationship, index) in relationships"
+        :key="'create-modal-' + index"
+    >
+        <div
+            v-if="shouldShowCreateForm(relationship) && createModalOpen[getRelationshipName(relationship)]"
+            class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 px-4"
+            @click.self="closeCreateModal(relationship)"
+        >
+            <div class="w-full max-w-4xl rounded-2xl bg-white dark:bg-gray-800 shadow-xl flex flex-col max-h-[90vh]">
+                <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        {{ t('admin.relationships.create_new_record') }}
+                    </h3>
+                    <button
+                        type="button"
+                        class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        @click="closeCreateModal(relationship)"
+                    >
+                        ✕
+                    </button>
+                </div>
+                <div class="px-6 py-4 overflow-y-auto flex-1">
                     <RelationshipCreateForm
-                        v-if="shouldShowCreateForm(relationship)"
                         :relationship="relationship"
                         :module-handle="moduleHandle"
                         :record-id="recordId"
                         :primary-key-column="primaryKeyColumn"
                         @created="(newRecordId) => handleRecordCreated(newRecordId, relationship)"
-                        @cancel="cancelEditing(relationship)"
+                        @cancel="closeCreateModal(relationship)"
                     />
-
-                    <!-- Selector for other relationship types -->
-                    <template v-else>
-                        <div class="flex gap-2 mb-4">
-                            <button
-                                type="button"
-                                @click.prevent="saveRelationship(relationship)"
-                                class="btn btn-sm btn-primary"
-                                :disabled="loading[getRelationshipName(relationship)]"
-                            >
-                                {{ t('admin.common.save') }}
-                            </button>
-                            <button
-                                type="button"
-                                @click.prevent="cancelEditing(relationship)"
-                                class="btn btn-sm btn-outline"
-                            >
-                                {{ t('admin.common.cancel') }}
-                            </button>
-                        </div>
-
-                        <RelationshipSelector
-                            :relationship="relationship"
-                            :selected-ids="editingRelationships[getRelationshipName(relationship)] || []"
-                            :related-table-name="getRelatedTableName(relationship)"
-                            :primary-key-column="primaryKeyColumn"
-                            :module-handle="moduleHandle"
-                            @update:selected-ids="(ids) => editingRelationships[getRelationshipName(relationship)] = ids"
-                        />
-                    </template>
                 </div>
             </div>
         </div>

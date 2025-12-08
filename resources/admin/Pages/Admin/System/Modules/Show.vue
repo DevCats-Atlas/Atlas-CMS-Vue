@@ -1031,6 +1031,7 @@ const reorderAction = (action, direction) => {
         <RelationshipModal
             :open="relationshipModalOpen"
             :relationship="editingRelationshipIndex !== null ? dbTableRelationships.relationships[editingRelationshipIndex] : null"
+            :module-id="props.module.id"
             @close="closeRelationshipModal"
             @save="saveRelationship"
         />

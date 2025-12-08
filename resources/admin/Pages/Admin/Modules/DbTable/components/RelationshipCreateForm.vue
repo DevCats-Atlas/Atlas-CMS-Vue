@@ -82,10 +82,22 @@ const getFieldConfig = (field) => {
     return {
         name: field.name,
         type: field.interface || 'text',
-        title: field.name,
+        title: field.title || field.name,
         options: field.options || '',
         required: !field.nullable,
+        config: {
+            type: field.interface || 'text',
+            options: field.options ? parseSelectOptions(field.options) : [],
+        },
     };
+};
+
+// Parse select options from comma-separated string
+const parseSelectOptions = (optionsString) => {
+    if (!optionsString || !optionsString.trim()) {
+        return [];
+    }
+    return optionsString.split(',').map(opt => opt.trim()).filter(opt => opt);
 };
 
 // Submit form

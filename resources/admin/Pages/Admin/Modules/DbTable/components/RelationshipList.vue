@@ -90,6 +90,8 @@ const getPageNumbers = () => {
 
 const editingRecordId = ref(null);
 const selectedRelatedId = ref(null);
+const editModalOpen = ref(false);
+const editingRecord = ref(null);
 
 // For belongsTo select dropdown
 const belongsToOptions = ref([]);
@@ -193,6 +195,18 @@ const getBelongsToOptionLabel = (record) => {
 };
 
 const startEdit = (recordId) => {
+    // For hasMany and hasOne, open modal instead of inline edit
+    if (props.relationship.type === 'hasMany' || props.relationship.type === 'hasOne') {
+        const record = props.records.find(r => getRecordId(r) === recordId);
+        if (record) {
+            editingRecord.value = record;
+            editModalOpen.value = true;
+        }
+        emit('edit', recordId);
+        return;
+    }
+    
+    // For belongsTo, use inline edit (select dropdown)
     editingRecordId.value = recordId;
     if (isBelongsTo.value) {
         // For belongsTo, pre-select the current related record
@@ -208,6 +222,8 @@ const cancelEdit = () => {
     selectedRelatedId.value = null;
     belongsToOptions.value = [];
     belongsToSearchQuery.value = '';
+    editModalOpen.value = false;
+    editingRecord.value = null;
 };
 
 const handleUpdated = () => {
@@ -215,7 +231,14 @@ const handleUpdated = () => {
     selectedRelatedId.value = null;
     belongsToOptions.value = [];
     belongsToSearchQuery.value = '';
-    emit('removed'); // Trigger reload
+    editModalOpen.value = false;
+    editingRecord.value = null;
+    emit('updated'); // Trigger reload
+};
+
+const closeEditModal = () => {
+    editModalOpen.value = false;
+    editingRecord.value = null;
 };
 
 const handleBelongsToUpdate = async () => {
@@ -251,13 +274,49 @@ const getRecordLabel = (record) => {
     return `Record #${record[props.primaryKeyColumn]}`;
 };
 
-// Get display columns from relationship config
+// Get display columns from relationship UI config
 const getDisplayColumns = () => {
-    const displayColumns = props.relationship.display_columns;
-    if (!displayColumns || !displayColumns.trim()) {
-        return null; // Use default display
+    // First try ui_config (new format)
+    let uiConfig = null;
+    if (props.relationship.ui_config) {
+        try {
+            uiConfig = typeof props.relationship.ui_config === 'string' 
+                ? JSON.parse(props.relationship.ui_config) 
+                : props.relationship.ui_config;
+        } catch (e) {
+            console.error('Failed to parse UI config:', e);
+        }
     }
-    return displayColumns.split(',').map(col => col.trim()).filter(col => col);
+    
+    if (uiConfig && typeof uiConfig === 'object') {
+        // Get columns with show_in_list = true
+        const visibleColumns = [];
+        Object.keys(uiConfig).forEach(columnName => {
+            const config = uiConfig[columnName];
+            if (config && (config.show_in_list !== false)) {
+                visibleColumns.push({
+                    name: columnName,
+                    title: config.title || columnName,
+                    interface: config.interface || 'text',
+                });
+            }
+        });
+        if (visibleColumns.length > 0) {
+            return visibleColumns;
+        }
+    }
+    
+    // Fallback to display_columns (old format) for backward compatibility
+    const displayColumns = props.relationship.display_columns;
+    if (displayColumns && displayColumns.trim()) {
+        return displayColumns.split(',').map(col => col.trim()).filter(col => col).map(col => ({
+            name: col,
+            title: col,
+            interface: 'text',
+        }));
+    }
+    
+    return null; // Use default display
 };
 
 const displayColumns = computed(() => getDisplayColumns());
@@ -316,6 +375,30 @@ const canRemove = computed(() => {
     // Allow removal for belongsToMany, hasMany, and hasOne
     return ['belongsToMany', 'hasMany', 'hasOne'].includes(props.relationship.type);
 });
+
+// Format value based on column interface
+const formatValue = (value, column) => {
+    if (value === null || value === undefined) {
+        return '-';
+    }
+    
+    const columnConfig = typeof column === 'object' ? column : { interface: 'text' };
+    const interfaceType = columnConfig.interface || 'text';
+    
+    if (interfaceType === 'checkbox') {
+        return value ? 'Yes' : 'No';
+    }
+    
+    if (interfaceType === 'datetime') {
+        // Try to parse as date
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+            return date.toLocaleString();
+        }
+    }
+    
+    return String(value);
+};
 </script>
 
 <template>
@@ -331,10 +414,10 @@ const canRemove = computed(() => {
                     <tr>
                         <th
                             v-for="column in displayColumns"
-                            :key="column"
+                            :key="column.name || column"
                             class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
                         >
-                            {{ column }}
+                            {{ typeof column === 'object' ? column.title : column }}
                         </th>
                         <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                             {{ t('admin.common.actions') }}
@@ -414,33 +497,21 @@ const canRemove = computed(() => {
                                         </p>
                                     </div>
                                 </div>
-                                <!-- For hasMany and hasOne, show edit form -->
-                                <RelationshipEditForm
-                                    v-else
-                                    :relationship="relationship"
-                                    :module-handle="moduleHandle"
-                                    :record-id="recordId"
-                                    :related-record-id="getRecordId(record)"
-                                    :primary-key-column="primaryKeyColumn"
-                                    :related-table-name="relatedTableName"
-                                    @updated="handleUpdated"
-                                    @cancel="cancelEdit"
-                                />
                             </td>
                         </tr>
                         
-                        <!-- Record row -->
-                        <tr
-                            v-else
-                            class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                        >
-                            <td
-                                v-for="column in displayColumns"
-                                :key="column"
-                                class="px-4 py-2 text-sm text-gray-900 dark:text-gray-100"
-                            >
-                                {{ record[column] ?? '-' }}
-                            </td>
+                                <!-- Record row -->
+                                <tr
+                                    v-else
+                                    class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                                >
+                                    <td
+                                        v-for="column in displayColumns"
+                                        :key="column.name || column"
+                                        class="px-4 py-2 text-sm text-gray-900 dark:text-gray-100"
+                                    >
+                                        {{ formatValue(record[typeof column === 'object' ? column.name : column], column) }}
+                                    </td>
                             <td class="px-4 py-2 text-sm font-medium text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <Link
@@ -555,18 +626,6 @@ const canRemove = computed(() => {
                             </p>
                         </div>
                     </div>
-                    <!-- For hasMany and hasOne, show edit form -->
-                    <RelationshipEditForm
-                        v-else
-                        :relationship="relationship"
-                        :module-handle="moduleHandle"
-                        :record-id="recordId"
-                        :related-record-id="getRecordId(record)"
-                        :primary-key-column="primaryKeyColumn"
-                        :related-table-name="relatedTableName"
-                        @updated="handleUpdated"
-                        @cancel="cancelEdit"
-                    />
                 </div>
                 
                 <!-- Record display -->
@@ -653,6 +712,40 @@ const canRemove = computed(() => {
                     >
                         {{ t('admin.common.next') }}
                     </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Edit Modal for hasMany and hasOne -->
+        <div
+            v-if="editModalOpen && editingRecord && (relationship.type === 'hasMany' || relationship.type === 'hasOne')"
+            class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 px-4"
+            @click.self="closeEditModal"
+        >
+            <div class="w-full max-w-4xl rounded-2xl bg-white dark:bg-gray-800 shadow-xl flex flex-col max-h-[90vh]">
+                <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        {{ t('admin.relationships.edit_relationship') }}
+                    </h3>
+                    <button
+                        type="button"
+                        class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        @click="closeEditModal"
+                    >
+                        ✕
+                    </button>
+                </div>
+                <div class="px-6 py-4 overflow-y-auto flex-1">
+                    <RelationshipEditForm
+                        :relationship="relationship"
+                        :module-handle="moduleHandle"
+                        :record-id="recordId"
+                        :related-record-id="getRecordId(editingRecord)"
+                        :primary-key-column="primaryKeyColumn"
+                        :related-table-name="relatedTableName"
+                        @updated="handleUpdated"
+                        @cancel="closeEditModal"
+                    />
                 </div>
             </div>
         </div>

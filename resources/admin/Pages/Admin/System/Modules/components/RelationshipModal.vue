@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch, computed } from 'vue';
+import FieldConfigurationBuilder from './FieldConfigurationBuilder.vue';
 
 const props = defineProps({
     open: {
@@ -8,6 +9,10 @@ const props = defineProps({
     },
     relationship: {
         type: Object,
+        default: null,
+    },
+    moduleId: {
+        type: [Number, String],
         default: null,
     },
 });
@@ -23,8 +28,10 @@ const formData = ref({
     owner_key: 'id',
     pivot_table: '',
     related_key: '',
-    display_columns: '',
+    ui_config: '',
 });
+
+const relatedTableUiConfig = ref('');
 
 // Initialize form when relationship changes or modal opens
 watch([() => props.open, () => props.relationship], () => {
@@ -40,8 +47,9 @@ watch([() => props.open, () => props.relationship], () => {
                 owner_key: props.relationship.owner_key || 'id',
                 pivot_table: props.relationship.pivot_table || '',
                 related_key: props.relationship.related_key || '',
-                display_columns: props.relationship.display_columns || '',
+                ui_config: props.relationship.ui_config || '',
             };
+            relatedTableUiConfig.value = props.relationship.ui_config || '';
         } else {
             // Create mode - reset to defaults
             formData.value = {
@@ -53,11 +61,17 @@ watch([() => props.open, () => props.relationship], () => {
                 owner_key: 'id',
                 pivot_table: '',
                 related_key: '',
-                display_columns: '',
+                ui_config: '',
             };
+            relatedTableUiConfig.value = '';
         }
     }
 }, { immediate: true });
+
+// Watch for UI config changes from FieldConfigurationBuilder
+watch(relatedTableUiConfig, (newConfig) => {
+    formData.value.ui_config = newConfig;
+});
 
 const isEditMode = computed(() => !!props.relationship);
 
@@ -218,17 +232,19 @@ const close = () => {
                             </p>
                         </div>
                         
-                        <!-- Display Columns Configuration -->
-                        <div class="md:col-span-2">
-                            <label class="form-label">Display Columns <span class="text-gray-400 text-xs">(optional)</span></label>
-                            <input
-                                v-model="formData.display_columns"
-                                type="text"
-                                class="form-input"
-                                placeholder="e.g., title, name, email (comma-separated)"
+                        <!-- Field Configuration for Related Table -->
+                        <div v-if="formData.related_table && formData.related_table.trim() !== ''" class="md:col-span-2">
+                            <label class="form-label">Field Configuration <span class="text-gray-400 text-xs">(optional)</span></label>
+                            <FieldConfigurationBuilder
+                                :table-name="formData.related_table"
+                                :module-id="moduleId"
+                                :initial-ui-config="relatedTableUiConfig"
+                                :show-editable="true"
+                                :show-show-in-list="true"
+                                @update:ui-config="(config) => { relatedTableUiConfig = config; formData.ui_config = config; }"
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Comma-separated list of columns to display from the related table. If empty, will show title/name/label or ID.
+                                Configure which columns to display, how they appear, and which fields are editable when editing related records.
                             </p>
                         </div>
                     </div>
