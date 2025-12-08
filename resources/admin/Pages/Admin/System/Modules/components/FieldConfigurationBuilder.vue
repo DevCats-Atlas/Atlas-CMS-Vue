@@ -114,7 +114,18 @@ const checkTableWithFetch = async () => {
 };
 
 const initializeUiConfigForColumns = () => {
-    const newConfig = { ...uiConfig.value };
+    // Get list of current column names
+    const currentColumnNames = columns.value.map(col => col.name);
+    
+    // Filter UI config to only include columns that actually exist
+    const filteredConfig = {};
+    Object.keys(uiConfig.value).forEach(columnName => {
+        if (currentColumnNames.includes(columnName)) {
+            filteredConfig[columnName] = uiConfig.value[columnName];
+        }
+    });
+    
+    const newConfig = { ...filteredConfig };
     
     columns.value.forEach((column) => {
         if (!newConfig[column.name]) {

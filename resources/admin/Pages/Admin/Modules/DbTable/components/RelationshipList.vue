@@ -289,16 +289,29 @@ const getDisplayColumns = () => {
     }
     
     if (uiConfig && typeof uiConfig === 'object') {
-        // Get columns with show_in_list = true
+        // Get actual column names from the records (to filter out non-existent columns)
+        const actualColumns = new Set();
+        if (props.records && props.records.length > 0) {
+            props.records.forEach(record => {
+                Object.keys(record).forEach(key => {
+                    actualColumns.add(key);
+                });
+            });
+        }
+        
+        // Get columns with show_in_list = true, but only if they exist in actual records
         const visibleColumns = [];
         Object.keys(uiConfig).forEach(columnName => {
-            const config = uiConfig[columnName];
-            if (config && (config.show_in_list !== false)) {
-                visibleColumns.push({
-                    name: columnName,
-                    title: config.title || columnName,
-                    interface: config.interface || 'text',
-                });
+            // Only include if column exists in actual records
+            if (actualColumns.size === 0 || actualColumns.has(columnName)) {
+                const config = uiConfig[columnName];
+                if (config && (config.show_in_list !== false)) {
+                    visibleColumns.push({
+                        name: columnName,
+                        title: config.title || columnName,
+                        interface: config.interface || 'text',
+                    });
+                }
             }
         });
         if (visibleColumns.length > 0) {
