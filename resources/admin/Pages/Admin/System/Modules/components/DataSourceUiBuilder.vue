@@ -168,6 +168,8 @@ const initializeUiConfigForColumns = () => {
                 title: column.name,
                 interface: 'text',
                 options: '', // For select interface
+                select_type: 'static', // static or dynamic
+                select_input_type: 'comma', // comma, newline, or value_label
                 editable: true, // Default to editable
                 show_in_list: true, // Default to show in list
             };
@@ -179,6 +181,14 @@ const initializeUiConfigForColumns = () => {
             // Ensure show_in_list field exists for existing configs (default to true)
             if (newConfig[column.name].show_in_list === undefined) {
                 newConfig[column.name].show_in_list = true;
+            }
+            // Ensure select_type exists (default to static for backward compatibility)
+            if (newConfig[column.name].select_type === undefined) {
+                newConfig[column.name].select_type = 'static';
+            }
+            // Ensure select_input_type exists (default to comma for backward compatibility)
+            if (newConfig[column.name].select_input_type === undefined) {
+                newConfig[column.name].select_input_type = 'comma';
             }
         }
     });
@@ -212,6 +222,8 @@ const getColumnConfig = (columnName) => {
             title: columnName,
             interface: 'text',
             options: '',
+            select_type: 'static',
+            select_input_type: 'comma',
             editable: true,
             show_in_list: true,
         };
@@ -223,6 +235,14 @@ const getColumnConfig = (columnName) => {
     // Ensure show_in_list field exists (default to true)
     if (uiConfig.value[columnName].show_in_list === undefined) {
         uiConfig.value[columnName].show_in_list = true;
+    }
+    // Ensure select_type exists (default to static for backward compatibility)
+    if (uiConfig.value[columnName].select_type === undefined) {
+        uiConfig.value[columnName].select_type = 'static';
+    }
+    // Ensure select_input_type exists (default to comma for backward compatibility)
+    if (uiConfig.value[columnName].select_input_type === undefined) {
+        uiConfig.value[columnName].select_input_type = 'comma';
     }
     return uiConfig.value[columnName];
 };
@@ -239,6 +259,36 @@ watch(() => props.tableName, (newTableName) => {
         emitUiConfig();
     }
 }, { immediate: false });
+
+// Get options placeholder based on input type
+const getOptionsPlaceholder = (columnName) => {
+    const inputType = getColumnConfig(columnName).select_input_type || 'comma';
+    switch (inputType) {
+        case 'comma':
+            return 'option1, option2, option3';
+        case 'newline':
+            return 'option1\noption2\noption3';
+        case 'value_label':
+            return 'value1=Label 1\nvalue2=Label 2\nvalue3=Label 3';
+        default:
+            return 'option1, option2, option3';
+    }
+};
+
+// Get options hint based on input type
+const getOptionsHint = (columnName) => {
+    const inputType = getColumnConfig(columnName).select_input_type || 'comma';
+    switch (inputType) {
+        case 'comma':
+            return 'Enter options separated by commas (e.g., option1, option2, option3)';
+        case 'newline':
+            return 'Enter one option per line';
+        case 'value_label':
+            return 'Enter one option per line in format: value=Label (e.g., red=Red Color)';
+        default:
+            return 'Enter options separated by commas';
+    }
+};
 
 // Watch for initial UI config changes
 watch(() => props.initialUiConfig, () => {
@@ -340,19 +390,67 @@ onMounted(() => {
                         
                         <div
                             v-if="getColumnConfig(column.name).interface === 'select'"
-                            class="pt-1"
+                            class="pt-1 space-y-3"
                         >
-                            <label class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Options</label>
-                            <textarea
-                                :value="getColumnConfig(column.name).options"
-                                @input="updateColumnConfig(column.name, 'options', $event.target.value)"
-                                class="form-textarea text-sm py-1.5"
-                                rows="2"
-                                placeholder="option1, option2, option3"
-                            />
-                            <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                                Comma-separated options
-                            </p>
+                            <!-- Select Type: Static or Dynamic -->
+                            <div>
+                                <label class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Select Type</label>
+                                <select
+                                    :value="getColumnConfig(column.name).select_type || 'static'"
+                                    @change="updateColumnConfig(column.name, 'select_type', $event.target.value)"
+                                    class="form-select text-sm py-1.5"
+                                >
+                                    <option value="static">Static</option>
+                                    <option value="dynamic">Dynamic</option>
+                                </select>
+                                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                    Choose static (manual list) or dynamic (from database)
+                                </p>
+                            </div>
+                            
+                            <!-- Static Options Input -->
+                            <div v-if="(getColumnConfig(column.name).select_type || 'static') === 'static'">
+                                <label class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Input Type</label>
+                                <select
+                                    :value="getColumnConfig(column.name).select_input_type || 'comma'"
+                                    @change="updateColumnConfig(column.name, 'select_input_type', $event.target.value)"
+                                    class="form-select text-sm py-1.5"
+                                >
+                                    <option value="comma">Comma-separated</option>
+                                    <option value="newline">Line break separated</option>
+                                    <option value="value_label">Value=Label (line break)</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Options Input Field -->
+                            <div v-if="(getColumnConfig(column.name).select_type || 'static') === 'static'">
+                                <label class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Options</label>
+                                <textarea
+                                    :value="getColumnConfig(column.name).options"
+                                    @input="updateColumnConfig(column.name, 'options', $event.target.value)"
+                                    class="form-textarea text-sm py-1.5"
+                                    :rows="getColumnConfig(column.name).select_input_type === 'comma' ? 2 : 4"
+                                    :placeholder="getOptionsPlaceholder(column.name)"
+                                />
+                                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                    {{ getOptionsHint(column.name) }}
+                                </p>
+                            </div>
+                            
+                            <!-- Dynamic Options (SQL Query) -->
+                            <div v-if="(getColumnConfig(column.name).select_type || 'static') === 'dynamic'">
+                                <label class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">SQL Query</label>
+                                <textarea
+                                    :value="getColumnConfig(column.name).options"
+                                    @input="updateColumnConfig(column.name, 'options', $event.target.value)"
+                                    class="form-textarea text-sm py-1.5 font-mono"
+                                    rows="3"
+                                    placeholder="SELECT code, title FROM articles_languages"
+                                />
+                                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                    Enter SQL query. First column = value, second column = label. If only one column, it will be used for both.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>

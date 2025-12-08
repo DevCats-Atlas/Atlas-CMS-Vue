@@ -44,25 +44,81 @@ const fieldModels = ref({});
 
 // Get field config for interface component
 const getFieldConfig = (field) => {
-    return {
+    const config = {
         name: field.name,
         type: field.interface || 'text',
         title: field.title || field.name,
-        options: field.options || '',
         required: !field.nullable,
         config: {
             type: field.interface || 'text',
-            options: field.options ? parseSelectOptions(field.options) : [],
         },
     };
+    
+    // Only set options for select interfaces
+    // Backend now sends options as an array, so use it directly
+    if (field.interface === 'select') {
+        // If options is already an array (from backend), use it directly
+        // Otherwise, parse it (for backward compatibility)
+        if (Array.isArray(field.options)) {
+            config.config.options = field.options;
+        } else {
+            const inputType = field.select_input_type || 'comma';
+            config.config.options = field.options ? parseSelectOptions(field.options, inputType) : [];
+        }
+    }
+    
+    return config;
 };
 
-// Parse select options from comma-separated string
-const parseSelectOptions = (optionsString) => {
+// Parse select options from string based on input type
+const parseSelectOptions = (optionsString, inputType = 'comma') => {
     if (!optionsString || !optionsString.trim()) {
         return [];
     }
-    return optionsString.split(',').map(opt => opt.trim()).filter(opt => opt);
+    
+    // Handle different input types
+    switch (inputType) {
+        case 'comma':
+            // Comma-separated values
+            return optionsString.split(',').map(opt => opt.trim()).filter(opt => opt).map(opt => ({
+                key: opt,
+                label: opt,
+            }));
+            
+        case 'newline':
+            // Line break separated values
+            return optionsString.split('\n').map(opt => opt.trim()).filter(opt => opt).map(opt => ({
+                key: opt,
+                label: opt,
+            }));
+            
+        case 'value_label':
+            // Value=Label format (line break separated)
+            const valueLabelLines = optionsString.split('\n').map(opt => opt.trim()).filter(opt => opt);
+            return valueLabelLines.map(line => {
+                if (line.includes('=')) {
+                    const [key, ...labelParts] = line.split('=');
+                    const label = labelParts.join('='); // In case label contains '='
+                    return {
+                        key: key.trim(),
+                        label: label.trim() || key.trim(),
+                    };
+                } else {
+                    // If no '=' found, use the whole line as both key and label
+                    return {
+                        key: line,
+                        label: line,
+                    };
+                }
+            });
+            
+        default:
+            // Fallback: try comma-separated
+            return optionsString.split(',').map(opt => opt.trim()).filter(opt => opt).map(opt => ({
+                key: opt,
+                label: opt,
+            }));
+    }
 };
 
 // Build form data structure based on fields and existing record

@@ -161,39 +161,80 @@ const submitCreate = () => {
     });
 };
 
-// Parse select options from string
-const parseSelectOptions = (optionsString) => {
+// Parse select options from string based on input type
+const parseSelectOptions = (optionsString, inputType = 'comma') => {
     if (!optionsString || optionsString.trim() === '') {
         return [];
     }
     
-    // Try comma-separated first
-    const commaSeparated = optionsString.split(',').map(opt => opt.trim()).filter(opt => opt);
-    if (commaSeparated.length > 1) {
-        return commaSeparated.map(opt => ({
-            key: opt,
-            label: opt,
-        }));
+    // Handle different input types
+    switch (inputType) {
+        case 'comma':
+            // Comma-separated values
+            const commaSeparated = optionsString.split(',').map(opt => opt.trim()).filter(opt => opt);
+            return commaSeparated.map(opt => ({
+                key: opt,
+                label: opt,
+            }));
+            
+        case 'newline':
+            // Line break separated values
+            const newlineSeparated = optionsString.split('\n').map(opt => opt.trim()).filter(opt => opt);
+            return newlineSeparated.map(opt => ({
+                key: opt,
+                label: opt,
+            }));
+            
+        case 'value_label':
+            // Value=Label format (line break separated)
+            const valueLabelLines = optionsString.split('\n').map(opt => opt.trim()).filter(opt => opt);
+            return valueLabelLines.map(line => {
+                if (line.includes('=')) {
+                    const [key, ...labelParts] = line.split('=');
+                    const label = labelParts.join('='); // In case label contains '='
+                    return {
+                        key: key.trim(),
+                        label: label.trim() || key.trim(),
+                    };
+                } else {
+                    // If no '=' found, use the whole line as both key and label
+                    return {
+                        key: line,
+                        label: line,
+                    };
+                }
+            });
+            
+        default:
+            // Fallback: try to auto-detect (backward compatibility)
+            // Try comma-separated first
+            const autoComma = optionsString.split(',').map(opt => opt.trim()).filter(opt => opt);
+            if (autoComma.length > 1) {
+                return autoComma.map(opt => ({
+                    key: opt,
+                    label: opt,
+                }));
+            }
+            
+            // Try newline-separated
+            const autoNewline = optionsString.split('\n').map(opt => opt.trim()).filter(opt => opt);
+            if (autoNewline.length > 1) {
+                return autoNewline.map(opt => ({
+                    key: opt,
+                    label: opt,
+                }));
+            }
+            
+            // Single option
+            if (optionsString.trim()) {
+                return [{
+                    key: optionsString.trim(),
+                    label: optionsString.trim(),
+                }];
+            }
+            
+            return [];
     }
-    
-    // Try newline-separated
-    const newlineSeparated = optionsString.split('\n').map(opt => opt.trim()).filter(opt => opt);
-    if (newlineSeparated.length > 1) {
-        return newlineSeparated.map(opt => ({
-            key: opt,
-            label: opt,
-        }));
-    }
-    
-    // Single option
-    if (optionsString.trim()) {
-        return [{
-            key: optionsString.trim(),
-            label: optionsString.trim(),
-        }];
-    }
-    
-    return [];
 };
 
 // Get enhanced field config for interface components
@@ -215,7 +256,8 @@ const getFieldConfig = (field) => {
     
     // For select fields, parse options
     if (interfaceType === 'select' && field.options) {
-        const options = parseSelectOptions(field.options);
+        const inputType = field.select_input_type || 'comma';
+        const options = parseSelectOptions(field.options, inputType);
         config.config.options = options;
     }
     
