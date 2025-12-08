@@ -93,7 +93,21 @@ const close = () => {
             <div class="px-6 py-4 overflow-y-auto flex-1">
                 <form @submit.prevent="submit" class="space-y-4">
                     <div class="grid gap-4 md:grid-cols-2">
-                        <!-- 1. Related Table (First) -->
+                        <!-- 1. Name (First) -->
+                        <div>
+                            <label class="form-label">Name <span class="text-gray-400 text-xs">(optional)</span></label>
+                            <input
+                                v-model="formData.name"
+                                type="text"
+                                class="form-input"
+                                placeholder="Auto-generated if empty"
+                            />
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Relationship name (used in code). If empty, will be auto-generated from related table name.
+                            </p>
+                        </div>
+                        
+                        <!-- 2. Related Table (Second) -->
                         <div>
                             <label class="form-label">
                                 <span v-if="formData.type === 'belongsToMany'">Final Related Table</span>
@@ -113,7 +127,7 @@ const close = () => {
                             </p>
                         </div>
                         
-                        <!-- 2. Type (Second) -->
+                        <!-- 3. Type (Third) -->
                         <div>
                             <label class="form-label">Type <span class="text-red-500">*</span></label>
                             <select
@@ -131,7 +145,7 @@ const close = () => {
                             </p>
                         </div>
                         
-                        <!-- 3. Local Key (Third) -->
+                        <!-- 4. Local Key (Fourth) -->
                         <div v-if="formData.type === 'hasOne' || formData.type === 'hasMany'">
                             <label class="form-label">Local Key</label>
                             <input
@@ -145,7 +159,7 @@ const close = () => {
                             </p>
                         </div>
                         
-                        <!-- 4. Foreign Key (Fourth) -->
+                        <!-- 5. Foreign Key (Fifth) -->
                         <div>
                             <label class="form-label">Foreign Key <span class="text-red-500">*</span></label>
                             <input
@@ -159,20 +173,6 @@ const close = () => {
                                 <span v-if="formData.type === 'belongsToMany'">Column in pivot table pointing to this table (e.g., venue_id in venues_categories_records)</span>
                                 <span v-else-if="formData.type === 'belongsTo'">Column in this table pointing to related table</span>
                                 <span v-else>Column in related table pointing to this table</span>
-                            </p>
-                        </div>
-                        
-                        <!-- 5. Name (Fifth, Optional) -->
-                        <div>
-                            <label class="form-label">Name <span class="text-gray-400 text-xs">(optional)</span></label>
-                            <input
-                                v-model="formData.name"
-                                type="text"
-                                class="form-input"
-                                placeholder="Auto-generated if empty"
-                            />
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Relationship name (used in code). If empty, will be auto-generated from related table name.
                             </p>
                         </div>
                         

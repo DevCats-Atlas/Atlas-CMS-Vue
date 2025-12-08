@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import axios from 'axios';
 import { confirmDialog } from '@/utils/confirmDialog.js';
@@ -39,6 +39,15 @@ const props = defineProps({
 const emit = defineEmits(['removed', 'edit']);
 
 const editingRecordId = ref(null);
+const selectedRelatedId = ref(null);
+
+// For belongsTo select dropdown
+const belongsToOptions = ref([]);
+const belongsToLoading = ref(false);
+const belongsToSearchQuery = ref('');
+const belongsToTotalCount = ref(null);
+const belongsToRequiresSearch = ref(false);
+let belongsToSearchTimeout = null;
 
 const showViewButton = computed(() => {
     // Don't show View button for belongsToMany and belongsTo
@@ -47,22 +56,137 @@ const showViewButton = computed(() => {
 });
 
 const showEditButton = computed(() => {
-    // Show Edit button for hasMany and hasOne
-    return ['hasMany', 'hasOne'].includes(props.relationship.type);
+    // Show Edit button for hasMany, hasOne, and belongsTo
+    return ['hasMany', 'hasOne', 'belongsTo'].includes(props.relationship.type);
 });
+
+const isBelongsTo = computed(() => {
+    return props.relationship.type === 'belongsTo';
+});
+
+// Check total count for belongsTo select
+const checkBelongsToCount = async () => {
+    if (!props.relatedTableName || !props.relatedTableName.trim()) {
+        return;
+    }
+    
+    try {
+        const response = await axios.get(`/admin/api/tables/${props.relatedTableName}/count`);
+        belongsToTotalCount.value = response.data.count || 0;
+        belongsToRequiresSearch.value = belongsToTotalCount.value >= 100;
+        
+        // If less than 100 records, load them all immediately
+        if (!belongsToRequiresSearch.value) {
+            loadBelongsToOptions();
+        }
+    } catch (error) {
+        console.error('Error loading record count:', error);
+        // Default to requiring search if count fails
+        belongsToRequiresSearch.value = true;
+    }
+};
+
+// Load options for belongsTo select
+const loadBelongsToOptions = async () => {
+    if (!props.relatedTableName || !props.relatedTableName.trim()) {
+        belongsToOptions.value = [];
+        return;
+    }
+    
+    // If search is required and no query provided, don't load
+    if (belongsToRequiresSearch.value && !belongsToSearchQuery.value.trim()) {
+        belongsToOptions.value = [];
+        return;
+    }
+    
+    belongsToLoading.value = true;
+    const url = `/admin/api/tables/${props.relatedTableName}/records`;
+    const params = {
+        search: belongsToSearchQuery.value || '',
+        per_page: belongsToRequiresSearch.value ? 50 : 100,
+    };
+    
+    try {
+        const response = await axios.get(url, { params });
+        belongsToOptions.value = response.data.records || [];
+    } catch (error) {
+        console.error('Error loading belongsTo options:', error);
+        belongsToOptions.value = [];
+    } finally {
+        belongsToLoading.value = false;
+    }
+};
+
+// Watch search query with debounce
+watch(belongsToSearchQuery, () => {
+    if (belongsToSearchTimeout) {
+        clearTimeout(belongsToSearchTimeout);
+    }
+    
+    belongsToSearchTimeout = setTimeout(() => {
+        if (belongsToRequiresSearch.value) {
+            loadBelongsToOptions();
+        }
+    }, 300);
+});
+
+const getBelongsToOptionLabel = (record) => {
+    // Try common title fields
+    const titleFields = ['title', 'name', 'label', 'email'];
+    for (const field of titleFields) {
+        if (record[field]) {
+            return record[field];
+        }
+    }
+    // Fallback to primary key
+    return `Record #${record[props.primaryKeyColumn]}`;
+};
 
 const startEdit = (recordId) => {
     editingRecordId.value = recordId;
+    if (isBelongsTo.value) {
+        // For belongsTo, pre-select the current related record
+        selectedRelatedId.value = recordId;
+        // Load options when editing starts
+        checkBelongsToCount();
+    }
     emit('edit', recordId);
 };
 
 const cancelEdit = () => {
     editingRecordId.value = null;
+    selectedRelatedId.value = null;
+    belongsToOptions.value = [];
+    belongsToSearchQuery.value = '';
 };
 
 const handleUpdated = () => {
     editingRecordId.value = null;
+    selectedRelatedId.value = null;
+    belongsToOptions.value = [];
+    belongsToSearchQuery.value = '';
     emit('removed'); // Trigger reload
+};
+
+const handleBelongsToUpdate = async () => {
+    const newRelatedId = selectedRelatedId.value;
+    
+    // Allow null/empty to unset the relationship
+    try {
+        const response = await axios.put(`/admin/${props.moduleHandle}/relationships/${props.relationship.name || props.relationship.related_table}/update`, {
+            record_id: props.recordId,
+            related_record_id: newRelatedId || null,
+        });
+        
+        if (response.data.success) {
+            handleUpdated();
+        } else {
+            alert(response.data.error || 'Failed to update relationship');
+        }
+    } catch (error) {
+        console.error('Error updating belongsTo relationship:', error);
+        alert(error.response?.data?.error || error.message || 'Failed to update relationship');
+    }
 };
 
 const getRecordLabel = (record) => {
@@ -169,10 +293,80 @@ const canRemove = computed(() => {
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     <template v-for="record in records" :key="getRecordId(record)">
-                        <!-- Edit form row -->
+                        <!-- Edit form/selector row -->
                         <tr v-if="editingRecordId === getRecordId(record)" class="bg-white dark:bg-gray-800">
                             <td :colspan="displayColumns.length + 1" class="px-4 py-4">
+                                <!-- For belongsTo, show select dropdown -->
+                                <div v-if="isBelongsTo" class="space-y-4">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h6 class="text-sm font-medium text-gray-900 dark:text-white">
+                                            Select Related Record
+                                        </h6>
+                                        <div class="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                @click.prevent="handleBelongsToUpdate"
+                                                class="btn btn-sm btn-primary"
+                                                :disabled="belongsToLoading"
+                                            >
+                                                Save
+                                            </button>
+                                            <button
+                                                type="button"
+                                                @click.prevent="cancelEdit"
+                                                class="btn btn-sm btn-outline"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Search input if more than 100 records -->
+                                    <div v-if="belongsToRequiresSearch" class="mb-4">
+                                        <label class="form-label">Search</label>
+                                        <input
+                                            v-model="belongsToSearchQuery"
+                                            type="text"
+                                            class="form-input"
+                                            placeholder="Type to search..."
+                                            :disabled="belongsToLoading"
+                                        />
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            {{ belongsToTotalCount }} records available. Type to search.
+                                        </p>
+                                    </div>
+                                    
+                                    <!-- Select dropdown -->
+                                    <div>
+                                        <label class="form-label">Related Record</label>
+                                        <select
+                                            v-model="selectedRelatedId"
+                                            class="form-select"
+                                            :disabled="belongsToLoading || (belongsToRequiresSearch && !belongsToSearchQuery.trim())"
+                                        >
+                                            <option :value="null">-- None --</option>
+                                            <option
+                                                v-for="option in belongsToOptions"
+                                                :key="option[primaryKeyColumn]"
+                                                :value="option[primaryKeyColumn]"
+                                            >
+                                                {{ getBelongsToOptionLabel(option) }}
+                                            </option>
+                                        </select>
+                                        <p v-if="belongsToLoading" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            Loading...
+                                        </p>
+                                        <p v-else-if="belongsToRequiresSearch && !belongsToSearchQuery.trim()" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            Please enter a search query to find records.
+                                        </p>
+                                        <p v-else-if="belongsToOptions.length === 0 && belongsToSearchQuery.trim()" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            No records found.
+                                        </p>
+                                    </div>
+                                </div>
+                                <!-- For hasMany and hasOne, show edit form -->
                                 <RelationshipEditForm
+                                    v-else
                                     :relationship="relationship"
                                     :module-handle="moduleHandle"
                                     :record-id="recordId"
@@ -241,9 +435,79 @@ const canRemove = computed(() => {
             </div>
             
             <template v-for="record in records" :key="getRecordId(record)">
-                <!-- Edit form -->
+                <!-- Edit form/selector -->
                 <div v-if="editingRecordId === getRecordId(record)" class="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <!-- For belongsTo, show select dropdown -->
+                    <div v-if="isBelongsTo" class="space-y-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h6 class="text-sm font-medium text-gray-900 dark:text-white">
+                                Select Related Record
+                            </h6>
+                            <div class="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    @click.prevent="handleBelongsToUpdate"
+                                    class="btn btn-sm btn-primary"
+                                    :disabled="belongsToLoading"
+                                >
+                                    Save
+                                </button>
+                                <button
+                                    type="button"
+                                    @click.prevent="cancelEdit"
+                                    class="btn btn-sm btn-outline"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Search input if more than 100 records -->
+                        <div v-if="belongsToRequiresSearch" class="mb-4">
+                            <label class="form-label">Search</label>
+                            <input
+                                v-model="belongsToSearchQuery"
+                                type="text"
+                                class="form-input"
+                                placeholder="Type to search..."
+                                :disabled="belongsToLoading"
+                            />
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {{ belongsToTotalCount }} records available. Type to search.
+                            </p>
+                        </div>
+                        
+                        <!-- Select dropdown -->
+                        <div>
+                            <label class="form-label">Related Record</label>
+                            <select
+                                v-model="selectedRelatedId"
+                                class="form-select"
+                                :disabled="belongsToLoading || (belongsToRequiresSearch && !belongsToSearchQuery.trim())"
+                            >
+                                <option :value="null">-- None --</option>
+                                <option
+                                    v-for="option in belongsToOptions"
+                                    :key="option[primaryKeyColumn]"
+                                    :value="option[primaryKeyColumn]"
+                                >
+                                    {{ getBelongsToOptionLabel(option) }}
+                                </option>
+                            </select>
+                            <p v-if="belongsToLoading" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Loading...
+                            </p>
+                            <p v-else-if="belongsToRequiresSearch && !belongsToSearchQuery.trim()" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Please enter a search query to find records.
+                            </p>
+                            <p v-else-if="belongsToOptions.length === 0 && belongsToSearchQuery.trim()" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                No records found.
+                            </p>
+                        </div>
+                    </div>
+                    <!-- For hasMany and hasOne, show edit form -->
                     <RelationshipEditForm
+                        v-else
                         :relationship="relationship"
                         :module-handle="moduleHandle"
                         :record-id="recordId"

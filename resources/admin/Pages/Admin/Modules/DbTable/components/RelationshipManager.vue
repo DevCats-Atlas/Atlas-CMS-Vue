@@ -276,7 +276,7 @@ const handleRecordCreated = async (newRecordId, relationship) => {
                             </p>
                         </div>
                         <button
-                            v-if="isEditable(relationship) && !(relationship.type === 'hasOne' && relationshipData[getRelationshipName(relationship)]?.length > 0)"
+                            v-if="isEditable(relationship) && !((relationship.type === 'hasOne' || relationship.type === 'belongsTo') && relationshipData[getRelationshipName(relationship)]?.length > 0)"
                             type="button"
                             @click.prevent="toggleSelector(relationship)"
                             class="btn btn-sm btn-primary"
