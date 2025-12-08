@@ -2,6 +2,9 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import { useTranslation } from '@admin/js/utils/useTranslation';
+
+const { t } = useTranslation();
 
 const isSidebarOpen = ref(false);
 const userToggled = ref(false); // Track if user manually toggled
@@ -32,7 +35,7 @@ const props = defineProps({
     },
 });
 
-const sidebarTitle = computed(() => props.sidebarTitle || 'CMS Admin');
+const sidebarTitle = computed(() => props.sidebarTitle || t('admin.layout.cms_admin'));
 const sharedNavigation = computed(() => page.props.cmsNavigation || []);
 const navigationGroups = computed(() => {
     if (props.navigation && props.navigation.length) {
@@ -113,7 +116,7 @@ const isAdminSection = computed(() => page.url.startsWith('/admin') && !isSystem
                     <button
                         @click="closeSidebar"
                         class="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                        title="Close sidebar"
+                        :title="t('admin.layout.close_sidebar')"
                     >
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -173,7 +176,7 @@ const isAdminSection = computed(() => page.url.startsWith('/admin') && !isSystem
                             v-if="!isSidebarOpen"
                             @click="toggleSidebar"
                             class="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            title="Open sidebar"
+                            :title="t('admin.layout.open_sidebar')"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -183,7 +186,7 @@ const isAdminSection = computed(() => page.url.startsWith('/admin') && !isSystem
 
                     <div class="flex items-center space-x-4">
                         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {{ user?.name || 'Admin' }}
+                            {{ user?.name || t('admin.layout.admin') }}
                         </span>
                         <Link
                             href="/admin"
@@ -194,7 +197,7 @@ const isAdminSection = computed(() => page.url.startsWith('/admin') && !isSystem
                                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100',
                             ]"
                         >
-                            CMS
+                            {{ t('admin.layout.cms') }}
                         </Link>
                         <Link
                             v-if="user?.is_superadmin"
@@ -206,13 +209,13 @@ const isAdminSection = computed(() => page.url.startsWith('/admin') && !isSystem
                                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100',
                             ]"
                         >
-                            System
+                            {{ t('admin.layout.system') }}
                         </Link>
                         <Link href="/" class="btn-text">
-                            View Site
+                            {{ t('admin.layout.view_site') }}
                         </Link>
                         <Link href="/admin/logout" method="post" as="button" class="btn-text-danger">
-                            Sign out
+                            {{ t('admin.layout.sign_out') }}
                         </Link>
                     </div>
                 </div>

@@ -7,6 +7,9 @@ import RelationshipSelector from './RelationshipSelector.vue';
 import RelationshipCreateForm from './RelationshipCreateForm.vue';
 import ToastStack from '@/components/ToastStack.vue';
 import { useToast } from '@/composables/useToast.js';
+import { useTranslation } from '@admin/js/utils/useTranslation';
+
+const { t } = useTranslation();
 
 const props = defineProps({
     relationships: {
@@ -102,13 +105,7 @@ onMounted(() => {
 
 // Get relationship type label
 const getTypeLabel = (type) => {
-    const labels = {
-        hasOne: 'Has One',
-        hasMany: 'Has Many',
-        belongsTo: 'Belongs To',
-        belongsToMany: 'Belongs To Many',
-    };
-    return labels[type] || type;
+    return t(`admin.relationships.type.${type}`) || type;
 };
 
 // Check if relationship is editable (all relationship types can be managed)
@@ -170,12 +167,12 @@ const saveRelationship = async (relationship) => {
         // Show success toast
         showToast({
             title: 'Success',
-            message: 'Relationship saved successfully',
+            message: t('admin.success.relationship_synced'),
             intent: 'success',
         });
     } catch (error) {
         console.error(`Error saving relationship ${name}:`, error);
-        const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to save relationship';
+        const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || t('admin.errors.relationship_sync_failed');
         
         showToast({
             title: 'Error Saving Relationship',
@@ -210,8 +207,8 @@ const handleRecordCreated = async (newRecordId, relationship) => {
         
         // Show success toast
         showToast({
-            title: 'Success',
-            message: 'Record created and attached successfully',
+            title: t('admin.common.success'),
+            message: t('admin.success.record_created_attached'),
             intent: 'success',
         });
     }
@@ -220,7 +217,7 @@ const handleRecordCreated = async (newRecordId, relationship) => {
 
 <template>
     <div v-if="relationships.length > 0" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-        <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Relationships</h4>
+        <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">{{ t('admin.relationships.title') }}</h4>
         
         <!-- Tabs for relationships -->
         <div class="border-b border-gray-200 dark:border-gray-700 mb-4">
@@ -299,7 +296,7 @@ const handleRecordCreated = async (newRecordId, relationship) => {
                             @click.prevent="toggleSelector(relationship)"
                             class="btn btn-sm btn-primary"
                         >
-                            {{ showSelector[getRelationshipName(relationship)] ? 'Cancel' : 'Add' }}
+                            {{ showSelector[getRelationshipName(relationship)] ? t('admin.common.cancel') : t('admin.relationships.add') }}
                         </button>
                     </div>
 
@@ -321,7 +318,7 @@ const handleRecordCreated = async (newRecordId, relationship) => {
                 <div v-if="showSelector[getRelationshipName(relationship)]" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 space-y-4">
                     <div class="flex items-center justify-between mb-4">
                         <h5 class="text-sm font-medium text-gray-900 dark:text-white">
-                            {{ shouldShowCreateForm(relationship) ? 'Create New Record' : (relationship.type === 'belongsTo' ? 'Add record' : 'Add records') }}
+                            {{ shouldShowCreateForm(relationship) ? t('admin.relationships.create_new_record') : (relationship.type === 'belongsTo' ? t('admin.relationships.add') : t('admin.relationships.add_records')) }}
                         </h5>
                     </div>
 
@@ -345,14 +342,14 @@ const handleRecordCreated = async (newRecordId, relationship) => {
                                 class="btn btn-sm btn-primary"
                                 :disabled="loading[getRelationshipName(relationship)]"
                             >
-                                Save
+                                {{ t('admin.common.save') }}
                             </button>
                             <button
                                 type="button"
                                 @click.prevent="cancelEditing(relationship)"
                                 class="btn btn-sm btn-outline"
                             >
-                                Cancel
+                                {{ t('admin.common.cancel') }}
                             </button>
                         </div>
 

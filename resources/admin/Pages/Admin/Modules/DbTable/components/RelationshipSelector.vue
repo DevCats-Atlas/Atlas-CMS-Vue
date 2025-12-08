@@ -1,6 +1,9 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue';
 import axios from 'axios';
+import { useTranslation } from '@admin/js/utils/useTranslation';
+
+const { t } = useTranslation();
 
 const props = defineProps({
     relationship: {
@@ -163,13 +166,13 @@ onMounted(() => {
                 v-model="searchQuery"
                 type="text"
                 class="form-input"
-                :placeholder="requiresSearch ? 'Type to search records (required for large datasets)...' : 'Search records...'"
+                :placeholder="requiresSearch ? t('admin.common.type_to_search') + '...' : t('admin.common.search') + '...'"
             />
             <p v-if="requiresSearch && totalCount !== null" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {{ totalCount }} records found. Please enter a search query to filter results.
+                {{ totalCount }} {{ t('admin.common.records_found') }}. {{ t('admin.common.please_search') }}
             </p>
             <p v-else-if="!requiresSearch && totalCount !== null" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Showing all {{ totalCount }} records
+                {{ t('admin.common.showing_all') }} {{ totalCount }} {{ t('admin.common.records') }}
             </p>
             <p v-if="searchQuery && !loading" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Searching for "{{ searchQuery }}"...
@@ -178,18 +181,18 @@ onMounted(() => {
 
         <!-- Loading count state -->
         <div v-if="loadingCount" class="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
-            Checking record count...
+            {{ t('admin.common.checking_record_count') }}
         </div>
 
         <!-- Loading state -->
         <div v-else-if="loading" class="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
-            Loading records...
+            {{ t('admin.common.loading_records') }}
         </div>
         
         <!-- Prompt for search if required -->
         <div v-else-if="requiresSearch && !searchQuery.trim() && availableRecords.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-4 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-            <p class="mb-2">This table has {{ totalCount }} records.</p>
-            <p>Please enter a search query above to filter and view records.</p>
+            <p class="mb-2">{{ t('admin.common.this_table_has') }} {{ totalCount }} {{ t('admin.common.records') }}.</p>
+            <p>{{ t('admin.common.please_enter_search') }}</p>
         </div>
 
         <!-- Records list -->

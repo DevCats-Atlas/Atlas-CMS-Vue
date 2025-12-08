@@ -1,5 +1,8 @@
 <script setup>
 import { Head, useForm } from '@inertiajs/vue3';
+import { useTranslation } from '@admin/js/utils/useTranslation';
+
+const { t } = useTranslation();
 
 defineProps({
     title: {
@@ -27,10 +30,10 @@ const submit = () => {
 
         <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
             <h2 class="mt-6 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-                Welcome back
+                {{ t('admin.auth.welcome_back') }}
             </h2>
             <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                Sign in to manage your sites and content.
+                {{ t('admin.auth.sign_in_description') }}
             </p>
         </div>
 
@@ -39,7 +42,7 @@ const submit = () => {
                 <form class="space-y-6" @submit.prevent="submit">
                     <div>
                         <label for="email" class="form-label">
-                            Email
+                            {{ t('admin.auth.email') }}
                         </label>
                         <input
                             id="email"
@@ -57,7 +60,7 @@ const submit = () => {
 
                     <div>
                         <label for="password" class="form-label">
-                            Password
+                            {{ t('admin.auth.password') }}
                         </label>
                         <input
                             id="password"
@@ -80,7 +83,7 @@ const submit = () => {
                                 type="checkbox"
                                 class="form-checkbox"
                             />
-                            <span class="ml-2">Remember me</span>
+                            <span class="ml-2">{{ t('admin.auth.remember_me') }}</span>
                         </label>
                     </div>
 
@@ -107,7 +110,7 @@ const submit = () => {
                                     d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                                 />
                             </svg>
-                            Sign in
+                            {{ t('admin.auth.sign_in') }}
                         </button>
                     </div>
                 </form>

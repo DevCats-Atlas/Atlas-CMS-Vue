@@ -2,6 +2,9 @@
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/components/interfaces';
+import { useTranslation } from '@admin/js/utils/useTranslation';
+
+const { t } = useTranslation();
 
 const props = defineProps({
     relationship: {
@@ -98,7 +101,7 @@ const loadData = async () => {
         const structureResponse = await axios.get(`/admin/${props.moduleHandle}/relationships/${getRelationshipName()}/structure`);
         
         if (!structureResponse.data.success) {
-            errors.value = { general: structureResponse.data.message || 'Failed to load table structure' };
+            errors.value = { general: structureResponse.data.message || t('admin.errors.error_occurred') };
             return;
         }
         
@@ -112,7 +115,7 @@ const loadData = async () => {
         });
         
         if (!recordDataResponse.data.success) {
-            errors.value = { general: recordDataResponse.data.error || 'Failed to load record data' };
+            errors.value = { general: recordDataResponse.data.error || t('admin.errors.error_occurred') };
             return;
         }
         
@@ -121,7 +124,7 @@ const loadData = async () => {
     } catch (error) {
         console.error('Error loading data:', error);
         errors.value = { 
-            general: error.response?.data?.message || error.message || 'Failed to load data' 
+            general: error.response?.data?.message || error.message || t('admin.errors.error_occurred')
         };
     } finally {
         loading.value = false;
@@ -153,7 +156,7 @@ const submitForm = async () => {
         if (response.data.success) {
             emit('updated', props.relatedRecordId);
         } else {
-            errors.value = { general: response.data.message || 'Failed to update record' };
+            errors.value = { general: response.data.message || t('admin.errors.error_updating_record') };
         }
     } catch (error) {
         console.error('Error updating record:', error);
@@ -161,7 +164,7 @@ const submitForm = async () => {
             errors.value = error.response.data.errors;
         } else {
             errors.value = { 
-                general: error.response?.data?.message || error.message || 'Failed to update record' 
+                general: error.response?.data?.message || error.message || t('admin.errors.error_updating_record')
             };
         }
     } finally {
@@ -183,7 +186,7 @@ onMounted(() => {
         <!-- Loading state -->
         <div v-if="loading" class="text-center py-8">
             <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
-            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Loading form...</p>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ t('admin.common.loading') }}</p>
         </div>
 
         <!-- Error state -->
@@ -215,7 +218,7 @@ onMounted(() => {
                     :disabled="submitting"
                 >
                     <span v-if="submitting">Updating...</span>
-                    <span v-else>Update Record</span>
+                    <span v-else>{{ t('admin.common.update') }}</span>
                 </button>
                 <button
                     type="button"
@@ -223,7 +226,7 @@ onMounted(() => {
                     class="btn btn-sm btn-outline"
                     :disabled="submitting"
                 >
-                    Cancel
+                    {{ t('admin.common.cancel') }}
                 </button>
             </div>
         </form>

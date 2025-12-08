@@ -3,7 +3,10 @@ import { computed, ref } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
 import { confirmDialog } from '@admin/js/utils/confirmDialog.js';
+import { useTranslation } from '@admin/js/utils/useTranslation';
 import axios from 'axios';
+
+const { t } = useTranslation();
 
 const props = defineProps({
     title: {
@@ -137,9 +140,9 @@ const confirmDelete = async (item) => {
     }
     
     const confirmed = await confirmDialog({
-        title: 'Delete record',
-        message: `Delete "${recordLabel}"?`,
-        confirmLabel: 'Delete',
+        title: t('admin.db_table.delete_confirm'),
+        message: `${t('admin.common.delete')} "${recordLabel}"?`,
+        confirmLabel: t('admin.common.delete'),
         intent: 'danger',
     });
     
@@ -239,7 +242,7 @@ const handleDrop = async (event, dropItem, dropIndex) => {
         router.reload({ preserveScroll: true });
     } catch (error) {
         console.error('Error reordering:', error);
-        alert(error.response?.data?.error || 'Failed to reorder item');
+        alert(error.response?.data?.error || t('admin.errors.error_reordering'));
     } finally {
         draggedItem.value = null;
         draggedOverIndex.value = null;
@@ -359,7 +362,7 @@ const submitCreateChild = (parentId) => {
                             </p>
                         </div>
                         <button type="button" class="btn btn-primary" @click="router.visit(baseUrl + '/create')">
-                            Create New
+                            {{ t('admin.common.create') }}
                         </button>
                     </div>
 
@@ -367,19 +370,19 @@ const submitCreateChild = (parentId) => {
                     <div class="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
                         <form @submit.prevent="performSearch" class="space-y-4">
                             <div>
-                                <label class="form-label">Search</label>
+                                <label class="form-label">{{ t('admin.common.search') }}</label>
                                 <div class="flex items-center gap-2">
                                     <div class="flex-1">
                                         <input
                                             v-model="searchForm.search"
                                             type="text"
                                             class="form-input"
-                                            placeholder="Search across all columns"
+                                            :placeholder="t('admin.common.search')"
                                         />
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <button type="submit" class="btn btn-primary" :disabled="searchForm.processing">
-                                            {{ searchForm.processing ? 'Searching...' : 'Search' }}
+                                            {{ searchForm.processing ? t('admin.common.loading') : t('admin.common.search') }}
                                         </button>
                                         <button
                                             v-if="search"
@@ -387,7 +390,7 @@ const submitCreateChild = (parentId) => {
                                             class="btn btn-outline"
                                             @click="clearSearch"
                                         >
-                                            Clear
+                                            {{ t('admin.common.clear') }}
                                         </button>
                                     </div>
                                 </div>
@@ -400,7 +403,7 @@ const submitCreateChild = (parentId) => {
 
                     <div v-if="displayItems.length === 0" class="text-center py-12">
                         <p class="text-gray-500 dark:text-gray-400">
-                            {{ search ? 'No records found matching your search.' : 'No records found in the table.' }}
+                            {{ search ? t('admin.common.no_results') : t('admin.db_table.no_records') }}
                         </p>
                     </div>
 
@@ -419,10 +422,10 @@ const submitCreateChild = (parentId) => {
                                         v-if="hasDeepStructure"
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
                                     >
-                                        Children
+                                        {{ t('admin.db_table.children') }}
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Actions
+                                        {{ t('admin.common.actions') }}
                                     </th>
                                 </tr>
                             </thead>
@@ -460,7 +463,7 @@ const submitCreateChild = (parentId) => {
                                                     class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                                                     draggable="false"
                                                     @click.stop="toggleExpand(item[props.primaryKeyColumn])"
-                                                    :title="isExpanded(item[props.primaryKeyColumn]) ? 'Collapse' : 'Expand'"
+                                                    :title="isExpanded(item[props.primaryKeyColumn]) ? t('admin.common.collapse') : t('admin.common.expand')"
                                                 >
                                                     <svg
                                                         class="w-4 h-4 transition-transform"
@@ -490,7 +493,7 @@ const submitCreateChild = (parentId) => {
                                                     class="btn-group-item-edit"
                                                     draggable="false"
                                                     @click.stop="openCreateChildForm(item[props.primaryKeyColumn])"
-                                                    title="Add child"
+                                                    :title="t('admin.db_table.create_child')"
                                                 >
                                                     <svg
                                                         class="w-4 h-4"
@@ -511,7 +514,7 @@ const submitCreateChild = (parentId) => {
                                                     class="btn-group-item-edit"
                                                     preserve-scroll
                                                     @click.stop
-                                                    title="Edit"
+                                                    :title="t('admin.common.edit')"
                                                 >
                                                     <svg
                                                         class="w-4 h-4"
@@ -531,7 +534,7 @@ const submitCreateChild = (parentId) => {
                                                     type="button"
                                                     class="btn-group-item-delete"
                                                     @click.stop="confirmDelete(item)"
-                                                    title="Delete"
+                                                    :title="t('admin.common.delete')"
                                                 >
                                                     <svg
                                                         class="w-4 h-4"
@@ -566,10 +569,10 @@ const submitCreateChild = (parentId) => {
                                                     autofocus
                                                 />
                                                 <button type="submit" class="btn btn-primary btn-sm" :disabled="childForms[String(item[props.primaryKeyColumn])]?.processing">
-                                                    {{ childForms[String(item[props.primaryKeyColumn])]?.processing ? 'Creating...' : 'Create' }}
+                                                    {{ childForms[String(item[props.primaryKeyColumn])]?.processing ? t('admin.common.loading') : t('admin.db_table.create_child') }}
                                                 </button>
                                                 <button type="button" class="btn btn-outline btn-sm" @click="closeCreateChildForm(item[props.primaryKeyColumn])">
-                                                    Cancel
+                                                    {{ t('admin.common.cancel') }}
                                                 </button>
                                             </form>
                                             <p v-if="childForms[String(item[props.primaryKeyColumn])]?.errors?.title" class="mt-1 text-sm text-red-600">

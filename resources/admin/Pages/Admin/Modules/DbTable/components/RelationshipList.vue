@@ -4,6 +4,9 @@ import { Link } from '@inertiajs/vue3';
 import axios from 'axios';
 import { confirmDialog } from '@/utils/confirmDialog.js';
 import RelationshipEditForm from './RelationshipEditForm.vue';
+import { useTranslation } from '@admin/js/utils/useTranslation';
+
+const { t } = useTranslation();
 
 const props = defineProps({
     relationship: {
@@ -228,11 +231,11 @@ const handleBelongsToUpdate = async () => {
         if (response.data.success) {
             handleUpdated();
         } else {
-            alert(response.data.error || 'Failed to update relationship');
+            alert(response.data.error || t('admin.errors.relationship_attach_failed'));
         }
     } catch (error) {
         console.error('Error updating belongsTo relationship:', error);
-        alert(error.response?.data?.error || error.message || 'Failed to update relationship');
+        alert(error.response?.data?.error || error.message || t('admin.errors.relationship_attach_failed'));
     }
 };
 
@@ -275,9 +278,9 @@ const removeRelationship = async (relatedRecordId, event) => {
     const recordLabel = record ? getRecordLabel(record) : `Record #${relatedRecordId}`;
     
     const confirmed = await confirmDialog({
-        title: 'Remove relationship',
-        message: `Remove "${recordLabel}" from this relationship?`,
-        confirmLabel: 'Remove',
+        title: t('admin.relationships.remove_relationship'),
+        message: `${t('admin.relationships.remove')} "${recordLabel}" ${t('admin.common.from')} ${t('admin.common.this')} ${t('admin.relationships.title').toLowerCase()}?`,
+        confirmLabel: t('admin.relationships.remove'),
         intent: 'danger',
     });
     
@@ -301,11 +304,11 @@ const removeRelationship = async (relatedRecordId, event) => {
                 props.onRemove(relatedRecordId);
             }
         } else {
-            alert(response.data.error || 'Failed to remove relationship');
+            alert(response.data.error || t('admin.errors.relationship_detach_failed'));
         }
     } catch (error) {
         console.error('Error removing relationship:', error);
-        alert(error.response?.data?.error || error.message || 'Failed to remove relationship');
+        alert(error.response?.data?.error || error.message || t('admin.errors.relationship_detach_failed'));
     }
 };
 
@@ -318,7 +321,7 @@ const canRemove = computed(() => {
 <template>
     <div class="space-y-2">
         <div v-if="records.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
-            No related records found.
+            {{ t('admin.common.no_results') }}
         </div>
         
         <!-- Table view if display columns are configured -->
@@ -334,7 +337,7 @@ const canRemove = computed(() => {
                             {{ column }}
                         </th>
                         <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Actions
+                            {{ t('admin.common.actions') }}
                         </th>
                     </tr>
                 </thead>
@@ -347,7 +350,7 @@ const canRemove = computed(() => {
                                 <div v-if="isBelongsTo" class="space-y-4">
                                     <div class="flex items-center justify-between mb-4">
                                         <h6 class="text-sm font-medium text-gray-900 dark:text-white">
-                                            Select Related Record
+                                            {{ t('admin.relationships.select_related_record') }}
                                         </h6>
                                         <div class="flex items-center gap-2">
                                             <button
@@ -356,42 +359,42 @@ const canRemove = computed(() => {
                                                 class="btn btn-sm btn-primary"
                                                 :disabled="belongsToLoading"
                                             >
-                                                Save
+                                                {{ t('admin.common.save') }}
                                             </button>
                                             <button
                                                 type="button"
                                                 @click.prevent="cancelEdit"
                                                 class="btn btn-sm btn-outline"
                                             >
-                                                Cancel
+                                                {{ t('admin.common.cancel') }}
                                             </button>
                                         </div>
                                     </div>
                                     
                                     <!-- Search input if more than 100 records -->
                                     <div v-if="belongsToRequiresSearch" class="mb-4">
-                                        <label class="form-label">Search</label>
+                                        <label class="form-label">{{ t('admin.common.search') }}</label>
                                         <input
                                             v-model="belongsToSearchQuery"
                                             type="text"
                                             class="form-input"
-                                            placeholder="Type to search..."
+                                            :placeholder="t('admin.common.search')"
                                             :disabled="belongsToLoading"
                                         />
                                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                            {{ belongsToTotalCount }} records available. Type to search.
+                                            {{ belongsToTotalCount }} {{ t('admin.common.records_available') }}. {{ t('admin.common.type_to_search') }}.
                                         </p>
                                     </div>
                                     
                                     <!-- Select dropdown -->
                                     <div>
-                                        <label class="form-label">Related Record</label>
+                                        <label class="form-label">{{ t('admin.relationships.select_related_record') }}</label>
                                         <select
                                             v-model="selectedRelatedId"
                                             class="form-select"
                                             :disabled="belongsToLoading || (belongsToRequiresSearch && !belongsToSearchQuery.trim())"
                                         >
-                                            <option :value="null">-- None --</option>
+                                            <option :value="null">-- {{ t('admin.common.none') }} --</option>
                                             <option
                                                 v-for="option in belongsToOptions"
                                                 :key="option[primaryKeyColumn]"
@@ -401,13 +404,13 @@ const canRemove = computed(() => {
                                             </option>
                                         </select>
                                         <p v-if="belongsToLoading" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                            Loading...
+                                            {{ t('admin.common.loading') }}
                                         </p>
                                         <p v-else-if="belongsToRequiresSearch && !belongsToSearchQuery.trim()" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                            Please enter a search query to find records.
+                                            {{ t('admin.common.please_search') }}
                                         </p>
                                         <p v-else-if="belongsToOptions.length === 0 && belongsToSearchQuery.trim()" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                            No records found.
+                                            {{ t('admin.common.no_results') }}
                                         </p>
                                     </div>
                                 </div>
@@ -453,18 +456,18 @@ const canRemove = computed(() => {
                                         type="button"
                                         @click.prevent="startEdit(getRecordId(record))"
                                         class="btn btn-sm btn-outline"
-                                        title="Edit record"
+                                        :title="t('admin.common.edit')"
                                     >
-                                        Edit
+                                        {{ t('admin.common.edit') }}
                                     </button>
                                     <button
                                         v-if="canRemove"
                                         type="button"
                                         @click.prevent="removeRelationship(getRecordId(record), $event)"
                                         class="btn btn-sm btn-danger"
-                                        title="Remove relationship"
+                                        :title="t('admin.relationships.remove_relationship')"
                                     >
-                                        Remove
+                                        {{ t('admin.relationships.remove') }}
                                     </button>
                                 </div>
                             </td>
@@ -478,7 +481,7 @@ const canRemove = computed(() => {
         <div v-else class="space-y-2">
             <!-- For hasOne, show message if no record exists -->
             <div v-if="relationship.type === 'hasOne' && records.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-4 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-                No record found. Click "Add" to create one.
+                {{ t('admin.relationships.no_record') }}. {{ t('admin.common.click_add_to_create') }}.
             </div>
             
             <template v-for="record in records" :key="getRecordId(record)">
@@ -516,11 +519,11 @@ const canRemove = computed(() => {
                                 v-model="belongsToSearchQuery"
                                 type="text"
                                 class="form-input"
-                                placeholder="Type to search..."
+                                :placeholder="t('admin.common.type_to_search')"
                                 :disabled="belongsToLoading"
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                {{ belongsToTotalCount }} records available. Type to search.
+                                {{ belongsToTotalCount }} {{ t('admin.common.records_available') }}. {{ t('admin.common.type_to_search') }}.
                             </p>
                         </div>
                         
@@ -545,10 +548,10 @@ const canRemove = computed(() => {
                                 Loading...
                             </p>
                             <p v-else-if="belongsToRequiresSearch && !belongsToSearchQuery.trim()" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Please enter a search query to find records.
+                                {{ t('admin.common.please_search') }}
                             </p>
                             <p v-else-if="belongsToOptions.length === 0 && belongsToSearchQuery.trim()" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                No records found.
+                                {{ t('admin.common.no_results') }}
                             </p>
                         </div>
                     </div>
@@ -593,7 +596,7 @@ const canRemove = computed(() => {
                             type="button"
                             @click.prevent="startEdit(getRecordId(record))"
                             class="btn btn-sm btn-outline"
-                            title="Edit record"
+                            :title="t('admin.common.edit')"
                         >
                             Edit
                         </button>
@@ -615,7 +618,7 @@ const canRemove = computed(() => {
         <div v-if="hasPagination && props.pagination" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between">
                 <div class="text-sm text-gray-600 dark:text-gray-400">
-                    Showing {{ props.pagination.from }} to {{ props.pagination.to }} of {{ props.pagination.total }} records
+                    {{ t('admin.common.showing') }} {{ props.pagination.from }} {{ t('admin.common.to') }} {{ props.pagination.to }} {{ t('admin.common.of') }} {{ props.pagination.total }} {{ t('admin.common.records') }}
                 </div>
                 <div class="flex items-center gap-2">
                     <button
@@ -625,7 +628,7 @@ const canRemove = computed(() => {
                         class="btn btn-sm btn-outline"
                         :class="{ 'opacity-50 cursor-not-allowed': props.pagination.current_page === 1 }"
                     >
-                        Previous
+                        {{ t('admin.common.previous') }}
                     </button>
                     <div class="flex items-center gap-1">
                         <button
@@ -648,7 +651,7 @@ const canRemove = computed(() => {
                         class="btn btn-sm btn-outline"
                         :class="{ 'opacity-50 cursor-not-allowed': props.pagination.current_page === props.pagination.last_page }"
                     >
-                        Next
+                        {{ t('admin.common.next') }}
                     </button>
                 </div>
             </div>

@@ -2,6 +2,9 @@
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/components/interfaces';
+import { useTranslation } from '@admin/js/utils/useTranslation';
+
+const { t } = useTranslation();
 
 const props = defineProps({
     relationship: {
@@ -62,12 +65,12 @@ const loadStructure = async () => {
             fields.value = response.data.fields || [];
             formData.value = buildFormData();
         } else {
-            errors.value = { general: response.data.message || 'Failed to load table structure' };
+            errors.value = { general: response.data.message || t('admin.errors.error_occurred') };
         }
     } catch (error) {
         console.error('Error loading table structure:', error);
         errors.value = { 
-            general: error.response?.data?.message || error.message || 'Failed to load table structure' 
+            general: error.response?.data?.message || error.message || t('admin.errors.error_occurred')
         };
     } finally {
         loading.value = false;
@@ -109,7 +112,7 @@ const submitForm = async () => {
             // Reset form
             formData.value = buildFormData();
         } else {
-            errors.value = { general: response.data.message || 'Failed to create record' };
+            errors.value = { general: response.data.message || t('admin.errors.error_creating_record') };
         }
     } catch (error) {
         console.error('Error creating record:', error);
@@ -117,7 +120,7 @@ const submitForm = async () => {
             errors.value = error.response.data.errors;
         } else {
             errors.value = { 
-                general: error.response?.data?.message || error.message || 'Failed to create record' 
+                general: error.response?.data?.message || error.message || t('admin.errors.error_creating_record')
             };
         }
     } finally {
@@ -139,7 +142,7 @@ onMounted(() => {
         <!-- Loading state -->
         <div v-if="loading" class="text-center py-8">
             <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
-            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Loading form structure...</p>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ t('admin.common.loading') }}</p>
         </div>
 
         <!-- Error state -->
@@ -171,7 +174,7 @@ onMounted(() => {
                     :disabled="submitting"
                 >
                     <span v-if="submitting">Creating...</span>
-                    <span v-else>Create Record</span>
+                    <span v-else>{{ t('admin.relationships.create_new_record') }}</span>
                 </button>
                 <button
                     type="button"
@@ -179,7 +182,7 @@ onMounted(() => {
                     class="btn btn-sm btn-outline"
                     :disabled="submitting"
                 >
-                    Cancel
+                    {{ t('admin.common.cancel') }}
                 </button>
             </div>
         </form>
