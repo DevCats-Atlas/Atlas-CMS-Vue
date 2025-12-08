@@ -7,6 +7,7 @@ import { useToast } from '@/composables/useToast.js';
 import { confirmDialog } from '@/utils/confirmDialog.js';
 import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/components/interfaces';
 import DataSourceUiBuilder from './components/DataSourceUiBuilder.vue';
+import RelationshipModal from './components/RelationshipModal.vue';
 
 const props = defineProps({
     title: {
@@ -136,11 +137,29 @@ const settingsFields = computed(() => {
     return settingsTab?.fields || [];
 });
 
-// Filter out data_source, data_source_table, and data_source_ui as they're shown directly in the form
+// Filter out data_source, data_source_table, data_source_ui, and db_table specific fields as they're shown directly in the form
+// Also hide deep_structure and sorting for db_table modules
 const filteredSettingsFields = computed(() => {
-    return settingsFields.value.filter(field => 
-        field.node !== 'data_source' && field.node !== 'data_source_table' && field.node !== 'data_source_ui'
+    let filtered = settingsFields.value.filter(field => 
+        field.node !== 'data_source' && 
+        field.node !== 'data_source_table' && 
+        field.node !== 'data_source_ui' &&
+        field.node !== 'db_table_deep_structure' &&
+        field.node !== 'db_table_parent_column' &&
+        field.node !== 'db_table_relationships' &&
+        field.node !== 'db_table_order_by_column' &&
+        field.node !== 'db_table_order_by_direction'
     );
+    
+    // Hide deep_structure and sorting for db_table modules
+    if (isDbTableSource.value) {
+        filtered = filtered.filter(field => 
+            field.node !== 'deep_structure' && 
+            field.node !== 'sorting'
+        );
+    }
+    
+    return filtered;
 });
 
 // Get data_source value - first try direct field, then custom fields
@@ -253,6 +272,58 @@ const initialDataSourceUi = computed(() => {
     return '';
 });
 
+// Initialize db_table_deep_structure from custom fields if available
+const initialDbTableDeepStructure = computed(() => {
+    const field = settingsFields.value.find(field => field.node === 'db_table_deep_structure');
+    if (field && initialCustomFields.value[field.id]) {
+        return normalizeCheckboxValue(initialCustomFields.value[field.id].default);
+    }
+    return false;
+});
+
+// Initialize db_table_parent_column from custom fields if available
+const initialDbTableParentColumn = computed(() => {
+    const field = settingsFields.value.find(field => field.node === 'db_table_parent_column');
+    if (field && initialCustomFields.value[field.id]) {
+        return initialCustomFields.value[field.id].default || 'parent_id';
+    }
+    return 'parent_id';
+});
+
+// Initialize db_table_relationships from custom fields if available
+const initialDbTableRelationships = computed(() => {
+    const field = settingsFields.value.find(field => field.node === 'db_table_relationships');
+    if (field && initialCustomFields.value[field.id]) {
+        const value = initialCustomFields.value[field.id].default || '';
+        if (value) {
+            try {
+                return JSON.parse(value);
+            } catch (e) {
+                return { relationships: [] };
+            }
+        }
+    }
+    return { relationships: [] };
+});
+
+// Initialize db_table_order_by_column from custom fields if available
+const initialDbTableOrderByColumn = computed(() => {
+    const field = settingsFields.value.find(field => field.node === 'db_table_order_by_column');
+    if (field && initialCustomFields.value[field.id]) {
+        return initialCustomFields.value[field.id].default || '';
+    }
+    return '';
+});
+
+// Initialize db_table_order_by_direction from custom fields if available
+const initialDbTableOrderByDirection = computed(() => {
+    const field = settingsFields.value.find(field => field.node === 'db_table_order_by_direction');
+    if (field && initialCustomFields.value[field.id]) {
+        return initialCustomFields.value[field.id].default || 'asc';
+    }
+    return 'asc';
+});
+
 const moduleForm = useForm({
     title: props.module.title,
     visible: props.module.visible,
@@ -266,6 +337,154 @@ const moduleForm = useForm({
 });
 
 const currentUiConfig = ref(initialDataSourceUi.value || '');
+
+// Tree structure and relationships state
+const dbTableDeepStructure = ref(initialDbTableDeepStructure.value);
+const dbTableParentColumn = ref(initialDbTableParentColumn.value);
+const dbTableRelationships = ref(JSON.parse(JSON.stringify(initialDbTableRelationships.value))); // Deep copy
+const dbTableOrderByColumn = ref(initialDbTableOrderByColumn.value);
+const dbTableOrderByDirection = ref(initialDbTableOrderByDirection.value);
+
+// Watch and sync tree structure fields to form
+watch([dbTableDeepStructure, dbTableParentColumn], () => {
+    const deepStructureField = settingsFields.value.find(field => field.node === 'db_table_deep_structure');
+    const parentColumnField = settingsFields.value.find(field => field.node === 'db_table_parent_column');
+    
+    if (deepStructureField) {
+        ensureFieldModel(deepStructureField);
+        moduleForm.custom_fields[deepStructureField.id].default = dbTableDeepStructure.value ? '1' : '0';
+    }
+    
+    if (parentColumnField) {
+        ensureFieldModel(parentColumnField);
+        moduleForm.custom_fields[parentColumnField.id].default = dbTableParentColumn.value;
+    }
+}, { immediate: true });
+
+// Watch and sync relationships to form
+watch(dbTableRelationships, () => {
+    const relationshipsField = settingsFields.value.find(field => field.node === 'db_table_relationships');
+    if (relationshipsField) {
+        ensureFieldModel(relationshipsField);
+        moduleForm.custom_fields[relationshipsField.id].default = JSON.stringify(dbTableRelationships.value);
+    }
+}, { deep: true, immediate: true });
+
+// Watch and sync ordering fields to form
+watch([dbTableOrderByColumn, dbTableOrderByDirection], () => {
+    const orderByColumnField = settingsFields.value.find(field => field.node === 'db_table_order_by_column');
+    const orderByDirectionField = settingsFields.value.find(field => field.node === 'db_table_order_by_direction');
+    
+    if (orderByColumnField) {
+        ensureFieldModel(orderByColumnField);
+        moduleForm.custom_fields[orderByColumnField.id].default = dbTableOrderByColumn.value;
+    }
+    
+    if (orderByDirectionField) {
+        ensureFieldModel(orderByDirectionField);
+        moduleForm.custom_fields[orderByDirectionField.id].default = dbTableOrderByDirection.value;
+    }
+}, { immediate: true });
+
+// Relationship management functions
+const relationshipModalOpen = ref(false);
+const editingRelationshipIndex = ref(null);
+
+const openRelationshipModal = (index = null) => {
+    editingRelationshipIndex.value = index;
+    relationshipModalOpen.value = true;
+};
+
+const closeRelationshipModal = () => {
+    relationshipModalOpen.value = false;
+    editingRelationshipIndex.value = null;
+};
+
+const saveRelationship = (relationshipData) => {
+    if (editingRelationshipIndex.value !== null) {
+        // Edit existing relationship
+        dbTableRelationships.value.relationships[editingRelationshipIndex.value] = relationshipData;
+    } else {
+        // Add new relationship
+        dbTableRelationships.value.relationships.push(relationshipData);
+    }
+    closeRelationshipModal();
+};
+
+const removeRelationship = async (index) => {
+    const confirmed = await confirmDialog({
+        title: 'Remove relationship',
+        message: 'Are you sure you want to remove this relationship?',
+        confirmLabel: 'Remove',
+        intent: 'danger',
+    });
+    
+    if (confirmed) {
+        dbTableRelationships.value.relationships.splice(index, 1);
+    }
+};
+
+// Drag and drop for relationships
+const draggedRelationshipIndex = ref(null);
+const draggedOverRelationshipIndex = ref(null);
+
+const handleRelationshipDragStart = (event, index) => {
+    draggedRelationshipIndex.value = index;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.dropEffect = 'move';
+    event.target.style.opacity = '0.5';
+};
+
+const handleRelationshipDragEnd = (event) => {
+    event.target.style.opacity = '';
+    draggedRelationshipIndex.value = null;
+    draggedOverRelationshipIndex.value = null;
+};
+
+const handleRelationshipDragOver = (event, index) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    draggedOverRelationshipIndex.value = index;
+};
+
+const handleRelationshipDrop = (event, dropIndex) => {
+    event.preventDefault();
+    
+    if (draggedRelationshipIndex.value === null || draggedRelationshipIndex.value === dropIndex) {
+        draggedRelationshipIndex.value = null;
+        draggedOverRelationshipIndex.value = null;
+        return;
+    }
+    
+    // Reorder relationships
+    const relationships = [...dbTableRelationships.value.relationships];
+    const [dragged] = relationships.splice(draggedRelationshipIndex.value, 1);
+    relationships.splice(dropIndex, 0, dragged);
+    dbTableRelationships.value.relationships = relationships;
+    
+    draggedRelationshipIndex.value = null;
+    draggedOverRelationshipIndex.value = null;
+};
+
+const getRelationshipDisplayName = (relationship) => {
+    if (relationship.name) {
+        return relationship.name;
+    }
+    if (relationship.related_table) {
+        return relationship.related_table;
+    }
+    return 'Unnamed relationship';
+};
+
+const getRelationshipTypeLabel = (type) => {
+    const labels = {
+        hasOne: 'Has One',
+        hasMany: 'Has Many',
+        belongsTo: 'Belongs To',
+        belongsToMany: 'Belongs To Many',
+    };
+    return labels[type] || type;
+};
 
 const actionForm = useForm({
     title: '',
@@ -483,15 +702,159 @@ const reorderAction = (action, direction) => {
                                     </p>
                                 </div>
                             </div>
-                            
-                            <!-- UI Builder Section -->
-                            <div v-if="moduleForm.data_source_table && moduleForm.data_source_table.trim() !== ''" class="mt-6">
+
+                            <!-- Ordering Configuration -->
+                            <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Default Ordering</h4>
+                                <div class="grid gap-4 md:grid-cols-2">
+                                    <div>
+                                        <label class="form-label">Order by column</label>
+                                        <input
+                                            v-model="dbTableOrderByColumn"
+                                            type="text"
+                                            class="form-input"
+                                            placeholder="e.g., id, created_at, name"
+                                        />
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            Column name to sort by (leave empty for default ordering)
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Order direction</label>
+                                        <select
+                                            v-model="dbTableOrderByDirection"
+                                            class="form-select"
+                                        >
+                                            <option value="asc">Ascending</option>
+                                            <option value="desc">Descending</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Field Configuration Section -->
+                            <div v-if="moduleForm.data_source_table && moduleForm.data_source_table.trim() !== ''" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Field Configuration</h4>
                                 <DataSourceUiBuilder
                                     :table-name="moduleForm.data_source_table"
                                     :module-id="props.module.id"
                                     :initial-ui-config="currentUiConfig"
                                     @update:ui-config="(config) => { currentUiConfig = config; moduleForm.data_source_ui = config; }"
                                 />
+                            </div>
+                            
+                            <!-- Tree Structure Configuration -->
+                            <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Tree Structure</h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="flex items-center gap-2">
+                                            <input
+                                                v-model="dbTableDeepStructure"
+                                                type="checkbox"
+                                                class="form-checkbox"
+                                            />
+                                            <span class="text-sm text-gray-900 dark:text-white">Enable tree structure</span>
+                                        </label>
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            Enable hierarchical organization of records with parent-child relationships
+                                        </p>
+                                    </div>
+                                    <div v-if="dbTableDeepStructure">
+                                        <label class="form-label">Parent column name</label>
+                                        <input
+                                            v-model="dbTableParentColumn"
+                                            type="text"
+                                            class="form-input"
+                                            placeholder="parent_id"
+                                        />
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            The column name that stores the parent record ID (default: parent_id)
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Relationships Configuration -->
+                            <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Relationships</h4>
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            Define Laravel Eloquent-style relationships between this table and other tables
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        @click="openRelationshipModal()"
+                                        class="btn btn-sm btn-primary"
+                                    >
+                                        Add Relationship
+                                    </button>
+                                </div>
+                                
+                                <div v-if="dbTableRelationships.relationships.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-4 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                    No relationships defined. Click "Add Relationship" to get started.
+                                </div>
+                                
+                                <div v-else class="space-y-2">
+                                    <div
+                                        v-for="(relationship, index) in dbTableRelationships.relationships"
+                                        :key="index"
+                                        :draggable="true"
+                                        @dragstart="handleRelationshipDragStart($event, index)"
+                                        @dragend="handleRelationshipDragEnd($event)"
+                                        @dragover="handleRelationshipDragOver($event, index)"
+                                        @drop="handleRelationshipDrop($event, index)"
+                                        class="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-move transition-colors"
+                                        :class="{
+                                            'opacity-50': draggedRelationshipIndex === index,
+                                            'border-blue-500 bg-blue-50 dark:bg-blue-900/20': draggedOverRelationshipIndex === index
+                                        }"
+                                    >
+                                        <!-- Drag handle -->
+                                        <div class="flex-shrink-0 text-gray-400 dark:text-gray-500">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                                            </svg>
+                                        </div>
+                                        
+                                        <!-- Relationship info -->
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {{ getRelationshipDisplayName(relationship) }}
+                                                </span>
+                                                <span class="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
+                                                    {{ getRelationshipTypeLabel(relationship.type) }}
+                                                </span>
+                                            </div>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                {{ relationship.related_table || 'No table specified' }}
+                                            </p>
+                                        </div>
+                                        
+                                        <!-- Actions -->
+                                        <div class="flex items-center gap-2 flex-shrink-0">
+                                            <button
+                                                type="button"
+                                                @click="openRelationshipModal(index)"
+                                                class="btn btn-sm btn-outline"
+                                                title="Edit relationship"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                type="button"
+                                                @click="removeRelationship(index)"
+                                                class="btn btn-sm btn-danger"
+                                                title="Remove relationship"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div v-if="isCustomSource" class="pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -662,5 +1025,13 @@ const reorderAction = (action, direction) => {
             </div>
         </div>
         <ToastStack :toasts="toasts" @dismiss="dismissToast" />
+        
+        <!-- Relationship Modal -->
+        <RelationshipModal
+            :open="relationshipModalOpen"
+            :relationship="editingRelationshipIndex !== null ? dbTableRelationships.relationships[editingRelationshipIndex] : null"
+            @close="closeRelationshipModal"
+            @save="saveRelationship"
+        />
     </SystemLayout>
 </template>

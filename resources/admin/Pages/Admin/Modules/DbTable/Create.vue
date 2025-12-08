@@ -29,6 +29,22 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    hasDeepStructure: {
+        type: Boolean,
+        default: false,
+    },
+    parentColumn: {
+        type: String,
+        default: 'parent_id',
+    },
+    availableParents: {
+        type: Array,
+        default: () => [],
+    },
+    parentId: {
+        type: [String, Number],
+        default: null,
+    },
 });
 
 const baseUrl = computed(() => `/admin/${props.moduleHandle}`);
@@ -36,6 +52,11 @@ const baseUrl = computed(() => `/admin/${props.moduleHandle}`);
 // Build form data structure based on fields
 const buildFormData = () => {
     const formData = {};
+    
+    // Initialize parent_id if tree structure is enabled
+    if (props.hasDeepStructure && props.parentColumn) {
+        formData[props.parentColumn] = props.parentId || null;
+    }
     
     props.fields.forEach((field) => {
         const fieldConfig = props.uiConfig[field.name] || {};
@@ -91,6 +112,33 @@ props.fields.forEach((field) => {
     );
 });
 
+// Get display text for parent option with hierarchy indicators
+const getParentDisplayText = (parent) => {
+    if (!parent.depth || parent.depth === 0) {
+        return parent.title;
+    }
+    // Use visual hierarchy indicators
+    const indent = '  '.repeat(parent.depth); // 2 spaces per level
+    const connector = parent.depth > 0 ? '└─ ' : '';
+    return indent + connector + parent.title;
+};
+
+// Update parent field when select changes
+const updateParentField = () => {
+    if (props.hasDeepStructure && props.parentColumn) {
+        const parentIdValue = createForm[props.parentColumn];
+        // Ensure the value is properly set (convert empty string to null)
+        const normalizedValue = parentIdValue === '' || parentIdValue === undefined ? null : parentIdValue;
+        createForm[props.parentColumn] = normalizedValue;
+        
+        // Also update the field model if parent_id is in the fields list
+        const parentField = props.fields.find(f => f.name === props.parentColumn);
+        if (parentField && fieldModels.value[props.parentColumn]) {
+            fieldModels.value[props.parentColumn].default = normalizedValue;
+        }
+    }
+};
+
 const submitCreate = () => {
     // Explicitly sync fieldModels to form before submission
     props.fields.forEach((field) => {
@@ -98,6 +146,12 @@ const submitCreate = () => {
             createForm[field.name] = fieldModels.value[field.name].default;
         }
     });
+    
+    // Ensure parent_id is properly set
+    if (props.hasDeepStructure && props.parentColumn) {
+        const parentIdValue = createForm[props.parentColumn];
+        createForm[props.parentColumn] = parentIdValue === '' || parentIdValue === undefined ? null : parentIdValue;
+    }
     
     createForm.post(`${baseUrl.value}/create`, {
         preserveScroll: true,
@@ -189,6 +243,28 @@ const getFieldConfig = (field) => {
                     </div>
 
                     <form @submit.prevent="submitCreate" class="space-y-6">
+                        <!-- Parent selector for tree structure -->
+                        <div v-if="hasDeepStructure && availableParents.length > 0" class="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                            <label class="form-label">Parent</label>
+                            <select
+                                v-model="createForm[parentColumn]"
+                                class="form-input"
+                                @change="updateParentField"
+                            >
+                                <option :value="null">None (Root item)</option>
+                                <option
+                                    v-for="parent in availableParents"
+                                    :key="parent.id"
+                                    :value="parent.id"
+                                >
+                                    {{ getParentDisplayText(parent) }}
+                                </option>
+                            </select>
+                            <p v-if="createForm.errors[parentColumn]" class="mt-1 text-sm text-red-600">
+                                {{ createForm.errors[parentColumn] }}
+                            </p>
+                        </div>
+
                         <div class="grid gap-6 md:grid-cols-2">
                             <div
                                 v-for="field in fields"

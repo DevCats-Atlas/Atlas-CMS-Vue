@@ -5,6 +5,7 @@ import AdminLayout from '@admin/Layouts/AdminLayout.vue';
 import ToastStack from '@/components/ToastStack.vue';
 import { useToast } from '@/composables/useToast.js';
 import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/components/interfaces';
+import RelationshipManager from './components/RelationshipManager.vue';
 
 const props = defineProps({
     title: {
@@ -43,6 +44,22 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    hasDeepStructure: {
+        type: Boolean,
+        default: false,
+    },
+    parentColumn: {
+        type: String,
+        default: 'parent_id',
+    },
+    availableParents: {
+        type: Array,
+        default: () => [],
+    },
+    relationships: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 const baseUrl = computed(() => `/admin/${props.moduleHandle}`);
@@ -53,6 +70,11 @@ const buildFormData = () => {
     const formData = {
         record_id: props.recordId,
     };
+    
+    // Initialize parent_id if tree structure is enabled
+    if (props.hasDeepStructure && props.parentColumn) {
+        formData[props.parentColumn] = props.record[props.parentColumn] ?? null;
+    }
     
     props.fields.forEach((field) => {
         const fieldConfig = props.uiConfig[field.name] || {};
@@ -116,6 +138,35 @@ props.fields.forEach((field) => {
     );
 });
 
+// Get display text for parent option with hierarchy indicators
+const getParentDisplayText = (parent) => {
+    if (!parent.depth || parent.depth === 0) {
+        return parent.title;
+    }
+    // Use visual hierarchy indicators
+    const indent = '  '.repeat(parent.depth); // 2 spaces per level
+    const connector = parent.depth > 0 ? '└─ ' : '';
+    return indent + connector + parent.title;
+};
+
+// Update parent field when select changes
+const updateParentField = () => {
+    // The v-model already updates editForm[parentColumn], but we ensure it's synced
+    // Also check if parent_id field exists in the form fields and update it
+    if (props.hasDeepStructure && props.parentColumn) {
+        const parentIdValue = editForm[props.parentColumn];
+        // Ensure the value is properly set (convert empty string to null)
+        const normalizedValue = parentIdValue === '' || parentIdValue === undefined ? null : parentIdValue;
+        editForm[props.parentColumn] = normalizedValue;
+        
+        // Also update the field model if parent_id is in the fields list
+        const parentField = props.fields.find(f => f.name === props.parentColumn);
+        if (parentField && fieldModels.value[props.parentColumn]) {
+            fieldModels.value[props.parentColumn].default = normalizedValue;
+        }
+    }
+};
+
 const submitUpdate = () => {
     // Explicitly sync fieldModels to form before submission
     props.fields.forEach((field) => {
@@ -123,6 +174,12 @@ const submitUpdate = () => {
             editForm[field.name] = fieldModels.value[field.name].default;
         }
     });
+    
+    // Ensure parent_id is properly set
+    if (props.hasDeepStructure && props.parentColumn) {
+        const parentIdValue = editForm[props.parentColumn];
+        editForm[props.parentColumn] = parentIdValue === '' || parentIdValue === undefined ? null : parentIdValue;
+    }
     
     editForm.put(`${baseUrl.value}/edit`, {
         preserveScroll: true,
@@ -220,6 +277,28 @@ const getFieldConfig = (field) => {
                     </div>
 
                     <form @submit.prevent="submitUpdate" class="space-y-6">
+                        <!-- Parent selector for tree structure -->
+                        <div v-if="hasDeepStructure && availableParents.length > 0" class="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                            <label class="form-label">Parent</label>
+                            <select
+                                v-model="editForm[parentColumn]"
+                                class="form-input"
+                                @change="updateParentField"
+                            >
+                                <option :value="null">None (Root item)</option>
+                                <option
+                                    v-for="parent in availableParents"
+                                    :key="parent.id"
+                                    :value="parent.id"
+                                >
+                                    {{ getParentDisplayText(parent) }}
+                                </option>
+                            </select>
+                            <p v-if="editForm.errors[parentColumn]" class="mt-1 text-sm text-red-600">
+                                {{ editForm.errors[parentColumn] }}
+                            </p>
+                        </div>
+
                         <div class="grid gap-6 md:grid-cols-2">
                             <div
                                 v-for="field in fields"
@@ -238,6 +317,15 @@ const getFieldConfig = (field) => {
                                 </p>
                             </div>
                         </div>
+
+                        <!-- Relationships Section -->
+                        <RelationshipManager
+                            v-if="relationships.length > 0"
+                            :relationships="relationships"
+                            :record-id="recordId"
+                            :module-handle="moduleHandle"
+                            :primary-key-column="primaryKeyColumn"
+                        />
 
                         <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                             <Link :href="baseUrl" class="btn-text">
