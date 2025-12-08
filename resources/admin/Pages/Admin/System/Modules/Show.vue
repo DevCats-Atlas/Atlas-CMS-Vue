@@ -151,11 +151,12 @@ const filteredSettingsFields = computed(() => {
         field.node !== 'db_table_order_by_direction'
     );
     
-    // Hide deep_structure and sorting for db_table modules
+    // Hide deep_structure, sorting, and columns_to_show for db_table modules
     if (isDbTableSource.value) {
         filtered = filtered.filter(field => 
             field.node !== 'deep_structure' && 
-            field.node !== 'sorting'
+            field.node !== 'sorting' &&
+            field.node !== 'columns_to_show'
         );
     }
     

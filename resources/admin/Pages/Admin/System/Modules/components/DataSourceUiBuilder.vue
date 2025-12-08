@@ -158,11 +158,16 @@ const initializeUiConfigForColumns = () => {
                 interface: 'text',
                 options: '', // For select interface
                 editable: true, // Default to editable
+                show_in_list: true, // Default to show in list
             };
         } else {
             // Ensure editable field exists for existing configs
             if (newConfig[column.name].editable === undefined) {
                 newConfig[column.name].editable = true;
+            }
+            // Ensure show_in_list field exists for existing configs (default to true)
+            if (newConfig[column.name].show_in_list === undefined) {
+                newConfig[column.name].show_in_list = true;
             }
         }
     });
@@ -178,6 +183,7 @@ const updateColumnConfig = (columnName, field, value) => {
             interface: 'text',
             options: '',
             editable: true,
+            show_in_list: true,
         };
     }
     
@@ -196,11 +202,16 @@ const getColumnConfig = (columnName) => {
             interface: 'text',
             options: '',
             editable: true,
+            show_in_list: true,
         };
     }
     // Ensure editable field exists
     if (uiConfig.value[columnName].editable === undefined) {
         uiConfig.value[columnName].editable = true;
+    }
+    // Ensure show_in_list field exists (default to true)
+    if (uiConfig.value[columnName].show_in_list === undefined) {
+        uiConfig.value[columnName].show_in_list = true;
     }
     return uiConfig.value[columnName];
 };
@@ -264,15 +275,26 @@ onMounted(() => {
                                     ({{ column.type }})
                                 </span>
                             </div>
-                            <label class="inline-flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
-                                <input
-                                    type="checkbox"
-                                    :checked="getColumnConfig(column.name).editable"
-                                    @change="updateColumnConfig(column.name, 'editable', $event.target.checked)"
-                                    class="form-checkbox h-3.5 w-3.5"
-                                />
-                                <span>Editable</span>
-                            </label>
+                            <div class="flex items-center gap-4">
+                                <label class="inline-flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
+                                    <input
+                                        type="checkbox"
+                                        :checked="getColumnConfig(column.name).show_in_list !== false"
+                                        @change="updateColumnConfig(column.name, 'show_in_list', $event.target.checked)"
+                                        class="form-checkbox h-3.5 w-3.5"
+                                    />
+                                    <span>Show in this list</span>
+                                </label>
+                                <label class="inline-flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
+                                    <input
+                                        type="checkbox"
+                                        :checked="getColumnConfig(column.name).editable"
+                                        @change="updateColumnConfig(column.name, 'editable', $event.target.checked)"
+                                        class="form-checkbox h-3.5 w-3.5"
+                                    />
+                                    <span>Editable</span>
+                                </label>
+                            </div>
                         </div>
                         
                         <div class="grid gap-3 md:grid-cols-2">
