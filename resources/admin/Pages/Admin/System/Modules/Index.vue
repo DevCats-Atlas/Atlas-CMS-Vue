@@ -48,7 +48,7 @@ const createForm = useForm({
     new_type_class: '',
     new_type_slug_is_multilingual: false,
     new_type_fields: [],
-    create_crud_actions: false,
+    create_crud_actions: true,
     create_menu_item: false,
     menu_group_id: '',
     menu_item_title: '',
@@ -95,7 +95,7 @@ const resetCreateForm = () => {
     createForm.reset();
     createForm.visible = true;
     createForm.create_item_type = false;
-    createForm.create_crud_actions = false;
+    createForm.create_crud_actions = true;
     createForm.create_menu_item = false;
     createForm.new_type_fields = [];
     createForm.data_source = 'items'; // Default to 'items'
@@ -113,12 +113,9 @@ const isCustomSource = computed(() => {
 });
 
 const setDefaultCollectionChoice = () => {
-    if (props.collections.length) {
-        createForm.collection_choice = String(props.collections[0].id);
-        createForm.collection_title = '';
-    } else {
-        createForm.collection_choice = COLLECTION_CREATE_OPTION;
-    }
+    // Keep collection unselected by default
+    createForm.collection_choice = '';
+    createForm.collection_title = '';
 };
 setDefaultCollectionChoice();
 
@@ -296,10 +293,10 @@ const submitNewModule = () => {
                         <label class="form-label">Collection</label>
                         <select v-model="createForm.collection_choice" class="form-select" :required="!isDbTableSource && !isCustomSource">
                             <option value="" disabled>Select collection</option>
+                            <option :value="COLLECTION_CREATE_OPTION">✨ Create new collection…</option>
                             <option v-for="collection in props.collections" :key="collection.id" :value="String(collection.id)">
                                 {{ collection.title }}
                             </option>
-                            <option :value="COLLECTION_CREATE_OPTION">Create new collection…</option>
                         </select>
                         <p v-if="createForm.errors.collection_choice" class="mt-1 text-sm text-red-600">
                             {{ createForm.errors.collection_choice }}
