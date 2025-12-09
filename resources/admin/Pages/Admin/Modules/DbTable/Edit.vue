@@ -181,8 +181,17 @@ const submitUpdate = () => {
         editForm[props.parentColumn] = parentIdValue === '' || parentIdValue === undefined ? null : parentIdValue;
     }
     
-    editForm.put(`${baseUrl.value}/edit`, {
+    // Use POST with forceFormData: true and _method: 'put' for file uploads
+    // This is the same pattern used in items EditForm and works correctly with multipart/form-data
+    editForm.transform((data) => {
+        const payload = { ...data };
+        payload._method = 'put';
+        return payload;
+    });
+    
+    editForm.post(`${baseUrl.value}/edit`, {
         preserveScroll: true,
+        forceFormData: true,
         onSuccess: () => {
             showToast({
                 title: 'Success',
@@ -285,6 +294,11 @@ const getFieldConfig = (field) => {
         config: {
             type: interfaceType,
         },
+        // For file fields, add value and value_url
+        values: field.interface === 'file' ? {
+            default: field.value || null,
+            default_url: field.value_url || null,
+        } : undefined,
     };
     
     // For select fields, parse options

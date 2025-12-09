@@ -252,6 +252,11 @@ const getFieldConfig = (field) => {
         config: {
             type: interfaceType,
         },
+        // For file fields, add value and value_url
+        values: field.interface === 'file' ? {
+            default: field.value || null,
+            default_url: field.value_url || null,
+        } : undefined,
     };
     
     // For select fields, parse options

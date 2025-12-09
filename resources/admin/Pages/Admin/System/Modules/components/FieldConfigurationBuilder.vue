@@ -39,6 +39,7 @@ const interfaceTypes = [
     { value: 'datetime', label: 'Date/Time' },
     { value: 'checkbox', label: 'Checkbox' },
     { value: 'select', label: 'Select' },
+    { value: 'file', label: 'File' },
 ];
 
 // Initialize UI config from prop
@@ -353,6 +354,7 @@ onMounted(() => {
                             </div>
                         </div>
                         
+                        <!-- Select Interface Options -->
                         <div
                             v-if="getColumnConfig(column.name).interface === 'select'"
                             class="pt-1 space-y-3"
@@ -414,6 +416,26 @@ onMounted(() => {
                                 />
                                 <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                                     Enter SQL query. First column = value, second column = label. If only one column, it will be used for both.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- File Interface Options -->
+                        <div
+                            v-if="(uiConfig.value[column.name]?.interface || getColumnConfig(column.name).interface) === 'file'"
+                            class="pt-1 space-y-3"
+                        >
+                            <div>
+                                <label class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Root Folder (Optional)</label>
+                                <input
+                                    :value="uiConfig.value[column.name]?.file_root_folder || getColumnConfig(column.name).file_root_folder || ''"
+                                    @input="updateColumnConfig(column.name, 'file_root_folder', $event.target.value)"
+                                    type="text"
+                                    class="form-input text-sm py-1.5"
+                                    placeholder="Leave empty to use table name"
+                                />
+                                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                    Custom root folder name for file uploads. If empty, the table name will be used.
                                 </p>
                             </div>
                         </div>

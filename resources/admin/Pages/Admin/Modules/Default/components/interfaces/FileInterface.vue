@@ -92,10 +92,30 @@ const currentFileValue = (languageCode = null) => {
 };
 
 const currentFileUrl = (languageCode = null) => {
+    let url = null;
     if (languageCode !== null) {
-        return props.field.values?.translations_url?.[languageCode] ?? null;
+        url = props.field.values?.translations_url?.[languageCode] ?? null;
+    } else {
+        url = props.field.values?.default_url ?? null;
     }
-    return props.field.values?.default_url ?? null;
+    
+    // If no URL is provided but we have a file path, generate URL from path
+    if (!url) {
+        const filePath = currentFileValue(languageCode);
+        if (filePath) {
+            // Generate URL from file path (assuming files are stored in public storage)
+            // This works for both items and db_table file paths
+            url = `/storage/${filePath}`;
+        }
+    }
+    
+    return url;
+};
+
+const getFileName = (filePath) => {
+    if (!filePath) return '';
+    // Extract filename from path
+    return filePath.split('/').pop() || filePath;
 };
 
 const hasCurrentFile = (languageCode = null) => {
@@ -149,15 +169,15 @@ const selectedFileName = (languageCode = null) => {
                     class="form-input"
                     @change="handleFileInput($event, languageKey(language, index))"
                 />
-                <div v-if="hasSelectedFile(languageKey(language, index))" class="flex items-center justify-between gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
-                    <div class="flex-1 min-w-0">
+                <div v-if="hasSelectedFile(languageKey(language, index))" class="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
+                    <div class="flex-1 min-w-0 overflow-hidden">
                         <span class="text-gray-500 dark:text-gray-400">Selected file: </span>
-                        <span class="text-blue-700 dark:text-blue-300 font-medium truncate">{{ selectedFileName(languageKey(language, index)) }}</span>
+                        <span class="text-blue-700 dark:text-blue-300 font-medium break-all">{{ selectedFileName(languageKey(language, index)) }}</span>
                     </div>
                     <button
                         type="button"
                         @click="clearFile(languageKey(language, index))"
-                        class="px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                        class="flex-shrink-0 px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                     >
                         Clear
                     </button>
@@ -172,7 +192,7 @@ const selectedFileName = (languageCode = null) => {
                             target="_blank"
                             rel="noreferrer"
                         >
-                            {{ currentFileUrl(languageKey(language, index)) }}
+                            {{ getFileName(currentFileValue(languageKey(language, index))) || currentFileValue(languageKey(language, index)) }}
                         </a>
                         <span v-else class="text-gray-700 dark:text-gray-300 truncate">{{ currentFileValue(languageKey(language, index)) }}</span>
                     </div>
@@ -197,15 +217,15 @@ const selectedFileName = (languageCode = null) => {
                 class="form-input"
                 @change="handleFileInput($event)"
             />
-            <div v-if="hasSelectedFile()" class="flex items-center justify-between gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
-                <div class="flex-1 min-w-0">
+            <div v-if="hasSelectedFile()" class="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
+                <div class="flex-1 min-w-0 overflow-hidden">
                     <span class="text-gray-500 dark:text-gray-400">Selected file: </span>
-                    <span class="text-blue-700 dark:text-blue-300 font-medium truncate">{{ selectedFileName() }}</span>
+                    <span class="text-blue-700 dark:text-blue-300 font-medium break-all">{{ selectedFileName() }}</span>
                 </div>
                 <button
                     type="button"
                     @click="clearFile()"
-                    class="px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                    class="flex-shrink-0 px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                 >
                     Clear
                 </button>
@@ -220,7 +240,7 @@ const selectedFileName = (languageCode = null) => {
                         target="_blank"
                         rel="noreferrer"
                     >
-                        {{ currentFileUrl() }}
+                        {{ getFileName(currentFileValue()) || currentFileValue() }}
                     </a>
                     <span v-else class="text-gray-700 dark:text-gray-300 truncate">{{ currentFileValue() }}</span>
                 </div>
