@@ -5,6 +5,9 @@ import { ref, computed, watch } from 'vue';
 import { confirmDialog } from '@/utils/confirmDialog.js';
 import ToastStack from '@/components/ToastStack.vue';
 import { useToast } from '@/composables/useToast.js';
+import { useTranslation } from '@/utils/useTranslation.js';
+
+const { t } = useTranslation();
 
 const props = defineProps({
     title: {
@@ -41,8 +44,8 @@ const submitNewRole = () => {
         onSuccess: () => {
             createForm.reset('title');
             showToast({
-                title: 'Success',
-                message: 'Role created successfully.',
+                title: t('admin.common.success'),
+                message: t('admin.access_roles.role_created'),
                 intent: 'success',
             });
         },
@@ -66,8 +69,8 @@ const submitEditRole = (role) => {
         preserveScroll: true,
         onSuccess: () => {
             showToast({
-                title: 'Success',
-                message: 'Role updated successfully.',
+                title: t('admin.common.success'),
+                message: t('admin.access_roles.role_updated'),
                 intent: 'success',
             });
             // Reload the page to get updated role data with modules
@@ -101,9 +104,9 @@ const reorderRole = (role, direction) => {
 
 const deleteRole = async (role) => {
     const confirmed = await confirmDialog({
-        title: 'Delete role',
-        message: `Delete role "${role.title}"?`,
-        confirmLabel: 'Delete',
+        title: t('admin.access_roles.delete_role'),
+        message: t('admin.access_roles.delete_confirm', { title: role.title }),
+        confirmLabel: t('admin.common.delete'),
         intent: 'danger',
     });
 
@@ -141,7 +144,7 @@ const toggleAllModules = () => {
             <div class="mx-auto max-w-4xl sm:px-6 lg:px-8 space-y-6">
                 <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
                     <div class="flex items-center justify-between">
-                        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Access Roles</h1>
+                        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ t('admin.access_roles.title') }}</h1>
                     </div>
 
                     <form class="space-y-4" @submit.prevent="submitNewRole">
@@ -169,7 +172,7 @@ const toggleAllModules = () => {
                                 class="btn btn-primary"
                                 :disabled="createForm.processing"
                             >
-                                {{ createForm.processing ? 'Creating…' : 'Create role' }}
+                                {{ createForm.processing ? t('admin.access_roles.creating') : t('admin.access_roles.create_role') }}
                             </button>
                         </div>
                     </form>
@@ -183,7 +186,7 @@ const toggleAllModules = () => {
                     >
                         <div>
                             <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ role.title }}</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Order {{ role.order }}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('admin.access_roles.order') }} {{ role.order }}</p>
                         </div>
                         <div class="flex items-center gap-2 text-sm">
                             <span
@@ -192,26 +195,26 @@ const toggleAllModules = () => {
                                     ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
                                     : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'"
                             >
-                                {{ role.visible ? 'Visible' : 'Hidden' }}
+                                {{ role.visible ? t('admin.access_roles.visible') : t('admin.access_roles.hidden') }}
                             </span>
                             <button class="btn btn-outline" @click="reorderRole(role, 'up')">↑</button>
                             <button class="btn btn-outline" @click="reorderRole(role, 'down')">↓</button>
                             <button class="btn btn-outline" @click="toggleRole(role)">
-                                {{ role.visible ? 'Hide' : 'Show' }}
+                                {{ role.visible ? t('admin.access_roles.hide') : t('admin.access_roles.show') }}
                             </button>
                             <button class="btn btn-outline" @click="startEditRole(role)">
-                                Edit
+                                {{ t('admin.common.edit') }}
                             </button>
                             <button class="btn btn-outline-danger" @click="deleteRole(role)">
-                                Delete
+                                {{ t('admin.common.delete') }}
                             </button>
                         </div>
                     </div>
-                    <p v-if="roles.length === 0" class="text-sm text-gray-500 dark:text-gray-400">No access roles yet.</p>
+                    <p v-if="roles.length === 0" class="text-sm text-gray-500 dark:text-gray-400">{{ t('admin.access_roles.no_roles') }}</p>
                 </section>
 
                 <section v-if="editingRoleId" class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Edit role</h2>
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('admin.access_roles.edit_role') }}</h2>
                     <form class="space-y-4" @submit.prevent="submitEditRole(props.roles.find((r) => r.id === editingRoleId))">
                         <div>
                             <label class="form-label">Title</label>
@@ -234,7 +237,7 @@ const toggleAllModules = () => {
                         <!-- Modules assignment -->
                         <div>
                             <div class="flex items-center justify-between mb-2">
-                                <label class="form-label block mb-0">Modules</label>
+                                <label class="form-label block mb-0">{{ t('admin.access_roles.modules') }}</label>
                                 <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
                                     <input
                                         type="checkbox"
@@ -242,7 +245,7 @@ const toggleAllModules = () => {
                                         @change="toggleAllModules"
                                         class="form-checkbox"
                                     />
-                                    <span>Select All</span>
+                                    <span>{{ t('admin.access_roles.select_all') }}</span>
                                 </label>
                             </div>
                             <div class="space-y-2 border border-gray-200 dark:border-gray-700 rounded-md p-3">
@@ -261,19 +264,19 @@ const toggleAllModules = () => {
                                     <span>{{ module.title }}</span>
                                 </label>
                                 <p v-if="modules.length === 0" class="text-sm text-gray-500 dark:text-gray-400">
-                                    No modules available.
+                                    {{ t('admin.access_roles.no_modules') }}
                                 </p>
                             </div>
                         </div>
                         
                         <div class="flex items-center gap-3">
-                            <button type="button" class="btn-text" @click="cancelEdit">Cancel</button>
+                            <button type="button" class="btn-text" @click="cancelEdit">{{ t('admin.common.cancel') }}</button>
                             <button
                                 type="submit"
                                 class="btn btn-primary"
                                 :disabled="editForm.processing"
                             >
-                                {{ editForm.processing ? 'Saving…' : 'Save changes' }}
+                                {{ editForm.processing ? t('admin.access_roles.saving') : t('admin.access_roles.save_changes') }}
                             </button>
                         </div>
                     </form>

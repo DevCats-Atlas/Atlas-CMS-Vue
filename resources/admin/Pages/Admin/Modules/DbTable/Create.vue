@@ -3,11 +3,14 @@ import { ref, computed, watch } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
 import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/components/interfaces';
+import { useTranslation } from '@/utils/useTranslation.js';
+
+const { t } = useTranslation();
 
 const props = defineProps({
     title: {
         type: String,
-        default: 'Create Record',
+        default: null,
     },
     moduleHandle: {
         type: String,
@@ -272,7 +275,7 @@ const getFieldConfig = (field) => {
 
 <template>
     <AdminLayout>
-        <Head :title="title" />
+        <Head :title="title || t('admin.db_table.create_record')" />
 
         <div class="py-6">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">

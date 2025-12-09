@@ -88,7 +88,7 @@ const loadRelationship = async (relationship, index, page = 1) => {
         
         // Show toast notification
         showToast({
-            title: 'Error Loading Relationship',
+            title: t('admin.errors.error_loading_relationships'),
             message: errorMessage,
             intent: 'danger',
             duration: 6000,
@@ -176,7 +176,7 @@ const saveRelationship = async (relationship) => {
         
         // Show success toast
         showToast({
-            title: 'Success',
+            title: t('admin.common.success'),
             message: t('admin.success.relationship_synced'),
             intent: 'success',
         });
@@ -185,7 +185,7 @@ const saveRelationship = async (relationship) => {
         const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || t('admin.errors.relationship_sync_failed');
         
         showToast({
-            title: 'Error Saving Relationship',
+            title: t('admin.errors.error_occurred'),
             message: errorMessage,
             intent: 'danger',
             duration: 6000,

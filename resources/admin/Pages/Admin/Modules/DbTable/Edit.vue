@@ -6,11 +6,14 @@ import ToastStack from '@/components/ToastStack.vue';
 import { useToast } from '@/composables/useToast.js';
 import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/components/interfaces';
 import RelationshipManager from './components/RelationshipManager.vue';
+import { useTranslation } from '@/utils/useTranslation.js';
+
+const { t } = useTranslation();
 
 const props = defineProps({
     title: {
         type: String,
-        default: 'Edit Record',
+        default: null,
     },
     moduleHandle: {
         type: String,
@@ -194,8 +197,8 @@ const submitUpdate = () => {
         forceFormData: true,
         onSuccess: () => {
             showToast({
-                title: 'Success',
-                message: 'Record updated successfully',
+                title: t('admin.common.success'),
+                message: t('admin.success.record_updated'),
                 intent: 'success',
             });
             router.visit(`${baseUrl.value}/edit?id=${props.recordId}`);
@@ -314,7 +317,7 @@ const getFieldConfig = (field) => {
 
 <template>
     <AdminLayout>
-        <Head :title="title" />
+        <Head :title="title || t('admin.db_table.edit_record')" />
 
         <div class="py-6">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
@@ -392,7 +395,7 @@ const getFieldConfig = (field) => {
                                 class="btn btn-primary"
                                 :disabled="editForm.processing"
                             >
-                                {{ editForm.processing ? 'Updating...' : 'Update Record' }}
+                                {{ editForm.processing ? t('admin.db_table.updating') : t('admin.db_table.update_record') }}
                             </button>
                         </div>
                     </form>

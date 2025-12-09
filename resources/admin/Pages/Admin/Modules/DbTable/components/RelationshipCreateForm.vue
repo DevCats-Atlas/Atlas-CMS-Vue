@@ -246,7 +246,7 @@ onMounted(() => {
                     class="btn btn-sm btn-primary"
                     :disabled="submitting"
                 >
-                    <span v-if="submitting">Creating...</span>
+                    <span v-if="submitting">{{ t('admin.db_table.creating') }}</span>
                     <span v-else>{{ t('admin.relationships.create_new_record') }}</span>
                 </button>
                 <button

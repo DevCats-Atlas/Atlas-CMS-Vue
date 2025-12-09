@@ -8,6 +8,9 @@ import { confirmDialog } from '@/utils/confirmDialog.js';
 import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/components/interfaces';
 import DataSourceUiBuilder from './components/DataSourceUiBuilder.vue';
 import RelationshipModal from './components/RelationshipModal.vue';
+import { useTranslation } from '@/utils/useTranslation.js';
+
+const { t } = useTranslation();
 
 const props = defineProps({
     title: {
@@ -414,9 +417,9 @@ const saveRelationship = (relationshipData) => {
 
 const removeRelationship = async (index) => {
     const confirmed = await confirmDialog({
-        title: 'Remove relationship',
-        message: 'Are you sure you want to remove this relationship?',
-        confirmLabel: 'Remove',
+        title: t('admin.modules.remove_relationship'),
+        message: t('admin.modules.remove_relationship_confirm'),
+        confirmLabel: t('admin.relationships.remove'),
         intent: 'danger',
     });
     
@@ -551,8 +554,8 @@ const submitModule = () => {
         forceFormData: hasFileFields, // Only enable if we have file uploads
         onSuccess: () => {
             showToast({
-                title: 'Module saved',
-                message: 'Module settings updated successfully.',
+                title: t('admin.modules.module_saved'),
+                message: t('admin.modules.module_settings_updated'),
                 intent: 'success',
             });
         },
@@ -561,9 +564,9 @@ const submitModule = () => {
 
 const deleteModule = async () => {
     const confirmed = await confirmDialog({
-        title: 'Delete module',
-        message: 'Delete this module and all actions?',
-        confirmLabel: 'Delete',
+        title: t('admin.modules.delete_module'),
+        message: t('admin.modules.delete_module_confirm'),
+        confirmLabel: t('admin.common.delete'),
         intent: 'danger',
     });
 
@@ -605,9 +608,9 @@ const submitAction = () => {
 
 const deleteAction = async (action) => {
     const confirmed = await confirmDialog({
-        title: 'Delete action',
-        message: `Delete action "${action.title}"?`,
-        confirmLabel: 'Delete',
+        title: t('admin.modules.delete_action'),
+        message: t('admin.modules.delete_action_confirm', { title: action.title }),
+        confirmLabel: t('admin.common.delete'),
         intent: 'danger',
     });
 
