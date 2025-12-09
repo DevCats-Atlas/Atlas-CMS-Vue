@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch, onMounted, nextTick } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
 
 const props = defineProps({
     field: {
@@ -14,15 +14,25 @@ const props = defineProps({
 
 const hideTitle = computed(() => props.field.config?.hide_title === true);
 
-// Computed JSON preview (only updates when model.default changes, not during typing)
+// Computed JSON preview (computed from properties array, not from model.default)
 const jsonPreview = computed(() => {
-    return props.model.default || '{}';
+    const obj = {};
+    properties.value.forEach((item) => {
+        if (item.key && item.key.trim() !== '') {
+            obj[item.key.trim()] = item.value || '';
+        }
+    });
+    
+    try {
+        return Object.keys(obj).length > 0 ? JSON.stringify(obj, null, 2) : '{}';
+    } catch (error) {
+        return '{}';
+    }
 });
 
 // Key-value pairs array
 const properties = ref([]);
 let nextId = 1;
-let saveTimeout = null;
 const copySuccessMessage = ref('');
 const pasteErrorMessage = ref('');
 
@@ -55,28 +65,25 @@ const loadFromJson = () => {
     }
 };
 
-// Save properties to JSON (debounced)
+// Save properties to JSON (only when explicitly called)
 const saveToJson = () => {
-    // Clear previous timeout
-    if (saveTimeout) {
-        clearTimeout(saveTimeout);
-    }
-    
-    // Set new timeout - wait 300ms after user stops typing
-    saveTimeout = setTimeout(() => {
-        const obj = {};
-        properties.value.forEach((item) => {
-            if (item.key && item.key.trim() !== '') {
-                obj[item.key.trim()] = item.value || '';
-            }
-        });
-        
-        try {
-            props.model.default = Object.keys(obj).length > 0 ? JSON.stringify(obj) : '';
-        } catch (error) {
-            console.error('Failed to stringify JSON:', error);
+    const obj = {};
+    properties.value.forEach((item) => {
+        if (item.key && item.key.trim() !== '') {
+            obj[item.key.trim()] = item.value || '';
         }
-    }, 300);
+    });
+    
+    try {
+        props.model.default = Object.keys(obj).length > 0 ? JSON.stringify(obj) : '';
+    } catch (error) {
+        console.error('Failed to stringify JSON:', error);
+    }
+};
+
+// Handle input blur - save when user leaves the field
+const handleInputBlur = () => {
+    saveToJson();
 };
 
 // Add new property
@@ -86,6 +93,8 @@ const addProperty = () => {
         key: '',
         value: '',
     });
+    // Save after adding (in case user adds and immediately submits)
+    saveToJson();
 };
 
 // Remove property
@@ -271,18 +280,6 @@ const pasteProperties = async () => {
     }
 };
 
-// Watch for changes and save (debounced)
-watch(
-    properties,
-    () => {
-        // Use nextTick to ensure this runs after the current render cycle
-        nextTick(() => {
-            saveToJson();
-        });
-    },
-    { deep: true }
-);
-
 // Initialize on mount
 onMounted(() => {
     // Ensure model.default exists
@@ -291,6 +288,11 @@ onMounted(() => {
     }
     
     loadFromJson();
+});
+
+// Save to JSON before component is unmounted (when form is submitted)
+onBeforeUnmount(() => {
+    saveToJson();
 });
 </script>
 
@@ -360,6 +362,7 @@ onMounted(() => {
                                     type="text"
                                     class="form-input text-sm"
                                     placeholder="Property key"
+                                    @blur="handleInputBlur"
                                 />
                             </div>
                             <div>
@@ -371,6 +374,7 @@ onMounted(() => {
                                     type="text"
                                     class="form-input text-sm"
                                     placeholder="Property value"
+                                    @blur="handleInputBlur"
                                 />
                             </div>
                         </div>
