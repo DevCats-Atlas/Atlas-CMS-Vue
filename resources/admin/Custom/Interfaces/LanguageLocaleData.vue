@@ -23,6 +23,8 @@ const jsonPreview = computed(() => {
 const properties = ref([]);
 let nextId = 1;
 let saveTimeout = null;
+const copySuccessMessage = ref('');
+const pasteErrorMessage = ref('');
 
 // Generate unique ID for properties
 const generateId = () => {
@@ -115,6 +117,160 @@ const removeProperty = (propertyId) => {
     }
 };
 
+// Copy properties to clipboard
+const copyProperties = async () => {
+    try {
+        const obj = {};
+        properties.value.forEach((item) => {
+            if (item.key && item.key.trim() !== '') {
+                obj[item.key.trim()] = item.value || '';
+            }
+        });
+        
+        const jsonString = Object.keys(obj).length > 0 ? JSON.stringify(obj, null, 2) : '{}';
+        
+        // Try modern clipboard API first
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            try {
+                await navigator.clipboard.writeText(jsonString);
+                copySuccessMessage.value = 'Properties copied to clipboard!';
+                setTimeout(() => {
+                    copySuccessMessage.value = '';
+                }, 3000);
+                return;
+            } catch (clipboardError) {
+                console.warn('Clipboard API failed, trying fallback method:', clipboardError);
+            }
+        }
+        
+        // Fallback method: create temporary textarea
+        const textarea = document.createElement('textarea');
+        textarea.value = jsonString;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-999999px';
+        textarea.style.top = '-999999px';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            document.body.removeChild(textarea);
+            
+            if (successful) {
+                copySuccessMessage.value = 'Properties copied to clipboard!';
+                setTimeout(() => {
+                    copySuccessMessage.value = '';
+                }, 3000);
+            } else {
+                throw new Error('execCommand copy failed');
+            }
+        } catch (fallbackError) {
+            document.body.removeChild(textarea);
+            throw fallbackError;
+        }
+    } catch (error) {
+        console.error('Failed to copy to clipboard:', error);
+        pasteErrorMessage.value = 'Failed to copy to clipboard. Please check browser permissions or try manually copying the JSON below.';
+        setTimeout(() => {
+            pasteErrorMessage.value = '';
+        }, 5000);
+    }
+};
+
+// Paste properties from clipboard
+const pasteProperties = async () => {
+    try {
+        pasteErrorMessage.value = '';
+        
+        let text = '';
+        
+        // Try modern clipboard API first
+        if (navigator.clipboard && navigator.clipboard.readText) {
+            try {
+                text = await navigator.clipboard.readText();
+            } catch (clipboardError) {
+                console.warn('Clipboard API read failed:', clipboardError);
+                // Show prompt for manual paste
+                const manualText = prompt('Please paste the JSON here:');
+                if (manualText === null) {
+                    return; // User cancelled
+                }
+                text = manualText;
+            }
+        } else {
+            // Fallback: prompt user to paste manually
+            const manualText = prompt('Please paste the JSON here:');
+            if (manualText === null) {
+                return; // User cancelled
+            }
+            text = manualText;
+        }
+        
+        if (!text || text.trim() === '') {
+            pasteErrorMessage.value = 'Clipboard is empty';
+            setTimeout(() => {
+                pasteErrorMessage.value = '';
+            }, 3000);
+            return;
+        }
+        
+        const parsed = JSON.parse(text);
+        
+        if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+            pasteErrorMessage.value = 'Invalid JSON format. Expected an object.';
+            setTimeout(() => {
+                pasteErrorMessage.value = '';
+            }, 3000);
+            return;
+        }
+        
+        // Confirm before pasting (will replace current properties)
+        if (properties.value.length > 0) {
+            if (!confirm('This will replace all current properties. Are you sure?')) {
+                return;
+            }
+        }
+        
+        // Load the pasted data
+        properties.value = Object.entries(parsed).map(([key, value]) => ({
+            id: generateId(),
+            key: key,
+            value: String(value),
+        }));
+        
+        // Save immediately
+        const obj = {};
+        properties.value.forEach((item) => {
+            if (item.key && item.key.trim() !== '') {
+                obj[item.key.trim()] = item.value || '';
+            }
+        });
+        
+        try {
+            props.model.default = Object.keys(obj).length > 0 ? JSON.stringify(obj) : '';
+        } catch (error) {
+            console.error('Failed to stringify JSON:', error);
+        }
+        
+        // Show success message
+        copySuccessMessage.value = 'Properties pasted successfully!';
+        setTimeout(() => {
+            copySuccessMessage.value = '';
+        }, 3000);
+    } catch (error) {
+        console.error('Failed to paste from clipboard:', error);
+        if (error instanceof SyntaxError) {
+            pasteErrorMessage.value = 'Invalid JSON format. Please check the JSON syntax.';
+        } else {
+            pasteErrorMessage.value = 'Failed to paste. Please try pasting manually using Ctrl+V (Cmd+V on Mac) in the prompt.';
+        }
+        setTimeout(() => {
+            pasteErrorMessage.value = '';
+        }, 5000);
+    }
+};
+
 // Watch for changes and save (debounced)
 watch(
     properties,
@@ -150,13 +306,38 @@ onMounted(() => {
                     <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Locale Properties
                     </p>
-                    <button
-                        type="button"
-                        @click="addProperty"
-                        class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
-                    >
-                        Add Property
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button
+                            type="button"
+                            @click="copyProperties"
+                            class="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md transition-colors"
+                            :disabled="properties.length === 0"
+                        >
+                            Copy
+                        </button>
+                        <button
+                            type="button"
+                            @click="pasteProperties"
+                            class="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md transition-colors"
+                        >
+                            Paste
+                        </button>
+                        <button
+                            type="button"
+                            @click="addProperty"
+                            class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+                        >
+                            Add Property
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Success/Error messages -->
+                <div v-if="copySuccessMessage" class="p-2 rounded-md bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                    <p class="text-sm text-green-800 dark:text-green-200">{{ copySuccessMessage }}</p>
+                </div>
+                <div v-if="pasteErrorMessage" class="p-2 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                    <p class="text-sm text-red-800 dark:text-red-200">{{ pasteErrorMessage }}</p>
                 </div>
                 
                 <div v-if="properties.length === 0" class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
