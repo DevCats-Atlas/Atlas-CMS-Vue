@@ -149,7 +149,7 @@ const toggleAllModules = () => {
 
                     <form class="space-y-4" @submit.prevent="submitNewRole">
                         <div>
-                            <label class="form-label">Title</label>
+                            <label class="form-label">{{ t('admin.common.title_label') }}</label>
                             <input
                                 v-model="createForm.title"
                                 type="text"
@@ -165,7 +165,7 @@ const toggleAllModules = () => {
                                     type="checkbox"
                                     class="form-checkbox"
                                 />
-                                <span class="ml-2">Visible</span>
+                                <span class="ml-2">{{ t('admin.access_roles.visible') }}</span>
                             </label>
                             <button
                                 type="submit"
@@ -217,7 +217,7 @@ const toggleAllModules = () => {
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('admin.access_roles.edit_role') }}</h2>
                     <form class="space-y-4" @submit.prevent="submitEditRole(props.roles.find((r) => r.id === editingRoleId))">
                         <div>
-                            <label class="form-label">Title</label>
+                            <label class="form-label">{{ t('admin.common.title_label') }}</label>
                             <input
                                 v-model="editForm.title"
                                 type="text"
@@ -231,7 +231,7 @@ const toggleAllModules = () => {
                                 type="checkbox"
                                 class="form-checkbox"
                             />
-                            <span class="ml-2">Visible</span>
+                            <span class="ml-2">{{ t('admin.access_roles.visible') }}</span>
                         </label>
                         
                         <!-- Modules assignment -->

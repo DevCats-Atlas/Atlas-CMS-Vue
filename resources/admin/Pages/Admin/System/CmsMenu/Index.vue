@@ -4,6 +4,9 @@ import { computed, ref, watch } from 'vue';
 import SystemLayout from '@admin/Layouts/SystemLayout.vue';
 import ModalDialog from '@/components/ModalDialog.vue';
 import { confirmDialog } from '@/utils/confirmDialog.js';
+import { useTranslation } from '@/utils/useTranslation.js';
+
+const { t } = useTranslation();
 
 const props = defineProps({
     title: {
@@ -100,9 +103,9 @@ const reorderGroup = (group, direction) => {
 
 const deleteGroup = async (group) => {
     const confirmed = await confirmDialog({
-        title: 'Delete menu group',
-        message: `Delete group "${group.title}" and all nested menu items?`,
-        confirmLabel: 'Delete',
+        title: t('admin.cms_menu.delete_group'),
+        message: t('admin.cms_menu.delete_group_confirm', { title: group.title }),
+        confirmLabel: t('admin.common.delete'),
         intent: 'danger',
     });
 
@@ -206,9 +209,9 @@ const reorderItem = (item, direction) => {
 
 const deleteItem = async (item) => {
     const confirmed = await confirmDialog({
-        title: 'Delete menu item',
-        message: `Delete menu item "${item.title}"?`,
-        confirmLabel: 'Delete',
+        title: t('admin.cms_menu.delete_item'),
+        message: t('admin.cms_menu.delete_item_confirm', { title: item.title }),
+        confirmLabel: t('admin.common.delete'),
         intent: 'danger',
     });
 
@@ -229,10 +232,9 @@ const deleteItem = async (item) => {
                 <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">CMS Menu</h1>
+                            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ t('admin.cms_menu.title') }}</h1>
                             <p class="text-gray-600 dark:text-gray-400 mt-1">
-                                Manage the groups and links that compose the administrative menu. Use ordering buttons to
-                                rearrange entries and quickly toggle visibility when needed.
+                                {{ t('admin.cms_menu.description') }}
                             </p>
                         </div>
                     </div>
@@ -240,10 +242,10 @@ const deleteItem = async (item) => {
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <section class="bg-white dark:bg-gray-800 shadow rounded-xl p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Create menu group</h2>
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t('admin.cms_menu.create_group') }}</h2>
                         <form class="space-y-4" @submit.prevent="submitNewGroup">
                             <div>
-                                <label class="form-label">Title</label>
+                                <label class="form-label">{{ t('admin.common.title_label') }}</label>
                                 <input
                                     v-model="newGroupForm.title"
                                     type="text"
@@ -258,10 +260,10 @@ const deleteItem = async (item) => {
                                     type="checkbox"
                                     class="form-checkbox"
                                 />
-                                <span class="ml-2">Visible</span>
+                                <span class="ml-2">{{ t('admin.cms_menu.visible') }}</span>
                             </label>
                             <div>
-                                <p class="form-label">Access roles</p>
+                                <p class="form-label">{{ t('admin.cms_menu.access_roles') }}</p>
                                 <div class="mt-2 flex flex-wrap gap-3">
                                     <label
                                         v-for="role in props.roles"
@@ -284,7 +286,7 @@ const deleteItem = async (item) => {
                                     class="btn btn-primary"
                                     :disabled="newGroupForm.processing"
                                 >
-                                    {{ newGroupForm.processing ? 'Creating…' : 'Create group' }}
+                                    {{ newGroupForm.processing ? t('admin.cms_menu.creating') : t('admin.cms_menu.create_group') }}
                                 </button>
                             </div>
                         </form>
@@ -305,36 +307,36 @@ const deleteItem = async (item) => {
                                             ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
                                             : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'"
                                     >
-                                        {{ group.visible ? 'Visible' : 'Hidden' }}
+                                        {{ group.visible ? t('admin.cms_menu.visible') : t('admin.cms_menu.hidden') }}
                                     </span>
                                 </div>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ group.items.length }} items</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('admin.cms_menu.items_count', { count: group.items.length }) }}</p>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                                    Roles:
+                                    {{ t('admin.cms_menu.roles') }}:
                                     <span v-if="group.roleTitles?.length">{{ group.roleTitles.join(', ') }}</span>
-                                    <span v-else>None</span>
+                                    <span v-else>{{ t('admin.cms_menu.none') }}</span>
                                 </p>
                             </div>
                             <div class="flex flex-wrap gap-2 text-sm">
                                 <button class="btn btn-outline" @click="reorderGroup(group, 'up')">↑</button>
                                 <button class="btn btn-outline" @click="reorderGroup(group, 'down')">↓</button>
                                 <button class="btn btn-outline" @click="toggleGroupVisible(group)">
-                                    {{ group.visible ? 'Hide' : 'Show' }}
+                                    {{ group.visible ? t('admin.cms_menu.hide') : t('admin.cms_menu.show') }}
                                 </button>
                                 <button class="btn btn-outline" @click="startEditGroup(group)">
-                                    Edit
+                                    {{ t('admin.common.edit') }}
                                 </button>
                                 <button class="btn btn-outline" @click="startCreateItem(group)">
-                                    Add item
+                                    {{ t('admin.cms_menu.create_item') }}
                                 </button>
                                 <button class="btn btn-outline-danger" @click="deleteGroup(group)">
-                                    Delete
+                                    {{ t('admin.common.delete') }}
                                 </button>
                             </div>
                         </div>
 
                         <div>
-                            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Menu items</h4>
+                            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ t('admin.cms_menu.menu_items') }}</h4>
                             <template v-if="group.items.length">
                                 <div class="divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                                     <div
@@ -344,18 +346,18 @@ const deleteItem = async (item) => {
                                     >
                                         <div>
                                             <p class="font-medium text-gray-900 dark:text-white">{{ item.title }}</p>
-                                            <p class="text-gray-500 dark:text-gray-400">Order: {{ item.order }}</p>
+                                            <p class="text-gray-500 dark:text-gray-400">{{ t('admin.cms_menu.order') }}: {{ item.order }}</p>
                                             <p class="text-gray-500 dark:text-gray-400">
-                                                Module: {{ item.moduleTitle || '—' }}
-                                                <span v-if="item.actionTitle"> · Action: {{ item.actionTitle }}</span>
+                                                {{ t('admin.cms_menu.module') }}: {{ item.moduleTitle || '—' }}
+                                                <span v-if="item.actionTitle"> · {{ t('admin.cms_menu.action') }}: {{ item.actionTitle }}</span>
                                             </p>
                                             <p class="text-gray-500 dark:text-gray-400">
-                                                Query: {{ item.queryParams || '—' }}
+                                                {{ t('admin.cms_menu.query') }}: {{ item.queryParams || '—' }}
                                             </p>
                                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                                Roles:
+                                                {{ t('admin.cms_menu.roles') }}:
                                                 <span v-if="item.roleTitles?.length">{{ item.roleTitles.join(', ') }}</span>
-                                                <span v-else>None</span>
+                                                <span v-else>{{ t('admin.cms_menu.none') }}</span>
                                             </p>
                                         </div>
                                         <div class="flex flex-wrap items-center gap-2">
@@ -365,25 +367,25 @@ const deleteItem = async (item) => {
                                                     ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
                                                     : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'"
                                             >
-                                                {{ item.visible ? 'Visible' : 'Hidden' }}
+                                                {{ item.visible ? t('admin.cms_menu.visible') : t('admin.cms_menu.hidden') }}
                                             </span>
                                             <button class="px-2 py-1 rounded border border-gray-300 dark:border-gray-600" @click="reorderItem(item, 'up')">↑</button>
                                             <button class="px-2 py-1 rounded border border-gray-300 dark:border-gray-600" @click="reorderItem(item, 'down')">↓</button>
                                             <button class="btn btn-outline" @click="toggleItemVisible(item)">
-                                                {{ item.visible ? 'Hide' : 'Show' }}
+                                                {{ item.visible ? t('admin.cms_menu.hide') : t('admin.cms_menu.show') }}
                                             </button>
                                             <button class="btn btn-outline" @click="startEditItem(group, item)">
-                                                Edit
+                                                {{ t('admin.common.edit') }}
                                             </button>
                                             <button class="btn btn-outline-danger" @click="deleteItem(item)">
-                                                Delete
+                                                {{ t('admin.common.delete') }}
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                             </template>
                             <template v-else>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">No menu items yet.</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('admin.cms_menu.no_menu_items') }}</p>
                             </template>
                         </div>
                     </div>
@@ -394,12 +396,12 @@ const deleteItem = async (item) => {
         
         <ModalDialog
             :open="editingGroupId !== null"
-            title="Edit menu group"
+            :title="t('admin.cms_menu.edit_group')"
             @close="cancelEditGroup"
         >
             <form class="space-y-4" @submit.prevent="submitEditGroup(props.groups.find((g) => g.id === editingGroupId))">
                 <div>
-                    <label class="form-label">Title</label>
+                    <label class="form-label">{{ t('admin.cms_menu.title_label') }}</label>
                     <input
                         v-model="editGroupForm.title"
                         type="text"
@@ -414,10 +416,10 @@ const deleteItem = async (item) => {
                         type="checkbox"
                         class="form-checkbox"
                     />
-                    <span class="ml-2">Visible</span>
+                    <span class="ml-2">{{ t('admin.cms_menu.visible') }}</span>
                 </label>
                 <div>
-                    <p class="form-label">Access roles</p>
+                    <p class="form-label">{{ t('admin.cms_menu.access_roles') }}</p>
                     <div class="mt-2 flex flex-wrap gap-3">
                         <label
                             v-for="role in props.roles"
@@ -435,13 +437,13 @@ const deleteItem = async (item) => {
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button type="button" class="btn-text" @click="cancelEditGroup">Cancel</button>
+                    <button type="button" class="btn-text" @click="cancelEditGroup">{{ t('admin.common.cancel') }}</button>
                     <button
                         type="submit"
                         class="btn btn-primary"
                         :disabled="editGroupForm.processing"
                     >
-                        {{ editGroupForm.processing ? 'Saving…' : 'Save group' }}
+                        {{ editGroupForm.processing ? t('admin.cms_menu.saving') : t('admin.cms_menu.save_group') }}
                     </button>
                 </div>
             </form>
@@ -449,12 +451,12 @@ const deleteItem = async (item) => {
 
         <ModalDialog
             :open="activeItemContext.groupId !== null"
-            :title="isEditingItem ? 'Edit menu item' : 'Add menu item'"
+            :title="isEditingItem ? t('admin.cms_menu.edit_item') : t('admin.cms_menu.create_item')"
             @close="cancelItemForm"
         >
             <form class="space-y-4" @submit.prevent="submitItemForm">
                 <div>
-                    <label class="form-label text-gray-600 dark:text-gray-400">Title</label>
+                    <label class="form-label text-gray-600 dark:text-gray-400">{{ t('admin.cms_menu.title_label') }}</label>
                     <input
                         v-model="itemForm.title"
                         type="text"
@@ -464,25 +466,25 @@ const deleteItem = async (item) => {
                 </div>
                 <div class="grid gap-4 md:grid-cols-2">
                     <div>
-                        <label class="form-label text-gray-600 dark:text-gray-400">Module</label>
+                        <label class="form-label text-gray-600 dark:text-gray-400">{{ t('admin.cms_menu.module') }}</label>
                         <select
                             v-model="itemForm.module_id"
                             class="form-select"
                         >
-                            <option value="">Select module</option>
+                            <option value="">{{ t('admin.cms_menu.select_module') }}</option>
                             <option v-for="module in props.modules" :key="module.id" :value="module.id">
                                 {{ module.title }}
                             </option>
                         </select>
                     </div>
                     <div>
-                        <label class="form-label text-gray-600 dark:text-gray-400">Module action</label>
+                        <label class="form-label text-gray-600 dark:text-gray-400">{{ t('admin.cms_menu.action') }}</label>
                         <select
                             v-model="itemForm.module_action_id"
                             :disabled="!itemForm.module_id"
                             class="form-select disabled:opacity-50"
                         >
-                            <option value="">Select action</option>
+                            <option value="">{{ t('admin.cms_menu.select_action') }}</option>
                             <option v-for="action in availableActions" :key="action.id" :value="action.id">
                                 {{ action.title }}
                             </option>
@@ -490,16 +492,16 @@ const deleteItem = async (item) => {
                     </div>
                 </div>
                 <div>
-                    <label class="form-label text-gray-600 dark:text-gray-400">Query parameters</label>
+                    <label class="form-label text-gray-600 dark:text-gray-400">{{ t('admin.cms_menu.query_parameters') }}</label>
                     <input
                         v-model="itemForm.query_params"
                         type="text"
                         class="form-input"
-                        placeholder="utm_source=admin"
+                        :placeholder="t('admin.cms_menu.query_parameters_placeholder')"
                     />
                 </div>
                 <div>
-                    <p class="form-label">Access roles</p>
+                    <p class="form-label">{{ t('admin.cms_menu.access_roles') }}</p>
                     <div class="mt-2 flex flex-wrap gap-3">
                         <label
                             v-for="role in props.roles"
@@ -522,18 +524,18 @@ const deleteItem = async (item) => {
                         type="checkbox"
                         class="form-checkbox"
                     />
-                    <span class="ml-2">Visible</span>
+                    <span class="ml-2">{{ t('admin.cms_menu.visible') }}</span>
                 </label>
                 <div class="flex items-center gap-3">
                     <button type="button" class="btn-text" @click="cancelItemForm">
-                        Cancel
+                        {{ t('admin.common.cancel') }}
                     </button>
                     <button
                         type="submit"
                         class="btn btn-primary"
                         :disabled="itemForm.processing"
                     >
-                        {{ itemForm.processing ? 'Saving…' : (isEditingItem ? 'Save item' : 'Create item') }}
+                        {{ itemForm.processing ? t('admin.cms_menu.saving') : (isEditingItem ? t('admin.cms_menu.save_item') : t('admin.cms_menu.create_item_button')) }}
                     </button>
                 </div>
             </form>
