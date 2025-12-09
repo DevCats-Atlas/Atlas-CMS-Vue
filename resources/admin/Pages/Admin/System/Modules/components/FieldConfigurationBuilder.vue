@@ -422,13 +422,13 @@ onMounted(() => {
                         
                         <!-- File Interface Options -->
                         <div
-                            v-if="(uiConfig.value[column.name]?.interface || getColumnConfig(column.name).interface) === 'file'"
+                            v-if="column && (uiConfig[column.name]?.interface || getColumnConfig(column.name).interface) === 'file'"
                             class="pt-1 space-y-3"
                         >
                             <div>
                                 <label class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Root Folder (Optional)</label>
                                 <input
-                                    :value="uiConfig.value[column.name]?.file_root_folder || getColumnConfig(column.name).file_root_folder || ''"
+                                    :value="uiConfig[column.name]?.file_root_folder || getColumnConfig(column.name).file_root_folder || ''"
                                     @input="updateColumnConfig(column.name, 'file_root_folder', $event.target.value)"
                                     type="text"
                                     class="form-input text-sm py-1.5"
