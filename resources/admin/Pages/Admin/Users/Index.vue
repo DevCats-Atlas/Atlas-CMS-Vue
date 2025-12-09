@@ -4,6 +4,9 @@ import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
 import ModalDialog from '@/components/ModalDialog.vue';
 import { confirmDialog } from '@/utils/confirmDialog.js';
+import { useTranslation } from '@/utils/useTranslation.js';
+
+const { t } = useTranslation();
 
 const props = defineProps({
     title: {
@@ -174,9 +177,9 @@ const isIndeterminate = computed(() => {
 
 const deleteItem = async (item) => {
     const confirmed = await confirmDialog({
-        title: 'Delete user',
-        message: `Delete "${item.title}"?`,
-        confirmLabel: 'Delete',
+        title: t('admin.users.delete_user'),
+        message: t('admin.users.delete_user_confirm', { title: item.title }),
+        confirmLabel: t('admin.common.delete'),
         intent: 'danger',
     });
 
@@ -197,9 +200,9 @@ const deleteSelectedItems = async () => {
 
     const selectedCount = selectedItems.value.size;
     const confirmed = await confirmDialog({
-        title: 'Delete selected users',
-        message: `Delete ${selectedCount} user(s)?`,
-        confirmLabel: 'Delete',
+        title: t('admin.users.delete_selected_users'),
+        message: t('admin.users.delete_selected_confirm', { count: selectedCount }),
+        confirmLabel: t('admin.common.delete'),
         intent: 'danger',
     });
 
@@ -299,22 +302,22 @@ onMounted(() => {
 
                 <!-- Search Form -->
                 <section class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Search Users</h2>
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('admin.users.search_users') }}</h2>
                     <form @submit.prevent="performSearch" class="space-y-4">
                         <div>
-                            <label class="form-label">Search</label>
+                            <label class="form-label">{{ t('admin.users.search') }}</label>
                             <div class="flex items-center gap-2">
                                 <div class="flex-1">
                                     <input
                                         v-model="searchForm.search"
                                         type="text"
                                         class="form-input"
-                                        placeholder="Search by name, email, or item_id"
+                                        :placeholder="t('admin.users.search_placeholder')"
                                     />
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <button type="submit" class="btn btn-primary" :disabled="searchForm.processing">
-                                        {{ searchForm.processing ? 'Searching...' : 'Search' }}
+                                        {{ searchForm.processing ? t('admin.users.searching') : t('admin.users.search') }}
                                     </button>
                                     <button
                                         v-if="search"
@@ -322,12 +325,12 @@ onMounted(() => {
                                         class="btn btn-outline"
                                         @click="clearSearch"
                                     >
-                                        Clear
+                                        {{ t('admin.common.clear') }}
                                     </button>
                                 </div>
                             </div>
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Search across name, email, and item_id fields
+                                {{ t('admin.users.search_hint') }}
                             </p>
                         </div>
                     </form>
@@ -335,7 +338,7 @@ onMounted(() => {
 
                 <section class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Users</h2>
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('admin.users.title') }}</h2>
                         <div class="flex items-center gap-3">
                             <button
                                 v-if="selectedItems.size > 0"
@@ -344,10 +347,10 @@ onMounted(() => {
                                 :disabled="isDeleting"
                                 @click="deleteSelectedItems"
                             >
-                                {{ isDeleting ? 'Deleting...' : `Delete ${selectedItems.size} selected` }}
+                                {{ isDeleting ? t('admin.users.deleting') : t('admin.users.delete_selected', { count: selectedItems.size }) }}
                             </button>
                             <button type="button" class="btn btn-outline" @click="openCreateModal">
-                                New user
+                                {{ t('admin.users.new_user') }}
                             </button>
                         </div>
                     </div>
@@ -365,10 +368,10 @@ onMounted(() => {
                                         />
                                     </th>
                                     <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 w-0">ID</th>
-                                    <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">Name</th>
-                                    <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">Email</th>
-                                    <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">Item ID</th>
-                                    <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 w-32">Actions</th>
+                                    <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">{{ t('admin.users.name') }}</th>
+                                    <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">{{ t('admin.users.email') }}</th>
+                                    <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">{{ t('admin.users.item_id') }}</th>
+                                    <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 w-32">{{ t('admin.common.actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -396,13 +399,13 @@ onMounted(() => {
                                             class="text-sm font-medium text-indigo-600 dark:text-indigo-300 hover:underline"
                                             preserve-scroll
                                         >
-                                            {{ item.title || 'Unnamed User' }}
+                                            {{ item.title || t('admin.users.unnamed_user') }}
                                         </Link>
                                         <span
                                             v-else
                                             class="text-sm font-medium text-gray-900 dark:text-white"
                                         >
-                                            {{ item.title || 'Unnamed User' }}
+                                            {{ item.title || t('admin.users.unnamed_user') }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">
@@ -418,7 +421,7 @@ onMounted(() => {
                                                 :href="`${baseUrl}/edit?item=${item.id}`"
                                                 class="btn-group-item-edit"
                                                 preserve-scroll
-                                                title="Edit"
+                                                :title="t('admin.common.edit')"
                                             >
                                                 <svg
                                                     class="w-4 h-4"
@@ -439,7 +442,7 @@ onMounted(() => {
                                                 type="button"
                                                 class="btn-group-item-delete"
                                                 @click="deleteItem(item)"
-                                                title="Delete"
+                                                :title="t('admin.common.delete')"
                                             >
                                                 <svg
                                                     class="w-4 h-4"
@@ -459,14 +462,14 @@ onMounted(() => {
                                                 v-if="item.can_edit === false && item.can_delete === false"
                                                 class="text-xs text-gray-400 dark:text-gray-500"
                                             >
-                                                No permission
+                                                {{ t('admin.users.no_permission') }}
                                             </span>
                                         </div>
                                     </td>
                                 </tr>
                                 <tr v-if="items.length === 0">
                                     <td colspan="6" class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
-                                        {{ search ? 'No users found matching your search.' : 'No users yet.' }}
+                                        {{ search ? t('admin.users.no_users_found') : t('admin.users.no_users_yet') }}
                                     </td>
                                 </tr>
                             </tbody>
@@ -481,29 +484,29 @@ onMounted(() => {
                                 :href="`${baseUrl}?page=${pagination.current_page - 1}${search ? `&search=${encodeURIComponent(search)}` : ''}`"
                                 class="btn-text"
                             >
-                                Previous
+                                {{ t('admin.common.previous') }}
                             </Link>
-                            <span v-else class="text-gray-400">Previous</span>
+                            <span v-else class="text-gray-400">{{ t('admin.common.previous') }}</span>
                             
                             <Link
                                 v-if="pagination.current_page < pagination.last_page"
                                 :href="`${baseUrl}?page=${pagination.current_page + 1}${search ? `&search=${encodeURIComponent(search)}` : ''}`"
                                 class="btn-text"
                             >
-                                Next
+                                {{ t('admin.common.next') }}
                             </Link>
-                            <span v-else class="text-gray-400">Next</span>
+                            <span v-else class="text-gray-400">{{ t('admin.common.next') }}</span>
                         </div>
                         <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                             <div>
                                 <p class="text-sm text-gray-700 dark:text-gray-300">
-                                    Showing
+                                    {{ t('admin.common.showing') }}
                                     <span class="font-medium">{{ pagination.from }}</span>
-                                    to
+                                    {{ t('admin.common.to') }}
                                     <span class="font-medium">{{ pagination.to }}</span>
-                                    of
+                                    {{ t('admin.common.of') }}
                                     <span class="font-medium">{{ pagination.total }}</span>
-                                    results
+                                    {{ t('admin.users.results') }}
                                 </p>
                             </div>
                             <div>
@@ -528,18 +531,18 @@ onMounted(() => {
             </div>
         </div>
 
-        <ModalDialog :open="createModalOpen" title="Create user" @close="closeCreateModal">
+        <ModalDialog :open="createModalOpen" :title="t('admin.users.create_user')" @close="closeCreateModal">
             <form class="space-y-4" @submit.prevent="submitCreate">
                 <!-- Name field (required) -->
                 <div class="space-y-1">
-                    <label class="form-label">Name</label>
+                    <label class="form-label">{{ t('admin.users.name') }}</label>
                     <input
                         v-model="createForm.title"
                         type="text"
                         class="form-input"
                         :class="{ 'form-input-error': createForm.errors.title }"
                         required
-                        placeholder="Enter user name"
+                        :placeholder="t('admin.users.enter_name')"
                     />
                     <p v-if="createForm.errors.title" class="text-sm text-red-600 dark:text-red-400">
                         {{ createForm.errors.title }}
@@ -548,14 +551,14 @@ onMounted(() => {
 
                 <!-- Email field (required) -->
                 <div class="space-y-1">
-                    <label class="form-label">Email</label>
+                    <label class="form-label">{{ t('admin.users.email') }}</label>
                     <input
                         v-model="createForm.email"
                         type="email"
                         class="form-input"
                         :class="{ 'form-input-error': createForm.errors.email }"
                         required
-                        placeholder="Enter user email"
+                        :placeholder="t('admin.users.enter_email')"
                     />
                     <p v-if="createForm.errors.email" class="text-sm text-red-600 dark:text-red-400">
                         {{ createForm.errors.email }}
@@ -564,14 +567,14 @@ onMounted(() => {
 
                 <!-- Password field (required) -->
                 <div class="space-y-1">
-                    <label class="form-label">Password</label>
+                    <label class="form-label">{{ t('admin.users.password') }}</label>
                     <input
                         v-model="createForm.password"
                         type="password"
                         class="form-input"
                         :class="{ 'form-input-error': createForm.errors.password }"
                         required
-                        placeholder="Enter password"
+                        :placeholder="t('admin.users.enter_password')"
                     />
                     <p v-if="createForm.errors.password" class="text-sm text-red-600 dark:text-red-400">
                         {{ createForm.errors.password }}
@@ -580,14 +583,14 @@ onMounted(() => {
 
                 <!-- Password confirmation field (required) -->
                 <div class="space-y-1">
-                    <label class="form-label">Confirm Password</label>
+                    <label class="form-label">{{ t('admin.users.confirm_password') }}</label>
                     <input
                         v-model="createForm.password_confirmation"
                         type="password"
                         class="form-input"
                         :class="{ 'form-input-error': createForm.errors.password_confirmation }"
                         required
-                        placeholder="Confirm password"
+                        :placeholder="t('admin.users.confirm_password_create')"
                     />
                     <p v-if="createForm.errors.password_confirmation" class="text-sm text-red-600 dark:text-red-400">
                         {{ createForm.errors.password_confirmation }}
@@ -602,7 +605,7 @@ onMounted(() => {
                         type="checkbox"
                         class="form-checkbox"
                     />
-                    <label for="active" class="form-label mb-0">Active</label>
+                    <label for="active" class="form-label mb-0">{{ t('admin.users.active') }}</label>
                     <p v-if="createForm.errors.active" class="text-sm text-red-600 dark:text-red-400">
                         {{ createForm.errors.active }}
                     </p>
@@ -616,16 +619,16 @@ onMounted(() => {
                         type="checkbox"
                         class="form-checkbox"
                     />
-                    <label for="admin_access" class="form-label mb-0">Admin Access</label>
+                    <label for="admin_access" class="form-label mb-0">{{ t('admin.users.admin_access') }}</label>
                     <p v-if="createForm.errors.admin_access" class="text-sm text-red-600 dark:text-red-400">
                         {{ createForm.errors.admin_access }}
                     </p>
                 </div>
 
                 <div class="flex items-center justify-end gap-3">
-                    <button type="button" class="btn-text" @click="closeCreateModal">Cancel</button>
+                    <button type="button" class="btn-text" @click="closeCreateModal">{{ t('admin.common.cancel') }}</button>
                     <button type="submit" class="btn btn-primary" :disabled="createForm.processing">
-                        {{ createForm.processing ? 'Creating…' : 'Create' }}
+                        {{ createForm.processing ? t('admin.users.creating') : t('admin.common.create') }}
                     </button>
                 </div>
             </form>

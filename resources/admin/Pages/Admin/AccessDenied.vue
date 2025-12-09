@@ -1,6 +1,9 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
+import { useTranslation } from '@/utils/useTranslation.js';
+
+const { t } = useTranslation();
 
 const props = defineProps({
     title: {
@@ -28,19 +31,19 @@ const props = defineProps({
                     </div>
                     
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                        Access Denied
+                        {{ t('admin.access_denied.title') }}
                     </h1>
                     
                     <p class="text-gray-600 dark:text-gray-400 mb-6">
-                        You do not have permission to access this module.
+                        {{ t('admin.access_denied.message') }}
                         <span v-if="module" class="block mt-2 text-sm">
-                            Module: <span class="font-mono font-semibold">{{ module }}</span>
+                            {{ t('admin.access_denied.module_label') }} <span class="font-mono font-semibold">{{ module }}</span>
                         </span>
                     </p>
                     
                     <div class="flex items-center justify-center gap-4">
                         <Link href="/admin" class="btn btn-primary">
-                            Go to Dashboard
+                            {{ t('admin.access_denied.go_to_dashboard') }}
                         </Link>
                     </div>
                 </div>

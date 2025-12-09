@@ -5,6 +5,9 @@ import { ref, computed, watch } from 'vue';
 import ToastStack from '@/components/ToastStack.vue';
 import { useToast } from '@/composables/useToast.js';
 import CustomFieldsTab from '@admin/Pages/Admin/Modules/Default/components/CustomFieldsTab.vue';
+import { useTranslation } from '@/utils/useTranslation.js';
+
+const { t } = useTranslation();
 
 const props = defineProps({
     title: {
@@ -157,7 +160,7 @@ const buildFormPayload = () => {
 const activeTabId = ref('user');
 
 const tabItems = computed(() => {
-    const base = [{ id: 'user', title: 'User' }];
+    const base = [{ id: 'user', title: t('admin.users.title') }];
     
     if (props.customFieldTabs && props.customFieldTabs.length > 0) {
         const custom = props.customFieldTabs.map((tab) => ({
@@ -194,8 +197,8 @@ const submit = () => {
         forceFormData: true,
         onSuccess: () => {
             showToast({
-                title: 'Success',
-                message: 'User updated successfully.',
+                title: t('admin.common.success'),
+                message: t('admin.users.user_updated'),
                 intent: 'success',
             });
             
@@ -230,8 +233,8 @@ const submit = () => {
         },
         onError: (errors) => {
             showToast({
-                title: 'Error',
-                message: 'Failed to update user. Please check the errors.',
+                title: t('admin.common.error', 'Error'),
+                message: t('admin.users.user_update_failed'),
                 intent: 'danger',
             });
         },
@@ -262,14 +265,14 @@ const selectTab = (tabId) => {
                         <div>
                             <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Module</p>
                             <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
-                                {{ module.title }} · Edit user
+                                {{ module.title }} · {{ t('admin.users.edit_user') }}
                             </h1>
                             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                Editing user (ID #{{ user.id }})
+                                {{ t('admin.users.editing_user', { id: user.id }) }}
                             </p>
                         </div>
                         <Link :href="indexUrl" class="btn btn-outline" preserve-scroll>
-                            Back to list
+                            {{ t('admin.users.back_to_list') }}
                         </Link>
                     </div>
 
@@ -299,7 +302,7 @@ const selectTab = (tabId) => {
                             <div v-if="activeTab?.id === 'user'" class="space-y-6">
                                 <!-- Name field -->
                                 <div class="space-y-1">
-                                    <label class="form-label" for="name">Name</label>
+                                    <label class="form-label" for="name">{{ t('admin.users.name') }}</label>
                                     <input
                                         id="name"
                                         v-model="editForm.name"
@@ -307,7 +310,7 @@ const selectTab = (tabId) => {
                                         class="form-input"
                                         :class="{ 'form-input-error': editForm.errors.name }"
                                         required
-                                        placeholder="Enter user name"
+                                        :placeholder="t('admin.users.enter_name')"
                                     />
                                     <p v-if="editForm.errors.name" class="text-sm text-red-600 dark:text-red-400">
                                         {{ editForm.errors.name }}
@@ -316,7 +319,7 @@ const selectTab = (tabId) => {
 
                                 <!-- Email field -->
                                 <div class="space-y-1">
-                                    <label class="form-label" for="email">Email</label>
+                                    <label class="form-label" for="email">{{ t('admin.users.email') }}</label>
                                     <input
                                         id="email"
                                         v-model="editForm.email"
@@ -324,7 +327,7 @@ const selectTab = (tabId) => {
                                         class="form-input"
                                         :class="{ 'form-input-error': editForm.errors.email }"
                                         required
-                                        placeholder="Enter user email"
+                                        :placeholder="t('admin.users.enter_email')"
                                     />
                                     <p v-if="editForm.errors.email" class="text-sm text-red-600 dark:text-red-400">
                                         {{ editForm.errors.email }}
@@ -333,33 +336,33 @@ const selectTab = (tabId) => {
 
                                 <!-- Password field -->
                                 <div class="space-y-1">
-                                    <label class="form-label" for="password">Password</label>
+                                    <label class="form-label" for="password">{{ t('admin.users.password') }}</label>
                                     <input
                                         id="password"
                                         v-model="editForm.password"
                                         type="password"
                                         class="form-input"
                                         :class="{ 'form-input-error': editForm.errors.password }"
-                                        placeholder="Leave blank to keep current password"
+                                        :placeholder="t('admin.users.password_leave_blank')"
                                     />
                                     <p v-if="editForm.errors.password" class="text-sm text-red-600 dark:text-red-400">
                                         {{ editForm.errors.password }}
                                     </p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                                        Leave blank to keep the current password
+                                        {{ t('admin.users.password_leave_blank_hint') }}
                                     </p>
                                 </div>
 
                                 <!-- Password confirmation field -->
                                 <div v-if="editForm.password" class="space-y-1">
-                                    <label class="form-label" for="password_confirmation">Confirm Password</label>
+                                    <label class="form-label" for="password_confirmation">{{ t('admin.users.confirm_password') }}</label>
                                     <input
                                         id="password_confirmation"
                                         v-model="editForm.password_confirmation"
                                         type="password"
                                         class="form-input"
                                         :class="{ 'form-input-error': editForm.errors.password_confirmation }"
-                                        placeholder="Confirm new password"
+                                        :placeholder="t('admin.users.confirm_password_placeholder')"
                                     />
                                     <p v-if="editForm.errors.password_confirmation" class="text-sm text-red-600 dark:text-red-400">
                                         {{ editForm.errors.password_confirmation }}
@@ -374,7 +377,7 @@ const selectTab = (tabId) => {
                                         type="checkbox"
                                         class="form-checkbox"
                                     />
-                                    <label for="active" class="form-label mb-0">Active</label>
+                                    <label for="active" class="form-label mb-0">{{ t('admin.users.active') }}</label>
                                     <p v-if="editForm.errors.active" class="text-sm text-red-600 dark:text-red-400">
                                         {{ editForm.errors.active }}
                                     </p>
@@ -388,7 +391,7 @@ const selectTab = (tabId) => {
                                         type="checkbox"
                                         class="form-checkbox"
                                     />
-                                    <label for="admin_access" class="form-label mb-0">Admin Access</label>
+                                    <label for="admin_access" class="form-label mb-0">{{ t('admin.users.admin_access') }}</label>
                                     <p v-if="editForm.errors.admin_access" class="text-sm text-red-600 dark:text-red-400">
                                         {{ editForm.errors.admin_access }}
                                     </p>
@@ -408,13 +411,13 @@ const selectTab = (tabId) => {
                                         class="form-label mb-0"
                                         :class="{ 'opacity-50 cursor-not-allowed': !isCurrentUserSuperadmin }"
                                     >
-                                        Super Admin
+                                        {{ t('admin.users.super_admin') }}
                                     </label>
                                     <p v-if="editForm.errors.is_superadmin" class="text-sm text-red-600 dark:text-red-400">
                                         {{ editForm.errors.is_superadmin }}
                                     </p>
                                     <p v-if="!isCurrentUserSuperadmin" class="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                                        (Only superadmin users can modify this)
+                                        {{ t('admin.users.super_admin_hint') }}
                                     </p>
                                 </div>
 
@@ -431,9 +434,9 @@ const selectTab = (tabId) => {
                             <!-- Submit buttons (shown on all tabs) -->
                             <div class="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                                 <button type="submit" class="btn btn-primary" :disabled="editForm.processing">
-                                    {{ editForm.processing ? 'Saving…' : 'Save changes' }}
+                                    {{ editForm.processing ? t('admin.users.saving') : t('admin.users.save_changes') }}
                                 </button>
-                                <Link :href="indexUrl" class="btn-text" preserve-scroll>Cancel</Link>
+                                <Link :href="indexUrl" class="btn-text" preserve-scroll>{{ t('admin.common.cancel') }}</Link>
                             </div>
                         </form>
                     </div>
