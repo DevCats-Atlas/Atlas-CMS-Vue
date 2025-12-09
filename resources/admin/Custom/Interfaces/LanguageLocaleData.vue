@@ -1,5 +1,8 @@
 <script setup>
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
+import { useTranslation } from '@/utils/useTranslation.js';
+
+const { t } = useTranslation();
 
 const props = defineProps({
     field: {
@@ -105,7 +108,7 @@ const removeProperty = (propertyId) => {
         const key = property.key || 'this property';
         
         // Confirm before removing
-        if (!confirm(`Are you sure you want to remove the property "${key}"?`)) {
+        if (!confirm(t('admin.locale_data.remove_confirm', { key: key }))) {
             return;
         }
         
@@ -142,7 +145,7 @@ const copyProperties = async () => {
         if (navigator.clipboard && navigator.clipboard.writeText) {
             try {
                 await navigator.clipboard.writeText(jsonString);
-                copySuccessMessage.value = 'Properties copied to clipboard!';
+                copySuccessMessage.value = t('admin.locale_data.copy_success');
                 setTimeout(() => {
                     copySuccessMessage.value = '';
                 }, 3000);
@@ -167,7 +170,7 @@ const copyProperties = async () => {
             document.body.removeChild(textarea);
             
             if (successful) {
-                copySuccessMessage.value = 'Properties copied to clipboard!';
+                copySuccessMessage.value = t('admin.locale_data.copy_success');
                 setTimeout(() => {
                     copySuccessMessage.value = '';
                 }, 3000);
@@ -180,7 +183,7 @@ const copyProperties = async () => {
         }
     } catch (error) {
         console.error('Failed to copy to clipboard:', error);
-        pasteErrorMessage.value = 'Failed to copy to clipboard. Please check browser permissions or try manually copying the JSON below.';
+        pasteErrorMessage.value = t('admin.locale_data.copy_error');
         setTimeout(() => {
             pasteErrorMessage.value = '';
         }, 5000);
@@ -201,7 +204,7 @@ const pasteProperties = async () => {
             } catch (clipboardError) {
                 console.warn('Clipboard API read failed:', clipboardError);
                 // Show prompt for manual paste
-                const manualText = prompt('Please paste the JSON here:');
+                const manualText = prompt(t('admin.locale_data.paste_prompt'));
                 if (manualText === null) {
                     return; // User cancelled
                 }
@@ -209,7 +212,7 @@ const pasteProperties = async () => {
             }
         } else {
             // Fallback: prompt user to paste manually
-            const manualText = prompt('Please paste the JSON here:');
+            const manualText = prompt(t('admin.locale_data.paste_prompt'));
             if (manualText === null) {
                 return; // User cancelled
             }
@@ -217,7 +220,7 @@ const pasteProperties = async () => {
         }
         
         if (!text || text.trim() === '') {
-            pasteErrorMessage.value = 'Clipboard is empty';
+            pasteErrorMessage.value = t('admin.locale_data.paste_error_empty');
             setTimeout(() => {
                 pasteErrorMessage.value = '';
             }, 3000);
@@ -227,7 +230,7 @@ const pasteProperties = async () => {
         const parsed = JSON.parse(text);
         
         if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-            pasteErrorMessage.value = 'Invalid JSON format. Expected an object.';
+            pasteErrorMessage.value = t('admin.locale_data.paste_error_invalid_format');
             setTimeout(() => {
                 pasteErrorMessage.value = '';
             }, 3000);
@@ -236,7 +239,7 @@ const pasteProperties = async () => {
         
         // Confirm before pasting (will replace current properties)
         if (properties.value.length > 0) {
-            if (!confirm('This will replace all current properties. Are you sure?')) {
+            if (!confirm(t('admin.locale_data.paste_confirm'))) {
                 return;
             }
         }
@@ -263,16 +266,16 @@ const pasteProperties = async () => {
         }
         
         // Show success message
-        copySuccessMessage.value = 'Properties pasted successfully!';
+        copySuccessMessage.value = t('admin.locale_data.paste_success');
         setTimeout(() => {
             copySuccessMessage.value = '';
         }, 3000);
     } catch (error) {
         console.error('Failed to paste from clipboard:', error);
         if (error instanceof SyntaxError) {
-            pasteErrorMessage.value = 'Invalid JSON format. Please check the JSON syntax.';
+            pasteErrorMessage.value = t('admin.locale_data.paste_error_syntax');
         } else {
-            pasteErrorMessage.value = 'Failed to paste. Please try pasting manually using Ctrl+V (Cmd+V on Mac) in the prompt.';
+            pasteErrorMessage.value = t('admin.locale_data.paste_error_failed');
         }
         setTimeout(() => {
             pasteErrorMessage.value = '';
@@ -306,7 +309,7 @@ onBeforeUnmount(() => {
             <div class="space-y-3">
                 <div class="flex items-center justify-between">
                     <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Locale Properties
+                        {{ t('admin.locale_data.title') }}
                     </p>
                     <div class="flex items-center gap-2">
                         <button
@@ -315,21 +318,21 @@ onBeforeUnmount(() => {
                             class="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md transition-colors"
                             :disabled="properties.length === 0"
                         >
-                            Copy
+                            {{ t('admin.locale_data.copy') }}
                         </button>
                         <button
                             type="button"
                             @click="pasteProperties"
                             class="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md transition-colors"
                         >
-                            Paste
+                            {{ t('admin.locale_data.paste') }}
                         </button>
                         <button
                             type="button"
                             @click="addProperty"
                             class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
                         >
-                            Add Property
+                            {{ t('admin.locale_data.add_property') }}
                         </button>
                     </div>
                 </div>
@@ -343,7 +346,7 @@ onBeforeUnmount(() => {
                 </div>
                 
                 <div v-if="properties.length === 0" class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                    No properties added yet. Click "Add Property" to start.
+                    {{ t('admin.locale_data.no_properties') }}
                 </div>
                 
                 <div v-else class="space-y-3">
@@ -355,25 +358,25 @@ onBeforeUnmount(() => {
                         <div class="flex-1 grid grid-cols-2 gap-2">
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Key
+                                    {{ t('admin.locale_data.key') }}
                                 </label>
                                 <input
                                     v-model="property.key"
                                     type="text"
                                     class="form-input text-sm"
-                                    placeholder="Property key"
+                                    :placeholder="t('admin.locale_data.key_placeholder')"
                                     @blur="handleInputBlur"
                                 />
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Value
+                                    {{ t('admin.locale_data.value') }}
                                 </label>
                                 <input
                                     v-model="property.value"
                                     type="text"
                                     class="form-input text-sm"
-                                    placeholder="Property value"
+                                    :placeholder="t('admin.locale_data.value_placeholder')"
                                     @blur="handleInputBlur"
                                 />
                             </div>
@@ -383,19 +386,12 @@ onBeforeUnmount(() => {
                             @click="removeProperty(property.id)"
                             class="mt-6 px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
                         >
-                            Remove
+                            {{ t('admin.locale_data.remove') }}
                         </button>
                     </div>
                 </div>
                 
-                <div v-if="properties.length > 0" class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                        Data will be saved as JSON: 
-                        <code class="ml-1 px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs font-mono">
-                            {{ jsonPreview }}
-                        </code>
-                    </p>
-                </div>
+                
             </div>
         </div>
     </div>
