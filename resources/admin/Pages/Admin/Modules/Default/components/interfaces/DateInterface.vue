@@ -17,6 +17,17 @@ const languages = computed(() => usePage().props.languages || []);
 const hasTranslations = computed(() => props.field.multilanguage && languages.value.length > 0);
 const hideTitle = computed(() => props.field.config?.hide_title === true);
 
+// Determine input type: datetime-local for datetime fields, date for date fields
+const inputType = computed(() => {
+    const fieldType = props.field.type || props.field.interface || 'date';
+    const configInputType = props.field.config?.inputType;
+    
+    if (fieldType === 'datetime' || fieldType === 'datetime-local' || configInputType === 'datetime-local') {
+        return 'datetime-local';
+    }
+    return 'date';
+});
+
 const languageKey = (language, index) => language?.id ?? language?.slug ?? language?.code ?? index;
 const languageLabel = (language) => language?.title || language?.name || language?.label || language?.slug || 'Language';
 const ensureTranslationKey = (language, index) => {
@@ -43,14 +54,14 @@ const ensureTranslationKey = (language, index) => {
                 </label>
                 <input
                     v-model="model.translations[ensureTranslationKey(language, index)]"
-                    type="date"
+                    :type="inputType"
                     class="form-input"
                 />
             </div>
         </template>
         <div v-else class="space-y-1">
             <label v-if="!hideTitle" class="form-label">{{ field.title }}</label>
-            <input v-model="model.default" type="date" class="form-input" />
+            <input v-model="model.default" :type="inputType" class="form-input" />
         </div>
     </div>
 </template>

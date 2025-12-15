@@ -17,6 +17,8 @@ const interfaceComponents = {
     wysiwyg: WysiwygInterface,
     file: FileInterface,
     date: DateInterface,
+    datetime: DateInterface, // datetime also uses DateInterface component
+    'datetime-local': DateInterface, // datetime-local also uses DateInterface component
     select: SelectInterface,
     checkbox: CheckboxInterface,
     children: ChildrenInterface,

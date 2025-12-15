@@ -111,6 +111,35 @@ const editForm = useForm(buildFormData());
 // Create field model structure for interface components (reactive)
 const fieldModels = ref({});
 
+// Format datetime value for datetime-local input (YYYY-MM-DDTHH:mm)
+const formatDateTimeForInput = (value, interfaceType) => {
+    if (!value || interfaceType !== 'datetime' && interfaceType !== 'datetime-local') {
+        return value;
+    }
+    
+    // If already in correct format, return as is
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) {
+        return value.substring(0, 16); // Remove seconds and timezone if present
+    }
+    
+    // Try to parse and format
+    try {
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+    } catch (e) {
+        // If parsing fails, return original value
+    }
+    
+    return value;
+};
+
 // Initialize field models with existing values
 props.fields.forEach((field) => {
     let defaultValue = field.value !== null && field.value !== undefined
@@ -122,6 +151,9 @@ props.fields.forEach((field) => {
         defaultValue = defaultValue ? true : false;
     } else if (defaultValue === null) {
         defaultValue = '';
+    } else if (field.interface === 'datetime' || field.interface === 'datetime-local') {
+        // Format datetime values for datetime-local input
+        defaultValue = formatDateTimeForInput(defaultValue, field.interface);
     }
     
     fieldModels.value[field.name] = {
@@ -289,10 +321,11 @@ const parseSelectOptions = (optionsString, inputType = 'comma') => {
 
 // Get enhanced field config for interface components
 const getFieldConfig = (field) => {
-    // Map datetime to date interface
+    // Keep datetime and datetime-local as is, don't map to date
     let interfaceType = field.interface || 'text';
-    if (interfaceType === 'datetime') {
-        interfaceType = 'date';
+    // Map datetime-local to datetime for component lookup (DateInterface handles both)
+    if (interfaceType === 'datetime-local') {
+        interfaceType = 'datetime';
     }
     
     const config = {
@@ -301,6 +334,8 @@ const getFieldConfig = (field) => {
         title: field.title || field.name,
         config: {
             type: interfaceType,
+            // For datetime fields, specify input type
+            inputType: field.interface === 'datetime' || field.interface === 'datetime-local' ? 'datetime-local' : undefined,
         },
         // For file fields, add value and value_url
         values: field.interface === 'file' ? {

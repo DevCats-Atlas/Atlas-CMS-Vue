@@ -247,10 +247,11 @@ const parseSelectOptions = (optionsString, inputType = 'comma') => {
 
 // Get enhanced field config for interface components
 const getFieldConfig = (field) => {
-    // Map datetime to date interface
+    // Keep datetime and datetime-local as is, don't map to date
     let interfaceType = field.interface || 'text';
-    if (interfaceType === 'datetime') {
-        interfaceType = 'date';
+    // Map datetime-local to datetime for component lookup (DateInterface handles both)
+    if (interfaceType === 'datetime-local') {
+        interfaceType = 'datetime';
     }
     
     const config = {
@@ -259,6 +260,8 @@ const getFieldConfig = (field) => {
         title: field.title || field.name,
         config: {
             type: interfaceType,
+            // For datetime fields, specify input type
+            inputType: field.interface === 'datetime' || field.interface === 'datetime-local' ? 'datetime-local' : undefined,
         },
         // For file fields, add value and value_url
         values: field.interface === 'file' ? {
