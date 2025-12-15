@@ -69,6 +69,10 @@ const props = defineProps({
         type: String,
         default: 'order_index',
     },
+    hasWideLayout: {
+        type: Boolean,
+        default: false,
+    },
     // relationships prop removed - relationships are managed on Edit page only
     // Keeping prop for backward compatibility but not using it
     relationships: {
@@ -354,7 +358,7 @@ const submitCreateChild = (parentId) => {
         <Head :title="title" />
 
         <div class="py-6">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
+            <div :class="['mx-auto sm:px-6 lg:px-8 space-y-6', hasWideLayout ? '' : 'max-w-7xl']">
                 <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6">
                     <div class="flex items-start justify-between gap-4 mb-6">
                         <div>
