@@ -129,19 +129,8 @@ const confirmDelete = async (item) => {
     // Use the primary key column passed from backend
     const recordId = item[props.primaryKeyColumn];
     
-    // Try to find a meaningful label for the record
-    let recordLabel = `Record #${recordId}`;
-    const titleFields = ['title', 'name', 'label', 'email'];
-    for (const field of titleFields) {
-        if (item[field]) {
-            recordLabel = item[field];
-            break;
-        }
-    }
-    
     const confirmed = await confirmDialog({
         title: t('admin.db_table.delete_confirm'),
-        message: `${t('admin.common.delete')} "${recordLabel}"?`,
         confirmLabel: t('admin.common.delete'),
         intent: 'danger',
     });
