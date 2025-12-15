@@ -920,9 +920,21 @@ const reorderAction = (action, direction) => {
                                         class="form-input"
                                         placeholder="e.g., App\Handlers\CustomHandler"
                                     />
-                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                        Optional PHP class name to handle custom logic for this module.
-                                    </p>
+                                    <div class="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                                        <p class="text-xs font-semibold text-blue-900 dark:text-blue-200 mb-2">
+                                            Interface: <code class="text-xs">AtlasCMS\Contracts\HandlerDbTableModuleRecord</code>
+                                        </p>
+                                        <p class="text-xs text-blue-800 dark:text-blue-300 mb-2">
+                                            The class must implement this interface. All methods are optional:
+                                        </p>
+                                        <ul class="text-xs text-blue-800 dark:text-blue-300 space-y-1 list-disc list-inside">
+                                            <li><code class="text-xs">creating()</code> - Called before creating a record</li>
+                                            <li><code class="text-xs">created()</code> - Called after a record is created</li>
+                                            <li><code class="text-xs">updating()</code> - Called before updating a record</li>
+                                            <li><code class="text-xs">deleting()</code> - Called before deleting a record</li>
+                                            <li><code class="text-xs">deleted()</code> - Called after a record is deleted</li>
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
 
