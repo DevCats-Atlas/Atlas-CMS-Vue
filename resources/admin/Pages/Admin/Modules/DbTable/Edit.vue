@@ -319,6 +319,56 @@ const parseSelectOptions = (optionsString, inputType = 'comma') => {
     }
 };
 
+// Format field value for display in read-only mode
+const formatFieldValue = (field) => {
+    const value = field.value;
+    
+    if (value === null || value === undefined || value === '') {
+        return '—';
+    }
+    
+    // Handle checkbox
+    if (field.interface === 'checkbox') {
+        return value ? 'Yes' : 'No';
+    }
+    
+    // Handle select - try to find label from options
+    if (field.interface === 'select' && field.options && Array.isArray(field.options)) {
+        const option = field.options.find(opt => {
+            const optValue = typeof opt === 'object' ? opt.value : opt;
+            return String(optValue) === String(value);
+        });
+        if (option) {
+            return typeof option === 'object' ? option.label : option;
+        }
+    }
+    
+    // Handle date/datetime
+    if (field.interface === 'date' || field.interface === 'datetime' || field.interface === 'datetime-local') {
+        if (value) {
+            try {
+                const date = new Date(value);
+                if (!isNaN(date.getTime())) {
+                    if (field.interface === 'date') {
+                        return date.toLocaleDateString();
+                    }
+                    return date.toLocaleString();
+                }
+            } catch (e) {
+                // Fall through to return raw value
+            }
+        }
+    }
+    
+    // Handle file
+    if (field.interface === 'file' && field.value_url) {
+        return field.value || '—';
+    }
+    
+    // Default: return string representation
+    return String(value);
+};
+
 // Get enhanced field config for interface components
 const getFieldConfig = (field) => {
     // Keep datetime and datetime-local as is, don't map to date
@@ -406,11 +456,23 @@ const getFieldConfig = (field) => {
                                     'md:col-span-2': field.interface === 'textarea' || field.interface === 'wysiwyg',
                                 }"
                             >
-                                <component
-                                    :is="resolveInterfaceComponent(getFieldConfig(field).type)"
-                                    :field="getFieldConfig(field)"
-                                    :model="fieldModels[field.name]"
-                                />
+                                <!-- Non-editable fields shown as read-only text -->
+                                <div v-if="field.editable === false" class="space-y-1">
+                                    <label class="form-label">{{ field.title || field.name }}</label>
+                                    <div class="form-input bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 cursor-not-allowed">
+                                        {{ formatFieldValue(field) }}
+                                    </div>
+                                </div>
+                                
+                                <!-- Editable fields shown as input components -->
+                                <template v-else>
+                                    <component
+                                        :is="resolveInterfaceComponent(getFieldConfig(field).type)"
+                                        :field="getFieldConfig(field)"
+                                        :model="fieldModels[field.name]"
+                                    />
+                                </template>
+                                
                                 <p v-if="editForm.errors[field.name]" class="mt-1 text-sm text-red-600">
                                     {{ editForm.errors[field.name] }}
                                 </p>
