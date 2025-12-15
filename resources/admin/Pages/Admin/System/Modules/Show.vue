@@ -157,6 +157,7 @@ const filteredSettingsFields = computed(() => {
         field.node !== 'data_source_table' && 
         field.node !== 'data_source_ui' &&
         field.node !== 'db_table_connection' &&
+        field.node !== 'db_table_handler_class' &&
         field.node !== 'db_table_deep_structure' &&
         field.node !== 'db_table_parent_column' &&
         field.node !== 'db_table_relationships' &&
@@ -297,6 +298,15 @@ const initialDbTableConnection = computed(() => {
     return '';
 });
 
+// Initialize db_table_handler_class from custom fields if available
+const initialDbTableHandlerClass = computed(() => {
+    const field = settingsFields.value.find(field => field.node === 'db_table_handler_class');
+    if (field && initialCustomFields.value[field.id]) {
+        return initialCustomFields.value[field.id].default || '';
+    }
+    return '';
+});
+
 // Initialize db_table_deep_structure from custom fields if available
 const initialDbTableDeepStructure = computed(() => {
     const field = settingsFields.value.find(field => field.node === 'db_table_deep_structure');
@@ -387,6 +397,7 @@ const dataSourceTableInput = ref(initialDataSourceTable.value);
 
 // Tree structure and relationships state
 const dbTableConnection = ref(initialDbTableConnection.value);
+const dbTableHandlerClass = ref(initialDbTableHandlerClass.value);
 const dbTableDeepStructure = ref(initialDbTableDeepStructure.value);
 const dbTableParentColumn = ref(initialDbTableParentColumn.value);
 const dbTableRelationships = ref(JSON.parse(JSON.stringify(initialDbTableRelationships.value))); // Deep copy
@@ -407,6 +418,21 @@ watch(dbTableConnection, (newValue) => {
             };
         }
         moduleForm.custom_fields[connectionField.id].default = newValue || '';
+    }
+}, { immediate: true });
+
+// Watch and sync PHP Handler class to form
+watch(dbTableHandlerClass, (newValue) => {
+    const handlerClassField = settingsFields.value.find(field => field.node === 'db_table_handler_class');
+    if (handlerClassField) {
+        ensureFieldModel(handlerClassField);
+        if (!moduleForm.custom_fields[handlerClassField.id]) {
+            moduleForm.custom_fields[handlerClassField.id] = {
+                default: '',
+                translations: {},
+            };
+        }
+        moduleForm.custom_fields[handlerClassField.id].default = newValue || '';
     }
 }, { immediate: true });
 
@@ -620,11 +646,12 @@ const submitModule = () => {
     // Only use forceFormData if we have file uploads
     const hasFileFields = filteredSettingsFields.value.some(field => field.type === 'file');
     
-    // Sync data_source, data_source_table, data_source_ui, and db_table_connection to custom_fields before submitting
+    // Sync data_source, data_source_table, data_source_ui, db_table_connection, and db_table_handler_class to custom_fields before submitting
     const dataSourceField = settingsFields.value.find(field => field.node === 'data_source');
     const dataSourceTableField = settingsFields.value.find(field => field.node === 'data_source_table');
     const dataSourceUiField = settingsFields.value.find(field => field.node === 'data_source_ui');
     const connectionField = settingsFields.value.find(field => field.node === 'db_table_connection');
+    const handlerClassField = settingsFields.value.find(field => field.node === 'db_table_handler_class');
     
     if (!moduleForm.custom_fields) {
         moduleForm.custom_fields = {};
@@ -671,6 +698,17 @@ const submitModule = () => {
             };
         }
         moduleForm.custom_fields[connectionField.id].default = dbTableConnection.value || '';
+    }
+    
+    // Sync db_table_handler_class to custom_fields
+    if (handlerClassField) {
+        if (!moduleForm.custom_fields[handlerClassField.id]) {
+            moduleForm.custom_fields[handlerClassField.id] = {
+                default: '',
+                translations: {},
+            };
+        }
+        moduleForm.custom_fields[handlerClassField.id].default = dbTableHandlerClass.value || '';
     }
     
     moduleForm.put(`/admin/system/modules/${props.module.id}`, {
@@ -836,6 +874,8 @@ const reorderAction = (action, direction) => {
                                         Connection name from config/database.php. Leave empty to use the default connection.
                                     </p>
                                 </div>
+                            </div>
+                            <div class="grid gap-4 md:grid-cols-2 mt-4">
                                 <div>
                                     <label class="form-label">Data source table</label>
                                     <div class="flex gap-2">
@@ -870,6 +910,18 @@ const reorderAction = (action, direction) => {
                                     </div>
                                     <p v-if="moduleForm.errors.data_source_table" class="mt-1 text-sm text-red-600">
                                         {{ moduleForm.errors.data_source_table }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <label class="form-label">PHP Handler class</label>
+                                    <input
+                                        v-model="dbTableHandlerClass"
+                                        type="text"
+                                        class="form-input"
+                                        placeholder="e.g., App\Handlers\CustomHandler"
+                                    />
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        Optional PHP class name to handle custom logic for this module.
                                     </p>
                                 </div>
                             </div>
