@@ -371,7 +371,7 @@ onMounted(() => {
                                     <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">{{ t('admin.users.name') }}</th>
                                     <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">{{ t('admin.users.email') }}</th>
                                     <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">{{ t('admin.users.item_id') }}</th>
-                                    <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 w-32">{{ t('admin.common.actions') }}</th>
+                                    <th class="w-auto px-2 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">{{ t('admin.common.actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -414,7 +414,7 @@ onMounted(() => {
                                     <td class="px-4 py-2 font-mono text-xs text-gray-500 dark:text-gray-400">
                                         {{ item.item_id || '-' }}
                                     </td>
-                                    <td class="px-4 py-2">
+                                    <td class="w-auto px-2 py-2 whitespace-nowrap">
                                         <div class="btn-group" role="group">
                                             <Link
                                                 v-if="item.can_edit !== false"

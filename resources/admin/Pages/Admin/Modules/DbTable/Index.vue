@@ -430,7 +430,7 @@ const submitCreateChild = (parentId) => {
                                     >
                                         {{ t('admin.db_table.children') }}
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap" style="width: 1%;">
                                         {{ t('admin.common.actions') }}
                                     </th>
                                 </tr>
@@ -491,7 +491,7 @@ const submitCreateChild = (parentId) => {
                                                 </span>
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <td class="px-2 py-2 whitespace-nowrap text-sm font-medium" style="width: 1%;">
                                             <div class="btn-group" role="group">
                                                 <button
                                                     v-if="hasDeepStructure"
