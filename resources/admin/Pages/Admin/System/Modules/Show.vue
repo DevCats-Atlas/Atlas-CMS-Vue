@@ -925,12 +925,13 @@ const reorderAction = (action, direction) => {
                                             Interface: <code class="text-xs">AtlasCMS\Contracts\HandlerDbTableModuleRecord</code>
                                         </p>
                                         <p class="text-xs text-blue-800 dark:text-blue-300 mb-2">
-                                            The class must implement this interface. All methods are optional:
+                                            The class must implement this interface. You can extend <code class="text-xs">AbstractHandlerDbTableModuleRecord</code> to make all methods optional. Available methods:
                                         </p>
                                         <ul class="text-xs text-blue-800 dark:text-blue-300 space-y-1 list-disc list-inside">
                                             <li><code class="text-xs">creating()</code> - Called before creating a record</li>
                                             <li><code class="text-xs">created()</code> - Called after a record is created</li>
                                             <li><code class="text-xs">updating()</code> - Called before updating a record</li>
+                                            <li><code class="text-xs">updated()</code> - Called after a record is updated</li>
                                             <li><code class="text-xs">deleting()</code> - Called before deleting a record</li>
                                             <li><code class="text-xs">deleted()</code> - Called after a record is deleted</li>
                                         </ul>
