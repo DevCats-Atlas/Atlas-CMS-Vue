@@ -151,7 +151,9 @@ const filteredSettingsFields = computed(() => {
         field.node !== 'db_table_parent_column' &&
         field.node !== 'db_table_relationships' &&
         field.node !== 'db_table_order_by_column' &&
-        field.node !== 'db_table_order_by_direction'
+        field.node !== 'db_table_order_by_direction' &&
+        field.node !== 'db_table_sorting' &&
+        field.node !== 'db_table_sorting_column'
     );
     
     // Hide deep_structure, sorting, and columns_to_show for db_table modules
@@ -310,6 +312,25 @@ const initialDbTableRelationships = computed(() => {
     return { relationships: [] };
 });
 
+// Initialize db_table_sorting from custom fields if available
+const initialDbTableSorting = computed(() => {
+    const field = settingsFields.value.find(field => field.node === 'db_table_sorting');
+    if (field && initialCustomFields.value[field.id]) {
+        const value = initialCustomFields.value[field.id].default || '';
+        return normalizeCheckboxValue(value);
+    }
+    return false;
+});
+
+// Initialize db_table_sorting_column from custom fields if available
+const initialDbTableSortingColumn = computed(() => {
+    const field = settingsFields.value.find(field => field.node === 'db_table_sorting_column');
+    if (field && initialCustomFields.value[field.id]) {
+        return initialCustomFields.value[field.id].default || 'order_index';
+    }
+    return 'order_index';
+});
+
 // Initialize db_table_order_by_column from custom fields if available
 const initialDbTableOrderByColumn = computed(() => {
     const field = settingsFields.value.find(field => field.node === 'db_table_order_by_column');
@@ -349,6 +370,8 @@ const dataSourceTableInput = ref(initialDataSourceTable.value);
 const dbTableDeepStructure = ref(initialDbTableDeepStructure.value);
 const dbTableParentColumn = ref(initialDbTableParentColumn.value);
 const dbTableRelationships = ref(JSON.parse(JSON.stringify(initialDbTableRelationships.value))); // Deep copy
+const dbTableSorting = ref(initialDbTableSorting.value);
+const dbTableSortingColumn = ref(initialDbTableSortingColumn.value);
 const dbTableOrderByColumn = ref(initialDbTableOrderByColumn.value);
 const dbTableOrderByDirection = ref(initialDbTableOrderByDirection.value);
 
@@ -376,6 +399,22 @@ watch(dbTableRelationships, () => {
         moduleForm.custom_fields[relationshipsField.id].default = JSON.stringify(dbTableRelationships.value);
     }
 }, { deep: true, immediate: true });
+
+// Watch and sync sorting fields to form
+watch([dbTableSorting, dbTableSortingColumn], () => {
+    const sortingField = settingsFields.value.find(field => field.node === 'db_table_sorting');
+    const sortingColumnField = settingsFields.value.find(field => field.node === 'db_table_sorting_column');
+    
+    if (sortingField) {
+        ensureFieldModel(sortingField);
+        moduleForm.custom_fields[sortingField.id].default = dbTableSorting.value ? '1' : '0';
+    }
+    
+    if (sortingColumnField) {
+        ensureFieldModel(sortingColumnField);
+        moduleForm.custom_fields[sortingColumnField.id].default = dbTableSortingColumn.value;
+    }
+}, { immediate: true });
 
 // Watch and sync ordering fields to form
 watch([dbTableOrderByColumn, dbTableOrderByDirection], () => {
@@ -766,6 +805,38 @@ const reorderAction = (action, direction) => {
                                     <p v-if="moduleForm.errors.data_source_table" class="mt-1 text-sm text-red-600">
                                         {{ moduleForm.errors.data_source_table }}
                                     </p>
+                                </div>
+                            </div>
+
+                            <!-- Sorting Configuration -->
+                            <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Sorting</h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="flex items-center gap-2">
+                                            <input
+                                                v-model="dbTableSorting"
+                                                type="checkbox"
+                                                class="form-checkbox"
+                                            />
+                                            <span class="text-sm text-gray-900 dark:text-white">Enable sorting</span>
+                                        </label>
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            Enable drag-and-drop reordering of records in the list
+                                        </p>
+                                    </div>
+                                    <div v-if="dbTableSorting">
+                                        <label class="form-label">Sorting column</label>
+                                        <input
+                                            v-model="dbTableSortingColumn"
+                                            type="text"
+                                            class="form-input"
+                                            placeholder="order_index"
+                                        />
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            Column name to store sort order (default: order_index)
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 

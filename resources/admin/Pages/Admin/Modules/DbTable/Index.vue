@@ -61,6 +61,14 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    hasSortingEnabled: {
+        type: Boolean,
+        default: false,
+    },
+    sortingColumn: {
+        type: String,
+        default: 'order_index',
+    },
     // relationships prop removed - relationships are managed on Edit page only
     // Keeping prop for backward compatibility but not using it
     relationships: {
@@ -161,8 +169,13 @@ const isExpanded = (itemId) => {
 const draggedItem = ref(null);
 const draggedOverIndex = ref(null);
 
+// Check if reordering is enabled (sorting, tree structure, or legacy order_index)
+const canReorder = computed(() => {
+    return props.hasSortingEnabled || props.hasDeepStructure || props.hasOrderIndex;
+});
+
 const handleDragStart = (event, item) => {
-    if (!props.hasDeepStructure) {
+    if (!canReorder.value) {
         event.preventDefault();
         return;
     }
@@ -179,7 +192,7 @@ const handleDragEnd = (event) => {
 };
 
 const handleDragOver = (event, item, index) => {
-    if ((!props.hasDeepStructure && !props.hasOrderIndex) || !draggedItem.value) {
+    if (!canReorder.value || !draggedItem.value) {
         return;
     }
     event.preventDefault();
@@ -188,7 +201,7 @@ const handleDragOver = (event, item, index) => {
 };
 
 const handleDrop = async (event, dropItem, dropIndex) => {
-    if ((!props.hasDeepStructure && !props.hasOrderIndex) || !draggedItem.value) {
+    if (!canReorder.value || !draggedItem.value) {
         return;
     }
     event.preventDefault();
@@ -421,17 +434,17 @@ const submitCreateChild = (parentId) => {
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 <template v-for="(item, index) in finalDisplayItems" :key="item[props.primaryKeyColumn]">
                                 <tr
-                                    :draggable="hasDeepStructure || hasOrderIndex"
+                                    :draggable="canReorder"
                                     class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
                                     :class="{
-                                        'cursor-move': hasDeepStructure || hasOrderIndex,
+                                        'cursor-move': canReorder,
                                         'opacity-50': draggedItem && draggedItem[props.primaryKeyColumn] === item[props.primaryKeyColumn],
                                         'bg-blue-50 dark:bg-blue-900/20': draggedOverIndex === index && draggedItem && draggedItem[props.primaryKeyColumn] !== item[props.primaryKeyColumn],
                                     }"
-                                    @dragstart="(hasDeepStructure || hasOrderIndex) && handleDragStart($event, item)"
-                                    @dragend="(hasDeepStructure || hasOrderIndex) && handleDragEnd($event)"
-                                    @dragover.prevent="(hasDeepStructure || hasOrderIndex) && handleDragOver($event, item, index)"
-                                    @drop="(hasDeepStructure || hasOrderIndex) && handleDrop($event, item, index)"
+                                    @dragstart="canReorder && handleDragStart($event, item)"
+                                    @dragend="canReorder && handleDragEnd($event)"
+                                    @dragover.prevent="canReorder && handleDragOver($event, item, index)"
+                                    @drop="canReorder && handleDrop($event, item, index)"
                                 >
                                         <td
                                             v-for="(column, colIndex) in columns"
