@@ -342,6 +342,9 @@ const moduleForm = useForm({
 
 const currentUiConfig = ref(initialDataSourceUi.value || '');
 
+// Local state for data_source_table input (separate from form to prevent auto-save)
+const dataSourceTableInput = ref(initialDataSourceTable.value);
+
 // Tree structure and relationships state
 const dbTableDeepStructure = ref(initialDbTableDeepStructure.value);
 const dbTableParentColumn = ref(initialDbTableParentColumn.value);
@@ -506,6 +509,39 @@ watch(
     },
 );
 
+// Sync dataSourceTableInput when moduleForm.data_source_table changes (e.g., after applying)
+watch(
+    () => moduleForm.data_source_table,
+    (newValue) => {
+        if (newValue !== dataSourceTableInput.value) {
+            dataSourceTableInput.value = newValue;
+        }
+    },
+);
+
+// Apply data source table name change (just updates local state to trigger table fetch)
+const applyDataSourceTable = () => {
+    // Simply update moduleForm.data_source_table to match the input
+    // The DataSourceUiBuilder component will automatically fetch the table structure
+    // because it watches the tableName prop and has :key binding
+    moduleForm.data_source_table = dataSourceTableInput.value;
+    
+    // Update custom_fields in moduleForm to keep it in sync (for when form is saved later)
+    const dataSourceTableField = settingsFields.value.find(field => field.node === 'data_source_table');
+    if (dataSourceTableField) {
+        if (!moduleForm.custom_fields) {
+            moduleForm.custom_fields = {};
+        }
+        if (!moduleForm.custom_fields[dataSourceTableField.id]) {
+            moduleForm.custom_fields[dataSourceTableField.id] = {
+                default: '',
+                translations: {},
+            };
+        }
+        moduleForm.custom_fields[dataSourceTableField.id].default = dataSourceTableInput.value || '';
+    }
+};
+
 const submitModule = () => {
     // Only use forceFormData if we have file uploads
     const hasFileFields = filteredSettingsFields.value.some(field => field.type === 'file');
@@ -536,7 +572,9 @@ const submitModule = () => {
                 translations: {},
             };
         }
-        moduleForm.custom_fields[dataSourceTableField.id].default = moduleForm.data_source_table || '';
+        // Use the applied value from dataSourceTableInput
+        moduleForm.custom_fields[dataSourceTableField.id].default = dataSourceTableInput.value || '';
+        moduleForm.data_source_table = dataSourceTableInput.value;
     }
     
     if (dataSourceUiField) {
@@ -695,12 +733,36 @@ const reorderAction = (action, direction) => {
                             <div class="grid gap-4 md:grid-cols-2">
                                 <div>
                                     <label class="form-label">Data source table</label>
-                                    <input
-                                        v-model="moduleForm.data_source_table"
-                                        type="text"
-                                        class="form-input"
-                                        placeholder="e.g., users, products"
-                                    />
+                                    <div class="flex gap-2">
+                                        <input
+                                            v-model="dataSourceTableInput"
+                                            type="text"
+                                            class="form-input flex-1"
+                                            placeholder="e.g., users, products"
+                                        />
+                                        <button
+                                            type="button"
+                                            @click="applyDataSourceTable"
+                                            :disabled="dataSourceTableInput === moduleForm.data_source_table"
+                                            class="btn btn-primary whitespace-nowrap flex items-center justify-center"
+                                            :class="{ 'opacity-50 cursor-not-allowed': dataSourceTableInput === moduleForm.data_source_table }"
+                                            title="Apply table name"
+                                        >
+                                            <svg
+                                                class="w-5 h-5"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M5 13l4 4L19 7"
+                                                />
+                                            </svg>
+                                        </button>
+                                    </div>
                                     <p v-if="moduleForm.errors.data_source_table" class="mt-1 text-sm text-red-600">
                                         {{ moduleForm.errors.data_source_table }}
                                     </p>
@@ -743,6 +805,7 @@ const reorderAction = (action, direction) => {
                                     :table-name="moduleForm.data_source_table"
                                     :module-id="props.module.id"
                                     :initial-ui-config="currentUiConfig"
+                                    :key="moduleForm.data_source_table"
                                     @update:ui-config="(config) => { currentUiConfig = config; moduleForm.data_source_ui = config; }"
                                 />
                             </div>

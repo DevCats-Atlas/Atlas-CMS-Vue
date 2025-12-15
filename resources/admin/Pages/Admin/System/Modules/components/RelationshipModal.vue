@@ -33,6 +33,9 @@ const formData = ref({
 
 const relatedTableUiConfig = ref('');
 
+// Local state for related_table input (separate from form to prevent auto-fetch)
+const relatedTableInput = ref('');
+
 // Initialize form when relationship changes or modal opens
 watch([() => props.open, () => props.relationship], () => {
     if (props.open) {
@@ -50,6 +53,7 @@ watch([() => props.open, () => props.relationship], () => {
                 ui_config: props.relationship.ui_config || '',
             };
             relatedTableUiConfig.value = props.relationship.ui_config || '';
+            relatedTableInput.value = props.relationship.related_table || '';
         } else {
             // Create mode - reset to defaults
             formData.value = {
@@ -64,9 +68,28 @@ watch([() => props.open, () => props.relationship], () => {
                 ui_config: '',
             };
             relatedTableUiConfig.value = '';
+            relatedTableInput.value = '';
         }
     }
 }, { immediate: true });
+
+// Sync relatedTableInput when formData.related_table changes (e.g., after applying)
+watch(
+    () => formData.value.related_table,
+    (newValue) => {
+        if (newValue !== relatedTableInput.value) {
+            relatedTableInput.value = newValue;
+        }
+    },
+);
+
+// Apply related table name change (just updates local state to trigger table fetch)
+const applyRelatedTable = () => {
+    // Simply update formData.related_table to match the input
+    // The FieldConfigurationBuilder component will automatically fetch the table structure
+    // because it watches the tableName prop and has :key binding
+    formData.value.related_table = relatedTableInput.value;
+};
 
 // Watch for UI config changes from FieldConfigurationBuilder
 watch(relatedTableUiConfig, (newConfig) => {
@@ -76,6 +99,8 @@ watch(relatedTableUiConfig, (newConfig) => {
 const isEditMode = computed(() => !!props.relationship);
 
 const submit = () => {
+    // Sync related_table input to formData before submitting
+    formData.value.related_table = relatedTableInput.value;
     emit('save', { ...formData.value });
     emit('close');
 };
@@ -128,13 +153,37 @@ const close = () => {
                                 <span v-else>Related Table</span>
                                 <span class="text-red-500">*</span>
                             </label>
-                            <input
-                                v-model="formData.related_table"
-                                type="text"
-                                class="form-input"
-                                placeholder="e.g., orders, users, venues_categories"
-                                required
-                            />
+                            <div class="flex gap-2">
+                                <input
+                                    v-model="relatedTableInput"
+                                    type="text"
+                                    class="form-input flex-1"
+                                    placeholder="e.g., orders, users, venues_categories"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    @click="applyRelatedTable"
+                                    :disabled="relatedTableInput === formData.related_table"
+                                    class="btn btn-primary whitespace-nowrap flex items-center justify-center"
+                                    :class="{ 'opacity-50 cursor-not-allowed': relatedTableInput === formData.related_table }"
+                                    title="Apply table name"
+                                >
+                                    <svg
+                                        class="w-5 h-5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M5 13l4 4L19 7"
+                                        />
+                                    </svg>
+                                </button>
+                            </div>
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                 <span v-if="formData.type === 'belongsToMany'">The final table you want to access (through the pivot table)</span>
                                 <span v-else>The table this relationship connects to</span>
@@ -241,6 +290,7 @@ const close = () => {
                                 :initial-ui-config="relatedTableUiConfig"
                                 :show-editable="true"
                                 :show-show-in-list="true"
+                                :key="formData.related_table"
                                 @update:ui-config="(config) => { relatedTableUiConfig = config; formData.ui_config = config; }"
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
