@@ -1,13 +1,21 @@
 <script setup>
 import { Head, useForm } from '@inertiajs/vue3';
 import { useTranslation } from '@admin/js/utils/useTranslation';
+import { onMounted, onUnmounted, ref } from 'vue';
 
 const { t } = useTranslation();
 
-defineProps({
+const props = defineProps({
     title: {
         type: String,
         default: 'Sign in',
+    },
+    recaptcha: {
+        type: Object,
+        default: () => ({
+            enabled: false,
+            siteKey: '',
+        }),
     },
 });
 
@@ -15,9 +23,48 @@ const form = useForm({
     email: '',
     password: '',
     remember: false,
+    recaptcha_token: '',
 });
 
-const submit = () => {
+const recaptchaLoaded = ref(false);
+let recaptchaWidgetId = null;
+
+// Load reCAPTCHA v3 script
+onMounted(() => {
+    if (props.recaptcha?.enabled && props.recaptcha?.siteKey) {
+        const script = document.createElement('script');
+        script.src = `https://www.google.com/recaptcha/api.js?render=${props.recaptcha.siteKey}`;
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
+            recaptchaLoaded.value = true;
+        };
+        document.head.appendChild(script);
+    }
+});
+
+// Cleanup script on unmount
+onUnmounted(() => {
+    if (recaptchaWidgetId !== null && window.grecaptcha) {
+        window.grecaptcha.reset(recaptchaWidgetId);
+    }
+});
+
+const submit = async () => {
+    // Execute reCAPTCHA if enabled
+    if (props.recaptcha?.enabled && props.recaptcha?.siteKey && window.grecaptcha) {
+        try {
+            const token = await window.grecaptcha.execute(props.recaptcha.siteKey, {
+                action: 'login',
+            });
+            form.recaptcha_token = token;
+        } catch (error) {
+            console.error('reCAPTCHA error:', error);
+            // Continue with form submission even if reCAPTCHA fails
+            // Backend will handle validation
+        }
+    }
+
     form.post('/admin/login', {
         onFinish: () => form.reset('password'),
     });
@@ -88,6 +135,9 @@ const submit = () => {
                     </div>
 
                     <div>
+                        <p v-if="form.errors.recaptcha" class="mb-4 text-sm text-red-600 dark:text-red-400">
+                            {{ form.errors.recaptcha }}
+                        </p>
                         <button type="submit" class="btn btn-primary w-full" :disabled="form.processing">
                             <svg
                                 v-if="form.processing"
