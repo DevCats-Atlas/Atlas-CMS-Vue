@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
+import Toggle from '@/components/Toggle.vue';
 
 const props = defineProps({
     field: {
@@ -49,30 +50,22 @@ const getBooleanValue = (value) => {
     <div class="space-y-4">
         <template v-if="hasTranslations">
             <div v-for="(language, index) in languages" :key="languageKey(language, index)" class="space-y-1">
-                <label class="inline-flex items-center">
-                    <input
+                <label class="inline-flex items-center gap-3">
+                    <Toggle
                         v-model="model.translations[ensureTranslationKey(language, index)]"
-                        type="checkbox"
-                        class="form-checkbox"
-                        :true-value="true"
-                        :false-value="false"
                     />
-                    <span v-if="!hideTitle" class="ml-2 form-label">
+                    <span v-if="!hideTitle" class="form-label">
                         {{ field.title }} ({{ languageLabel(language) }})
                     </span>
                 </label>
             </div>
         </template>
         <div v-else class="space-y-1">
-            <label class="inline-flex items-center">
-                <input
+            <label class="inline-flex items-center gap-3">
+                <Toggle
                     v-model="model.default"
-                    type="checkbox"
-                    class="form-checkbox"
-                    :true-value="true"
-                    :false-value="false"
                 />
-                <span v-if="!hideTitle" class="ml-2 form-label">{{ field.title }}</span>
+                <span v-if="!hideTitle" class="form-label">{{ field.title }}</span>
             </label>
         </div>
     </div>
