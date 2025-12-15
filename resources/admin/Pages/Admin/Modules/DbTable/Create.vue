@@ -166,7 +166,12 @@ const submitCreate = () => {
 
 // Parse select options from string based on input type
 const parseSelectOptions = (optionsString, inputType = 'comma') => {
-    if (!optionsString || optionsString.trim() === '') {
+    // Convert to string if it's not already (handles numbers, null, undefined)
+    if (optionsString == null) {
+        return [];
+    }
+    optionsString = String(optionsString);
+    if (optionsString.trim() === '') {
         return [];
     }
     
