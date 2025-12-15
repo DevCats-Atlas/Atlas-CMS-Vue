@@ -185,10 +185,11 @@ const loadData = async () => {
         
         fields.value = structureResponse.data.fields || [];
         
-        // Load existing record data
+        // Load existing record data (pass module_handle so backend can use module's DB connection)
         const recordDataResponse = await axios.get(`/admin/api/tables/${props.relatedTableName}/record`, {
             params: {
                 id: props.relatedRecordId,
+                module_handle: props.moduleHandle,
             },
         });
         
