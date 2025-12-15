@@ -34,10 +34,19 @@ const props = defineProps({
         type: String,
         default: '__create_collection__',
     },
+    dbConnections: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 const CREATE_TYPE_OPTION = '__create__';
 const COLLECTION_CREATE_OPTION = props.collectionCreateValue || '__create_collection__';
+
+const defaultDbConnectionLabel = computed(() => {
+    const def = props.dbConnections.find((c) => c.is_default);
+    return def ? def.label : 'default';
+});
 
 const createForm = useForm({
     title: '',
@@ -56,6 +65,7 @@ const createForm = useForm({
     collection_title: '',
     data_source: 'items', // Default to 'items'
     data_source_table: '', // Data source table field
+    db_table_connection: '', // Database connection field
 });
 
 const isCreateModalOpen = ref(false);
@@ -100,6 +110,7 @@ const resetCreateForm = () => {
     createForm.new_type_fields = [];
     createForm.data_source = 'items'; // Default to 'items'
     createForm.data_source_table = ''; // Reset data_source_table
+    createForm.db_table_connection = ''; // Reset db_table_connection
     selectedItemType.value = '';
     setDefaultCollectionChoice();
 };
@@ -246,6 +257,25 @@ const submitNewModule = () => {
                 </div>
 
                 <div v-if="isDbTableSource" class="grid gap-4 md:grid-cols-2">
+                    <div>
+                        <label class="form-label">Database connection</label>
+                        <select v-model="createForm.db_table_connection" class="form-select">
+                            <option value="">Default ({{ defaultDbConnectionLabel }})</option>
+                            <option
+                                v-for="connection in props.dbConnections"
+                                :key="connection.key"
+                                :value="connection.key"
+                            >
+                                {{ connection.label }}
+                            </option>
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Connection name from config/database.php. Leave empty to use default connection.
+                        </p>
+                        <p v-if="createForm.errors.db_table_connection" class="mt-1 text-sm text-red-600">
+                            {{ createForm.errors.db_table_connection }}
+                        </p>
+                    </div>
                     <div>
                         <label class="form-label">Data source table</label>
                         <input v-model="createForm.data_source_table" type="text" class="form-input" />

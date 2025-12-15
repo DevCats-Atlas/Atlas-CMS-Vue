@@ -41,10 +41,19 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    dbConnections: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 const { toasts, showToast, dismissToast } = useToast();
 const COLLECTION_CREATE_OPTION = props.collectionCreateValue || '__create_collection__';
+
+const defaultDbConnectionLabel = computed(() => {
+    const def = props.dbConnections.find((c) => c.is_default);
+    return def ? def.label : 'default';
+});
 
 const defaultCollectionChoice = () => {
     if (props.module.collection?.id) {
@@ -147,6 +156,7 @@ const filteredSettingsFields = computed(() => {
         field.node !== 'data_source' && 
         field.node !== 'data_source_table' && 
         field.node !== 'data_source_ui' &&
+        field.node !== 'db_table_connection' &&
         field.node !== 'db_table_deep_structure' &&
         field.node !== 'db_table_parent_column' &&
         field.node !== 'db_table_relationships' &&
@@ -278,6 +288,15 @@ const initialDataSourceUi = computed(() => {
     return '';
 });
 
+// Initialize db_table_connection from custom fields if available
+const initialDbTableConnection = computed(() => {
+    const field = settingsFields.value.find(field => field.node === 'db_table_connection');
+    if (field && initialCustomFields.value[field.id]) {
+        return initialCustomFields.value[field.id].default || '';
+    }
+    return '';
+});
+
 // Initialize db_table_deep_structure from custom fields if available
 const initialDbTableDeepStructure = computed(() => {
     const field = settingsFields.value.find(field => field.node === 'db_table_deep_structure');
@@ -367,6 +386,7 @@ const currentUiConfig = ref(initialDataSourceUi.value || '');
 const dataSourceTableInput = ref(initialDataSourceTable.value);
 
 // Tree structure and relationships state
+const dbTableConnection = ref(initialDbTableConnection.value);
 const dbTableDeepStructure = ref(initialDbTableDeepStructure.value);
 const dbTableParentColumn = ref(initialDbTableParentColumn.value);
 const dbTableRelationships = ref(JSON.parse(JSON.stringify(initialDbTableRelationships.value))); // Deep copy
@@ -374,6 +394,21 @@ const dbTableSorting = ref(initialDbTableSorting.value);
 const dbTableSortingColumn = ref(initialDbTableSortingColumn.value);
 const dbTableOrderByColumn = ref(initialDbTableOrderByColumn.value);
 const dbTableOrderByDirection = ref(initialDbTableOrderByDirection.value);
+
+// Watch and sync database connection to form
+watch(dbTableConnection, (newValue) => {
+    const connectionField = settingsFields.value.find(field => field.node === 'db_table_connection');
+    if (connectionField) {
+        ensureFieldModel(connectionField);
+        if (!moduleForm.custom_fields[connectionField.id]) {
+            moduleForm.custom_fields[connectionField.id] = {
+                default: '',
+                translations: {},
+            };
+        }
+        moduleForm.custom_fields[connectionField.id].default = newValue || '';
+    }
+}, { immediate: true });
 
 // Watch and sync tree structure fields to form
 watch([dbTableDeepStructure, dbTableParentColumn], () => {
@@ -585,10 +620,11 @@ const submitModule = () => {
     // Only use forceFormData if we have file uploads
     const hasFileFields = filteredSettingsFields.value.some(field => field.type === 'file');
     
-    // Sync data_source, data_source_table, and data_source_ui to custom_fields before submitting
+    // Sync data_source, data_source_table, data_source_ui, and db_table_connection to custom_fields before submitting
     const dataSourceField = settingsFields.value.find(field => field.node === 'data_source');
     const dataSourceTableField = settingsFields.value.find(field => field.node === 'data_source_table');
     const dataSourceUiField = settingsFields.value.find(field => field.node === 'data_source_ui');
+    const connectionField = settingsFields.value.find(field => field.node === 'db_table_connection');
     
     if (!moduleForm.custom_fields) {
         moduleForm.custom_fields = {};
@@ -624,6 +660,17 @@ const submitModule = () => {
             };
         }
         moduleForm.custom_fields[dataSourceUiField.id].default = currentUiConfig.value || moduleForm.data_source_ui || '';
+    }
+    
+    // Sync db_table_connection to custom_fields
+    if (connectionField) {
+        if (!moduleForm.custom_fields[connectionField.id]) {
+            moduleForm.custom_fields[connectionField.id] = {
+                default: '',
+                translations: {},
+            };
+        }
+        moduleForm.custom_fields[connectionField.id].default = dbTableConnection.value || '';
     }
     
     moduleForm.put(`/admin/system/modules/${props.module.id}`, {
@@ -770,6 +817,25 @@ const reorderAction = (action, direction) => {
                         <div v-if="isDbTableSource" class="pt-4 border-t border-gray-200 dark:border-gray-700">
                             <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Database Table Configuration</h3>
                             <div class="grid gap-4 md:grid-cols-2">
+                                <div>
+                                    <label class="form-label">Database connection</label>
+                                    <select
+                                        v-model="dbTableConnection"
+                                        class="form-select"
+                                    >
+                                        <option value="">Default ({{ defaultDbConnectionLabel }})</option>
+                                        <option
+                                            v-for="connection in props.dbConnections"
+                                            :key="connection.key"
+                                            :value="connection.key"
+                                        >
+                                            {{ connection.label }}
+                                        </option>
+                                    </select>
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        Connection name from config/database.php. Leave empty to use the default connection.
+                                    </p>
+                                </div>
                                 <div>
                                     <label class="form-label">Data source table</label>
                                     <div class="flex gap-2">
