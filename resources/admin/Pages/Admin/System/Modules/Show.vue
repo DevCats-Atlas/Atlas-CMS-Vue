@@ -922,10 +922,10 @@ const reorderAction = (action, direction) => {
                                     />
                                     <div class="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
                                         <p class="text-xs font-semibold text-blue-900 dark:text-blue-200 mb-2">
-                                            Interface: <code class="text-xs">AtlasCMS\Contracts\HandlerDbTableModuleRecord</code>
+                                            Interface: <code class="text-xs">AtlasCMS\Contracts\Modules\DbTable\RecordHandler</code>
                                         </p>
                                         <p class="text-xs text-blue-800 dark:text-blue-300 mb-2">
-                                            The class must implement this interface. You can extend <code class="text-xs">AbstractHandlerDbTableModuleRecord</code> to make all methods optional. Available methods:
+                                            The class must implement this interface. You can extend <code class="text-xs">AbstractRecordHandler</code> to make all methods optional. Available methods:
                                         </p>
                                         <ul class="text-xs text-blue-800 dark:text-blue-300 space-y-1 list-disc list-inside">
                                             <li><code class="text-xs">creating()</code> - Called before creating a record</li>
