@@ -758,7 +758,7 @@ onMounted(() => {
                                         {{ column.title }}
                                     </th>
                                     <th v-if="hasDeepStructureEnabled" class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 w-20">Children</th>
-                                    <th class="w-auto px-2 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Actions</th>
+                                    <th class="w-fit px-2 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -866,7 +866,7 @@ onMounted(() => {
                                             </span>
                                         </div>
                                     </td>
-                                    <td class="w-auto px-2 py-2 whitespace-nowrap">
+                                    <td class="w-fit px-2 py-2 whitespace-nowrap" style="width: 1%;">
                                         <div class="btn-group" role="group">
                                             <button
                                                 v-if="hasDeepStructureEnabled"
