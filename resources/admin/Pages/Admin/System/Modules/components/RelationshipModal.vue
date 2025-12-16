@@ -29,6 +29,7 @@ const formData = ref({
     pivot_table: '',
     related_key: '',
     ui_config: '',
+    handler_class: '',
 });
 
 const relatedTableUiConfig = ref('');
@@ -51,6 +52,7 @@ watch([() => props.open, () => props.relationship], () => {
                 pivot_table: props.relationship.pivot_table || '',
                 related_key: props.relationship.related_key || '',
                 ui_config: props.relationship.ui_config || '',
+                handler_class: props.relationship.handler_class || '',
             };
             relatedTableUiConfig.value = props.relationship.ui_config || '';
             relatedTableInput.value = props.relationship.related_table || '';
@@ -66,6 +68,7 @@ watch([() => props.open, () => props.relationship], () => {
                 pivot_table: '',
                 related_key: '',
                 ui_config: '',
+                handler_class: '',
             };
             relatedTableUiConfig.value = '';
             relatedTableInput.value = '';
@@ -279,6 +282,33 @@ const close = () => {
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                 Column in pivot table pointing to the final related table (e.g., category_id in venues_categories_records pointing to venues_categories)
                             </p>
+                        </div>
+                        
+                        <!-- PHP Handler class -->
+                        <div class="md:col-span-2">
+                            <label class="form-label">PHP Handler class <span class="text-gray-400 text-xs">(optional)</span></label>
+                            <input
+                                v-model="formData.handler_class"
+                                type="text"
+                                class="form-input"
+                                placeholder="e.g., App\Handlers\CustomRelationshipHandler"
+                            />
+                            <div class="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                                <p class="text-xs font-semibold text-blue-900 dark:text-blue-200 mb-2">
+                                    Interface: <code class="text-xs">AtlasCMS\Contracts\HandlerDbTableModuleRecord</code>
+                                </p>
+                                <p class="text-xs text-blue-800 dark:text-blue-300 mb-2">
+                                    The class must implement this interface. You can extend <code class="text-xs">AbstractHandlerDbTableModuleRecord</code> to make all methods optional. Available methods:
+                                </p>
+                                <ul class="text-xs text-blue-800 dark:text-blue-300 space-y-1 list-disc list-inside">
+                                    <li><code>creating($context, $tableName, &$data, $request)</code> - Called before creating a related record</li>
+                                    <li><code>created($context, $tableName, $recordId, $data, $request)</code> - Called after a related record is created</li>
+                                    <li><code>updating($context, $tableName, $recordId, &$data, $originalData, $request)</code> - Called before updating a related record</li>
+                                    <li><code>updated($context, $tableName, $recordId, $data, $originalData, $request)</code> - Called after a related record is updated</li>
+                                    <li><code>deleting($context, $tableName, $recordId, $data, $request)</code> - Called before deleting a related record</li>
+                                    <li><code>deleted($context, $tableName, $recordId, $data, $request)</code> - Called after a related record is deleted</li>
+                                </ul>
+                            </div>
                         </div>
                         
                         <!-- Field Configuration for Related Table -->
