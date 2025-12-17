@@ -29,7 +29,7 @@ defineProps({
         <div class="py-6">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
                 <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6">
-                    <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">System Overview</h1>
+                    <h1 class="heading-1">System Overview</h1>
                     <p class="text-gray-500 dark:text-gray-400 mt-2">
                         Monitor the health of background services, queues, and infrastructure integrations.
                     </p>

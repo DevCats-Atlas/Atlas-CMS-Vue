@@ -466,7 +466,7 @@ const deleteInterface = async (field) => {
                     {{ form.errors.interface_path }}
                 </p>
             </div>
-            <div class="flex items-center justify-end gap-3">
+            <div class="actions-footer">
                 <button type="button" class="btn-text" @click="closeModal">Cancel</button>
                 <button type="submit" class="btn btn-primary" :disabled="form.processing">
                     {{ form.processing ? (editingField ? 'Saving…' : 'Creating…') : (editingField ? 'Save interface' : 'Create interface') }}

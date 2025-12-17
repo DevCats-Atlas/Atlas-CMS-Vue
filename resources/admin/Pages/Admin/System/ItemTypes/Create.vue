@@ -30,7 +30,7 @@ const submit = () => {
                 <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6">
                     <div class="flex items-center justify-between mb-6">
                         <div>
-                            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Create item type</h1>
+                            <h1 class="heading-1">Create item type</h1>
                             <p class="text-gray-500 dark:text-gray-400 mt-1">Define a new polymorphic content type.</p>
                         </div>
                         <Link href="/admin/system/item-types" class="btn-text">
@@ -106,7 +106,7 @@ const submit = () => {
                             </label>
                         </div>
                     
-                        <div class="flex items-center justify-end gap-3">
+                        <div class="actions-footer">
                             <Link href="/admin/system/item-types" class="btn-text">
                                 Cancel
                             </Link>

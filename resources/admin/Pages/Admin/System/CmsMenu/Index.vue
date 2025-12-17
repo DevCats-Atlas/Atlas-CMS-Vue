@@ -232,7 +232,7 @@ const deleteItem = async (item) => {
                 <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ t('admin.cms_menu.title') }}</h1>
+                            <h1 class="heading-1">{{ t('admin.cms_menu.title') }}</h1>
                             <p class="text-gray-600 dark:text-gray-400 mt-1">
                                 {{ t('admin.cms_menu.description') }}
                             </p>

@@ -801,7 +801,7 @@ const reorderAction = (action, direction) => {
                 <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ module.title }}</h1>
+                            <h1 class="heading-1">{{ module.title }}</h1>
                             <p class="text-sm text-gray-500 dark:text-gray-400">Manage module details and actions.</p>
                         </div>
                         <Link href="/admin/system/modules" class="btn-text">
@@ -853,7 +853,7 @@ const reorderAction = (action, direction) => {
                         </div>
                         <!-- Database Table Configuration Section -->
                         <div v-if="isDbTableSource" class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Database Table Configuration</h3>
+                            <h3 class="heading-4 mb-4">Database Table Configuration</h3>
                             <div class="grid gap-4 md:grid-cols-2">
                                 <div>
                                     <label class="form-label">Database connection</label>
@@ -941,7 +941,7 @@ const reorderAction = (action, direction) => {
 
                             <!-- Sorting Configuration -->
                             <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Sorting</h4>
+                                <h4 class="heading-4 mb-4">Sorting</h4>
                                 <div class="space-y-4">
                                     <div>
                                         <label class="flex items-center gap-2">
@@ -973,7 +973,7 @@ const reorderAction = (action, direction) => {
 
                             <!-- Ordering Configuration -->
                             <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Default Ordering</h4>
+                                <h4 class="heading-4 mb-4">Default Ordering</h4>
                                 <div class="grid gap-4 md:grid-cols-2">
                                     <div>
                                         <label class="form-label">Order by column</label>
@@ -1002,7 +1002,7 @@ const reorderAction = (action, direction) => {
 
                             <!-- Field Configuration Section -->
                             <div v-if="moduleForm.data_source_table && moduleForm.data_source_table.trim() !== ''" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Field Configuration</h4>
+                                <h4 class="heading-4 mb-4">Field Configuration</h4>
                                 <DataSourceUiBuilder
                                     :table-name="moduleForm.data_source_table"
                                     :module-id="props.module.id"
@@ -1014,7 +1014,7 @@ const reorderAction = (action, direction) => {
                             
                             <!-- Tree Structure Configuration -->
                             <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Tree Structure</h4>
+                                <h4 class="heading-4 mb-4">Tree Structure</h4>
                                 <div class="space-y-4">
                                     <div>
                                         <label class="flex items-center gap-2">
@@ -1048,7 +1048,7 @@ const reorderAction = (action, direction) => {
                             <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                                 <div class="flex items-center justify-between mb-4">
                                     <div>
-                                        <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Relationships</h4>
+                                        <h4 class="heading-4">Relationships</h4>
                                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                             Define Laravel Eloquent-style relationships between this table and other tables
                                         </p>

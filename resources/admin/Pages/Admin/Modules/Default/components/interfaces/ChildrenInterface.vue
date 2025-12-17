@@ -589,7 +589,7 @@ const handleDrop = (event, dropIndex) => {
             <!-- Selected files preview -->
             <div v-if="selectedFiles.length > 0" class="bg-gray-50 dark:bg-gray-900/40 rounded-lg p-4 space-y-3 border border-gray-200 dark:border-gray-700">
                 <div>
-                    <p class="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                    <p class="heading-label mb-2">
                         Selected files ({{ selectedFiles.length }})
                     </p>
                     <div class="flex flex-wrap gap-2 mb-3">

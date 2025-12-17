@@ -264,7 +264,7 @@ const selectTab = (tabId) => {
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Module</p>
-                            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
+                            <h1 class="heading-1">
                                 {{ module.title }} · {{ t('admin.users.edit_user') }}
                             </h1>
                             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -278,7 +278,7 @@ const selectTab = (tabId) => {
 
                     <!-- Tabs -->
                     <div class="space-y-6">
-                        <div class="flex flex-wrap gap-2 border-b border-gray-200 dark:border-gray-700 pb-1">
+                        <div class="flex flex-wrap gap-2 border-divider pb-1">
                             <button
                                 v-for="tab in tabItems"
                                 :key="tab.id"

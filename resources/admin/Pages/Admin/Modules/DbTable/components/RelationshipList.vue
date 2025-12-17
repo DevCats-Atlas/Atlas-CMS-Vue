@@ -736,8 +736,8 @@ const formatValue = (value, column) => {
             @click.self="closeEditModal"
         >
             <div class="w-full max-w-4xl rounded-2xl bg-white dark:bg-gray-800 shadow-xl flex flex-col max-h-[90vh]">
-                <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                <div class="modal-header">
+                    <h3 class="section-heading">
                         {{ t('admin.relationships.edit_relationship') }}
                     </h3>
                     <button
@@ -748,7 +748,7 @@ const formatValue = (value, column) => {
                         ✕
                     </button>
                 </div>
-                <div class="px-6 py-4 overflow-y-auto flex-1">
+                <div class="modal-body">
                     <RelationshipEditForm
                         :relationship="relationship"
                         :module-handle="moduleHandle"

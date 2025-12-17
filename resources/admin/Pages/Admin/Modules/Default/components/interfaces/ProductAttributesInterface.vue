@@ -196,7 +196,7 @@ onBeforeUnmount(() => {
 
         <div v-else class="space-y-4">
             <!-- Category Tabs -->
-            <div class="border-b border-gray-200 dark:border-gray-700">
+            <div class="border-divider">
                 <nav class="-mb-px flex space-x-4">
                     <button
                         v-for="category in categoriesData"

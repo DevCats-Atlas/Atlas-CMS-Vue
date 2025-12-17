@@ -456,7 +456,7 @@ const handleDrop = (event, dropCategory) => {
                     <div class="flex items-center gap-2">
                         <div class="flex-1 min-w-0">
                             <!-- Show breadcrumbs inline with title for second level and deeper -->
-                            <p v-if="includeDescendants && category.breadcrumbs && category.breadcrumbs.length > 0" class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            <p v-if="includeDescendants && category.breadcrumbs && category.breadcrumbs.length > 0" class="heading-label truncate">
                                 <span class="text-gray-500 dark:text-gray-400">
                                     <template v-for="(crumb, idx) in category.breadcrumbs" :key="crumb.id">
                                         <span>{{ crumb.title }}</span>
@@ -466,7 +466,7 @@ const handleDrop = (event, dropCategory) => {
                                 <span class="text-gray-900 dark:text-white font-medium">{{ category.title }}</span>
                             </p>
                             <!-- Just title for first level items -->
-                            <p v-else class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            <p v-else class="heading-label truncate">
                                 {{ category.title }}
                             </p>
                         </div>

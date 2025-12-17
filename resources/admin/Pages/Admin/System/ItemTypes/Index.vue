@@ -39,7 +39,7 @@ const deleteType = async (type) => {
                 <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6">
                     <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Item types</h1>
+                            <h1 class="heading-1">Item types</h1>
                             <p class="text-gray-500 dark:text-gray-400 mt-2">
                                 View the polymorphic content types that power collections, languages, and CMS entities.
                             </p>

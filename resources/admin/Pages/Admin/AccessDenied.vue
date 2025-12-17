@@ -30,7 +30,7 @@ const props = defineProps({
                         </svg>
                     </div>
                     
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                    <h1 class="heading-1 font-bold mb-2">
                         {{ t('admin.access_denied.title') }}
                     </h1>
                     

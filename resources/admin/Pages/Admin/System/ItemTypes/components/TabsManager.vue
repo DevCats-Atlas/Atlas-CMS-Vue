@@ -164,7 +164,7 @@ const deleteTab = async (tab) => {
                 <input v-model="form.visible" type="checkbox" class="form-checkbox" />
                 <span class="ml-2">Visible</span>
             </label>
-            <div class="flex items-center justify-end gap-3">
+            <div class="actions-footer">
                 <button type="button" class="btn-text" @click="closeModal">Cancel</button>
                 <button type="submit" class="btn btn-primary" :disabled="form.processing">
                     {{ form.processing ? (editingTab ? 'Saving…' : 'Creating…') : (editingTab ? 'Save tab' : 'Create tab') }}

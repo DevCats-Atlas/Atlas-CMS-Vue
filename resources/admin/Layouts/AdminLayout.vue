@@ -133,11 +133,11 @@ onMounted(() => {
         >
             <div class="flex flex-col h-full">
                 <!-- Logo -->
-                <div class="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
-                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ sidebarTitle }}</h1>
+                <div class="flex items-center justify-between h-16 px-6 border-divider">
+                    <h1 class="heading-2 font-bold">{{ sidebarTitle }}</h1>
                     <button
                         @click="closeSidebar"
-                        class="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        class="btn-icon"
                         :title="t('admin.layout.close_sidebar')"
                     >
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,13 +197,13 @@ onMounted(() => {
         <!-- Main content -->
         <div :class="['transition-all duration-300', isSidebarOpen ? 'lg:ml-64' : 'lg:ml-0']">
             <!-- Top bar -->
-            <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+            <header class="bg-white dark:bg-gray-800 shadow-sm border-divider">
                 <div class="flex items-center justify-between h-16 px-6">
                     <div class="flex items-center space-x-4">
                         <button
                             v-if="!isSidebarOpen"
                             @click="toggleSidebar"
-                            class="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            class="btn-icon"
                             :title="t('admin.layout.open_sidebar')"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,7 +236,7 @@ onMounted(() => {
                         </span>
                         <button
                             @click="toggleTheme"
-                            class="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            class="btn-icon"
                             :title="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
                         >
                             <!-- Sun icon (light mode) -->

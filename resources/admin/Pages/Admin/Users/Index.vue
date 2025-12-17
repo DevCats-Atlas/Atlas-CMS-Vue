@@ -288,7 +288,7 @@ onMounted(() => {
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <p class="text-sm uppercase tracking-wide text-gray-500 dark:text-gray-400">Module</p>
-                            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
+                            <h1 class="heading-1">
                                 {{ module.title }}
                                 <span class="text-gray-400 text-base font-normal">/ {{ action.title }}</span>
                             </h1>
@@ -358,7 +358,7 @@ onMounted(() => {
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                             <thead class="bg-gray-50 dark:bg-gray-900/40">
                                 <tr>
-                                    <th class="px-4 py-2 text-center w-12">
+                                    <th class="table-cell text-center w-12">
                                         <input
                                             ref="selectAllCheckbox"
                                             type="checkbox"
@@ -367,10 +367,10 @@ onMounted(() => {
                                             @change="toggleSelectAll"
                                         />
                                     </th>
-                                    <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 w-0">ID</th>
-                                    <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">{{ t('admin.users.name') }}</th>
-                                    <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">{{ t('admin.users.email') }}</th>
-                                    <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">{{ t('admin.users.item_id') }}</th>
+                                    <th class="table-header w-0">ID</th>
+                                    <th class="table-header">{{ t('admin.users.name') }}</th>
+                                    <th class="table-header">{{ t('admin.users.email') }}</th>
+                                    <th class="table-header">{{ t('admin.users.item_id') }}</th>
                                     <th class="w-auto px-2 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">{{ t('admin.common.actions') }}</th>
                                 </tr>
                             </thead>
@@ -380,7 +380,7 @@ onMounted(() => {
                                     :key="`${item.id}-${index}`"
                                     class="hover:bg-gray-50 dark:hover:bg-gray-900/40 transition-colors"
                                 >
-                                    <td class="px-4 py-2 text-center">
+                                    <td class="table-cell text-center">
                                         <input
                                             type="checkbox"
                                             class="form-checkbox"
@@ -389,10 +389,10 @@ onMounted(() => {
                                             @change="toggleSelectItem(item.id)"
                                         />
                                     </td>
-                                    <td class="px-4 py-2 font-mono text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                    <td class="table-cell table-id">
                                         #{{ item.id }}
                                     </td>
-                                    <td class="px-4 py-2">
+                                    <td class="table-cell">
                                         <Link
                                             v-if="item.can_edit !== false"
                                             :href="`${baseUrl}/edit?item=${item.id}`"
@@ -408,10 +408,10 @@ onMounted(() => {
                                             {{ item.title || t('admin.users.unnamed_user') }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">
+                                    <td class="table-cell text-sm text-gray-900 dark:text-white">
                                         {{ item.email || '-' }}
                                     </td>
-                                    <td class="px-4 py-2 font-mono text-xs text-gray-500 dark:text-gray-400">
+                                    <td class="table-cell font-mono text-xs text-gray-500 dark:text-gray-400">
                                         {{ item.item_id || '-' }}
                                     </td>
                                     <td class="w-auto px-2 py-2 whitespace-nowrap">
@@ -515,7 +515,7 @@ onMounted(() => {
                                         v-for="link in pagination.links"
                                         :key="link.label"
                                         :href="link.url || '#'"
-                                        class="relative inline-flex items-center px-4 py-2 text-sm font-semibold"
+                                        class="relative inline-flex items-center table-cell text-sm font-semibold"
                                         :class="{
                                             'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-600 dark:hover:bg-gray-700': link.url && !link.active,
                                             'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600': link.active,
@@ -625,7 +625,7 @@ onMounted(() => {
                     </p>
                 </div>
 
-                <div class="flex items-center justify-end gap-3">
+                <div class="actions-footer">
                     <button type="button" class="btn-text" @click="closeCreateModal">{{ t('admin.common.cancel') }}</button>
                     <button type="submit" class="btn btn-primary" :disabled="createForm.processing">
                         {{ createForm.processing ? t('admin.users.creating') : t('admin.common.create') }}

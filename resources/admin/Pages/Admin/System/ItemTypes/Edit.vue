@@ -64,7 +64,7 @@ const destroyType = async () => {
                 <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6">
                     <div class="flex items-center justify-between mb-6">
                         <div>
-                            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Edit item type</h1>
+                            <h1 class="heading-1">Edit item type</h1>
                             <p class="text-gray-500 dark:text-gray-400 mt-1">Update the definition for {{ itemType.code }}.</p>
                         </div>
                         <Link href="/admin/system/item-types" class="btn-text">

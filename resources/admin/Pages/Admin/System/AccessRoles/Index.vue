@@ -144,7 +144,7 @@ const toggleAllModules = () => {
             <div class="mx-auto max-w-4xl sm:px-6 lg:px-8 space-y-6">
                 <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
                     <div class="flex items-center justify-between">
-                        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ t('admin.access_roles.title') }}</h1>
+                        <h1 class="heading-1">{{ t('admin.access_roles.title') }}</h1>
                     </div>
 
                     <form class="space-y-4" @submit.prevent="submitNewRole">

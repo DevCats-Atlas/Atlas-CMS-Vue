@@ -666,7 +666,7 @@ onMounted(() => {
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <p class="text-sm uppercase tracking-wide text-gray-500 dark:text-gray-400">Module</p>
-                            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
+                            <h1 class="heading-1">
                                 {{ module.title }}
                                 <span class="text-gray-400 text-base font-normal">/ {{ action.title }}</span>
                             </h1>
@@ -737,8 +737,8 @@ onMounted(() => {
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                             <thead class="bg-gray-50 dark:bg-gray-900/40">
                                 <tr>
-                                    <th v-if="hasSortingEnabled" class="px-4 py-2 text-center w-12"></th>
-                                    <th class="px-4 py-2 text-center w-12">
+                                    <th v-if="hasSortingEnabled" class="table-cell text-center w-12"></th>
+                                    <th class="table-cell text-center w-12">
                                         <input
                                             ref="selectAllCheckbox"
                                             type="checkbox"
@@ -747,17 +747,17 @@ onMounted(() => {
                                             @change="toggleSelectAll"
                                         />
                                     </th>
-                                    <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 w-0">ID</th>
-                                    <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 w-0">Visible</th>
-                                    <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">Title</th>
+                                    <th class="table-header w-0">ID</th>
+                                    <th class="table-header w-0">Visible</th>
+                                    <th class="table-header">Title</th>
                                     <th
                                         v-for="column in columnsToShow"
                                         :key="column.node"
-                                        class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300"
+                                        class="table-header"
                                     >
                                         {{ column.title }}
                                     </th>
-                                    <th v-if="hasDeepStructureEnabled" class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 w-20">Children</th>
+                                    <th v-if="hasDeepStructureEnabled" class="table-header w-20">Children</th>
                                     <th class="w-fit px-2 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
@@ -777,7 +777,7 @@ onMounted(() => {
                                         @dragover.prevent="hasSortingEnabled && handleDragOver($event, item, index)"
                                         @drop="hasSortingEnabled && handleDrop($event, item, index)"
                                     >
-                                    <td v-if="hasSortingEnabled" class="px-4 py-2 text-center">
+                                    <td v-if="hasSortingEnabled" class="table-cell text-center">
                                         <div class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-move pointer-events-none select-none">
                                             <svg
                                                 class="w-5 h-5"
@@ -794,7 +794,7 @@ onMounted(() => {
                                             </svg>
                                         </div>
                                     </td>
-                                    <td class="px-4 py-2 text-center">
+                                    <td class="table-cell text-center">
                                         <input
                                             type="checkbox"
                                             class="form-checkbox"
@@ -804,13 +804,13 @@ onMounted(() => {
                                             @click.stop
                                         />
                                     </td>
-                                    <td class="px-4 py-2 font-mono text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                    <td class="table-cell table-id">
                                         <span v-if="item._isChild" :style="{ paddingLeft: `${item._depth * 1.5}rem` }" class="inline-block">
                                             <span class="text-gray-400">├─</span>
                                         </span>
                                         #{{ item.id }}
                                     </td>
-                                    <td class="px-4 py-2 whitespace-nowrap">
+                                    <td class="table-cell whitespace-nowrap">
                                         <span
                                             class="px-2 py-0.5 rounded-full text-xs font-semibold"
                                             :class="item.visible
@@ -820,7 +820,7 @@ onMounted(() => {
                                             {{ item.visible ? 'Visible' : 'Hidden' }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-2">
+                                    <td class="table-cell">
                                         <Link
                                             :href="`${baseUrl}/edit?item=${item.id}`"
                                             class="text-sm font-medium text-indigo-600 dark:text-indigo-300 hover:underline"
@@ -832,11 +832,11 @@ onMounted(() => {
                                     <td
                                         v-for="column in columnsToShow"
                                         :key="column.node"
-                                        class="px-4 py-2"
+                                        class="table-cell"
                                     >
                                         {{ item.custom_field_values?.[column.node] ?? '-' }}
                                     </td>
-                                    <td v-if="hasDeepStructureEnabled" class="px-4 py-2">
+                                    <td v-if="hasDeepStructureEnabled" class="table-cell">
                                         <div class="flex items-center gap-2">
                                             <button
                                                 v-if="item.children && item.children.length > 0"
@@ -941,15 +941,15 @@ onMounted(() => {
                                     class="bg-blue-50 dark:bg-blue-900/20"
                                 >
                                     <!-- Drag handle column (if sorting enabled) -->
-                                    <td v-if="hasSortingEnabled" class="px-4 py-2"></td>
+                                    <td v-if="hasSortingEnabled" class="table-cell"></td>
                                     <!-- Checkbox column -->
-                                    <td class="px-4 py-2"></td>
+                                    <td class="table-cell"></td>
                                     <!-- ID column -->
-                                    <td class="px-4 py-2"></td>
+                                    <td class="table-cell"></td>
                                     <!-- Visible column -->
-                                    <td class="px-4 py-2"></td>
+                                    <td class="table-cell"></td>
                                     <!-- Title column with form -->
-                                    <td :colspan="1 + columnsToShow.length + (hasDeepStructureEnabled ? 1 : 0) + 1" class="px-4 py-2">
+                                    <td :colspan="1 + columnsToShow.length + (hasDeepStructureEnabled ? 1 : 0) + 1" class="table-cell">
                                         <form class="flex items-center gap-2" @submit.prevent="submitCreateChild(item.id)">
                                             <input
                                                 v-model="childForms[item.id].title"
@@ -1020,7 +1020,7 @@ onMounted(() => {
                                         v-for="link in pagination.links"
                                         :key="link.label"
                                         :href="link.url || '#'"
-                                        class="relative inline-flex items-center px-4 py-2 text-sm font-semibold"
+                                        class="relative inline-flex items-center table-cell text-sm font-semibold"
                                         :class="{
                                             'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-600 dark:hover:bg-gray-700': link.url && !link.active,
                                             'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600': link.active,
@@ -1064,7 +1064,7 @@ onMounted(() => {
                     </p>
                 </div>
 
-                <div class="flex items-center justify-end gap-3">
+                <div class="actions-footer">
                     <button type="button" class="btn-text" @click="closeCreateModal">Cancel</button>
                     <button type="submit" class="btn btn-primary" :disabled="createForm.processing">
                         {{ createForm.processing ? 'Creating…' : 'Create' }}

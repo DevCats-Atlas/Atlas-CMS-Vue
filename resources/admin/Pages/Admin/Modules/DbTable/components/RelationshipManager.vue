@@ -245,7 +245,7 @@ const handleRecordCreated = async (newRecordId, relationship) => {
         <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">{{ t('admin.relationships.title') }}</h4>
         
         <!-- Tabs for relationships -->
-        <div class="border-b border-gray-200 dark:border-gray-700 mb-4">
+        <div class="border-divider mb-4">
             <nav class="-mb-px flex space-x-4">
                 <button
                     v-for="(relationship, index) in relationships"
@@ -394,8 +394,8 @@ const handleRecordCreated = async (newRecordId, relationship) => {
             @click.self="closeCreateModal(relationship)"
         >
             <div class="w-full max-w-4xl rounded-2xl bg-white dark:bg-gray-800 shadow-xl flex flex-col max-h-[90vh]">
-                <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                <div class="modal-header">
+                    <h3 class="section-heading">
                         {{ t('admin.relationships.create_new_record') }}
                     </h3>
                     <button
@@ -406,7 +406,7 @@ const handleRecordCreated = async (newRecordId, relationship) => {
                         ✕
                     </button>
                 </div>
-                <div class="px-6 py-4 overflow-y-auto flex-1">
+                <div class="modal-body">
                     <RelationshipCreateForm
                         :relationship="relationship"
                         :module-handle="moduleHandle"

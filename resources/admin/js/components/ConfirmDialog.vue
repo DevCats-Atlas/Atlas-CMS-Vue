@@ -40,7 +40,7 @@ onUnmounted(() => {
             <div class="w-full max-w-md rounded-2xl bg-white dark:bg-gray-800 shadow-xl">
                 <div class="p-6 space-y-4">
                     <div class="space-y-1">
-                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+                        <h2 class="heading-2">
                             {{ state.title }}
                         </h2>
                         <p class="text-sm text-gray-600 dark:text-gray-300" v-if="state.message">

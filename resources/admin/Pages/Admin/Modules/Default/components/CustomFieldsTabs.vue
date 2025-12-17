@@ -70,7 +70,7 @@ const selectTab = (tabId) => {
 <template>
     <div class="relative">
         <!-- Sticky tabs at the top -->
-        <div class="sticky top-0 z-20 bg-white dark:bg-gray-800 pt-2 pb-3 mb-6 border-b border-gray-200 dark:border-gray-700">
+        <div class="sticky top-0 z-20 bg-white dark:bg-gray-800 pt-2 pb-3 mb-6 border-divider">
             <div class="flex flex-wrap gap-2">
                 <button
                     v-for="tab in tabItems"

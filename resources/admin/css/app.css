@@ -120,4 +120,67 @@
     .section-heading {
         @apply text-lg font-semibold text-gray-900 dark:text-white;
     }
+
+    /* Typography - Headings */
+    .heading-1 {
+        @apply text-2xl font-semibold text-gray-900 dark:text-white;
+    }
+
+    .heading-2 {
+        @apply text-xl font-semibold text-gray-900 dark:text-white;
+    }
+
+    .heading-4 {
+        @apply text-sm font-semibold text-gray-900 dark:text-white;
+    }
+
+    .heading-label {
+        @apply text-sm font-medium text-gray-900 dark:text-white;
+    }
+
+    /* Table Styles */
+    .table-cell {
+        @apply px-4 py-2;
+    }
+
+    .table-header {
+        @apply px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300;
+    }
+
+    .table-id {
+        @apply font-mono text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap;
+    }
+
+    /* Modal/Dialog Styles */
+    .modal-header {
+        @apply flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0;
+    }
+
+    .modal-body {
+        @apply px-6 py-4 overflow-y-auto flex-1;
+    }
+
+    /* Border Utilities */
+    .border-divider {
+        @apply border-b border-gray-200 dark:border-gray-700;
+    }
+
+    /* Button Styles */
+    .btn-icon {
+        @apply p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors;
+    }
+
+    /* Layout Utilities */
+    .actions-footer {
+        @apply flex items-center justify-end gap-3;
+    }
+
+    /* Text Utilities */
+    .text-muted {
+        @apply text-gray-500 dark:text-gray-400;
+    }
+
+    .text-secondary {
+        @apply text-gray-600 dark:text-gray-300;
+    }
 }

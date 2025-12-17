@@ -414,7 +414,7 @@ const getFieldConfig = (field) => {
                 <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6">
                     <div class="flex items-start justify-between gap-4 mb-6">
                         <div>
-                            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ title }}</h1>
+                            <h1 class="heading-1">{{ title }}</h1>
                             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
                                 Table: <code class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">{{ tableName }}</code>
                                 · ID: <code class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">{{ recordId }}</code>
@@ -427,7 +427,7 @@ const getFieldConfig = (field) => {
 
                     <form @submit.prevent="submitUpdate" class="space-y-6">
                         <!-- Parent selector for tree structure -->
-                        <div v-if="hasDeepStructure && availableParents.length > 0" class="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                        <div v-if="hasDeepStructure && availableParents.length > 0" class="mb-6 pb-6 border-divider">
                             <label class="form-label">Parent</label>
                             <select
                                 v-model="editForm[parentColumn]"
