@@ -107,4 +107,17 @@
     .nav-sidebar-link-active {
         @apply bg-gray-100 dark:bg-gray-700 font-semibold text-gray-900 dark:text-white;
     }
+
+    /* Section Styles */
+    .section {
+        @apply bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4;
+    }
+
+    .section-compact {
+        @apply bg-white dark:bg-gray-800 shadow rounded-xl p-6;
+    }
+
+    .section-heading {
+        @apply text-lg font-semibold text-gray-900 dark:text-white;
+    }
 }

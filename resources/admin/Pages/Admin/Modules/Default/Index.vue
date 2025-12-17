@@ -662,7 +662,7 @@ onMounted(() => {
 
         <div class="py-6">
             <div :class="containerClasses">
-                <section class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
+                <section class="section">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <p class="text-sm uppercase tracking-wide text-gray-500 dark:text-gray-400">Module</p>
@@ -680,8 +680,8 @@ onMounted(() => {
                 </section>
 
                 <!-- Search Form -->
-                <section class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Search Entries</h2>
+                <section class="section">
+                    <h2 class="section-heading">Search Entries</h2>
                     <form @submit.prevent="performSearch" class="space-y-4">
                         <div>
                             <label class="form-label">Search</label>
@@ -715,9 +715,9 @@ onMounted(() => {
                     </form>
                 </section>
 
-                <section class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
+                <section class="section">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Entries</h2>
+                        <h2 class="section-heading">Entries</h2>
                         <div class="flex items-center gap-3">
                             <button
                                 v-if="selectedItems.size > 0"
