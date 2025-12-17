@@ -420,17 +420,17 @@ const submitCreateChild = (parentId) => {
                                     <th
                                         v-for="column in columns"
                                         :key="column.name"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                                        class="table-header-sm-padded"
                                     >
                                         {{ column.title }}
                                     </th>
                                     <th
                                         v-if="hasDeepStructure"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                                        class="table-header-sm-padded"
                                     >
                                         {{ t('admin.db_table.children') }}
                                     </th>
-                                    <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap" style="width: 1%;">
+                                    <th class="table-header-sm-actions" style="width: 1%;">
                                         {{ t('admin.common.actions') }}
                                     </th>
                                 </tr>
@@ -600,11 +600,11 @@ const submitCreateChild = (parentId) => {
                                     v-for="link in pagination.links"
                                     :key="link.label"
                                     :href="link.url || '#'"
-                                    class="relative inline-flex items-center px-4 py-2 text-sm font-semibold"
+                                    class="pagination-link"
                                     :class="{
-                                        'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-600 dark:hover:bg-gray-700': link.url && !link.active,
-                                        'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600': link.active,
-                                        'text-gray-300 cursor-not-allowed dark:text-gray-600': !link.url
+                                        'pagination-link-inactive': link.url && !link.active,
+                                        'pagination-link-active': link.active,
+                                        'pagination-link-disabled': !link.url
                                     }"
                                     v-html="link.label"
                                 />

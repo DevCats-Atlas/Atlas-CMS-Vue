@@ -515,11 +515,11 @@ onMounted(() => {
                                         v-for="link in pagination.links"
                                         :key="link.label"
                                         :href="link.url || '#'"
-                                        class="relative inline-flex items-center table-cell text-sm font-semibold"
+                                        class="pagination-link"
                                         :class="{
-                                            'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-600 dark:hover:bg-gray-700': link.url && !link.active,
-                                            'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600': link.active,
-                                            'text-gray-300 cursor-not-allowed dark:text-gray-600': !link.url
+                                            'pagination-link-inactive': link.url && !link.active,
+                                            'pagination-link-active': link.active,
+                                            'pagination-link-disabled': !link.url
                                         }"
                                         v-html="link.label"
                                     />
