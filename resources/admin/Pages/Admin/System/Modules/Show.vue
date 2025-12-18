@@ -642,6 +642,10 @@ const applyDataSourceTable = () => {
     }
 };
 
+const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
 const submitModule = () => {
     // Only use forceFormData if we have file uploads
     const hasFileFields = filteredSettingsFields.value.some(field => field.type === 'file');
@@ -1302,6 +1306,16 @@ const reorderAction = (action, direction) => {
                             @click="submitModule"
                         >
                             {{ moduleForm.processing ? 'Saving…' : 'Save module' }}
+                        </button>
+                        <button
+                            type="button"
+                            class="btn-icon"
+                            @click="scrollToTop"
+                            title="Scroll to top"
+                        >
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                            </svg>
                         </button>
                     </div>
                 </div>
