@@ -86,21 +86,30 @@ const groupedFieldNames = computed(() => {
     return names;
 });
 
-// Fields organized by groups (only groups with existing fields)
+// Fields organized by groups (only groups with existing fields, excluding hidden fields)
 const fieldsInGroups = computed(() => {
     return fieldGroups.value
         .map(group => ({
             ...group,
             fieldObjects: (group.fields || [])
                 .map(fieldName => props.fields.find(f => f.name === fieldName))
-                .filter(Boolean), // Remove undefined (field not found)
+                .filter(field => field && !isFieldHiddenInForm(field.name)), // Remove undefined and hidden fields
         }))
         .filter(group => group.fieldObjects.length > 0); // Only groups with fields
 });
 
-// Fields not in any group
+// Check if a field should be hidden in the form
+const isFieldHiddenInForm = (fieldName) => {
+    const config = props.uiConfig[fieldName] || {};
+    // Hide if editable is false AND hide_in_form is true
+    return config.editable === false && config.hide_in_form === true;
+};
+
+// Fields not in any group (excluding hidden fields)
 const ungroupedFields = computed(() => {
-    return props.fields.filter(field => !groupedFieldNames.value.has(field.name));
+    return props.fields.filter(field => 
+        !groupedFieldNames.value.has(field.name) && !isFieldHiddenInForm(field.name)
+    );
 });
 
 // Check if we have any field groups defined
@@ -441,6 +450,52 @@ const getFieldConfig = (field) => {
     
     return config;
 };
+
+// Format cast display with safe HTML and newline support
+const formatCastDisplay = (html) => {
+    if (!html) return '';
+    
+    // Allowed tags whitelist
+    const allowedTags = ['div', 'p', 'strong', 'em', 'b', 'i', 'ul', 'ol', 'li', 'a', 'br', 'span'];
+    
+    // Create a temporary div to parse HTML
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    
+    // Sanitize: remove disallowed tags but keep their content
+    const sanitize = (node) => {
+        const children = Array.from(node.childNodes);
+        children.forEach(child => {
+            if (child.nodeType === Node.ELEMENT_NODE) {
+                const tagName = child.tagName.toLowerCase();
+                if (!allowedTags.includes(tagName)) {
+                    // Replace disallowed tag with its content
+                    while (child.firstChild) {
+                        node.insertBefore(child.firstChild, child);
+                    }
+                    node.removeChild(child);
+                } else {
+                    // For <a> tags, ensure they open in new tab and have safe attributes
+                    if (tagName === 'a') {
+                        child.setAttribute('target', '_blank');
+                        child.setAttribute('rel', 'noopener noreferrer');
+                        child.classList.add('underline', 'hover:text-blue-700');
+                    }
+                    // Recursively sanitize children
+                    sanitize(child);
+                }
+            }
+        });
+    };
+    
+    sanitize(temp);
+    
+    // Convert remaining newlines to <br>
+    let result = temp.innerHTML;
+    result = result.replace(/\n/g, '<br>');
+    
+    return '→ ' + result;
+};
 </script>
 
 <template>
@@ -521,6 +576,17 @@ const getFieldConfig = (field) => {
                                             />
                                         </template>
                                         
+                                        <!-- Cast display (related data) -->
+                                        <div v-if="field.cast_display || field.cast_error" class="mt-1.5">
+                                            <div v-if="field.cast_error" class="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                                <span>{{ field.cast_error }}</span>
+                                            </div>
+                                            <div v-else class="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1.5 rounded cast-display" v-html="formatCastDisplay(field.cast_display)"></div>
+                                        </div>
+                                        
                                         <p v-if="editForm.errors[field.name]" class="mt-1 text-sm text-red-600">
                                             {{ editForm.errors[field.name] }}
                                         </p>
@@ -561,6 +627,17 @@ const getFieldConfig = (field) => {
                                             :model="fieldModels[field.name]"
                                         />
                                     </template>
+                                    
+                                    <!-- Cast display (related data) -->
+                                    <div v-if="field.cast_display || field.cast_error" class="mt-1.5">
+                                        <div v-if="field.cast_error" class="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            <span>{{ field.cast_error }}</span>
+                                        </div>
+                                        <div v-else class="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1.5 rounded cast-display" v-html="formatCastDisplay(field.cast_display)"></div>
+                                    </div>
                                     
                                     <p v-if="editForm.errors[field.name]" class="mt-1 text-sm text-red-600">
                                         {{ editForm.errors[field.name] }}

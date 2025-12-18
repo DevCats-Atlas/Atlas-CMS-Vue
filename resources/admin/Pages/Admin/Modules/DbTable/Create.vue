@@ -70,21 +70,30 @@ const groupedFieldNames = computed(() => {
     return names;
 });
 
-// Fields organized by groups (only groups with existing fields)
+// Check if a field should be hidden in the form
+const isFieldHiddenInForm = (fieldName) => {
+    const config = props.uiConfig[fieldName] || {};
+    // Hide if editable is false AND hide_in_form is true
+    return config.editable === false && config.hide_in_form === true;
+};
+
+// Fields organized by groups (only groups with existing fields, excluding hidden fields)
 const fieldsInGroups = computed(() => {
     return fieldGroups.value
         .map(group => ({
             ...group,
             fieldObjects: (group.fields || [])
                 .map(fieldName => props.fields.find(f => f.name === fieldName))
-                .filter(Boolean), // Remove undefined (field not found)
+                .filter(field => field && !isFieldHiddenInForm(field.name)), // Remove undefined and hidden fields
         }))
         .filter(group => group.fieldObjects.length > 0); // Only groups with fields
 });
 
-// Fields not in any group
+// Fields not in any group (excluding hidden fields)
 const ungroupedFields = computed(() => {
-    return props.fields.filter(field => !groupedFieldNames.value.has(field.name));
+    return props.fields.filter(field => 
+        !groupedFieldNames.value.has(field.name) && !isFieldHiddenInForm(field.name)
+    );
 });
 
 // Check if we have any field groups defined

@@ -416,6 +416,18 @@ onMounted(() => {
                                     />
                                     <span>Editable</span>
                                 </label>
+                                <label 
+                                    v-if="!getColumnConfig(column.name).editable"
+                                    class="inline-flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        :checked="getColumnConfig(column.name).hide_in_form"
+                                        @change="updateColumnConfig(column.name, 'hide_in_form', $event.target.checked)"
+                                        class="form-checkbox h-3.5 w-3.5"
+                                    />
+                                    <span>Hide in form</span>
+                                </label>
                             </div>
                         </div>
                         
@@ -531,6 +543,55 @@ onMounted(() => {
                                 <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                                     Custom root folder name for file uploads. If empty, the table name will be used.
                                 </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Cast As (Related Table Lookup) -->
+                        <div class="pt-2 border-t border-gray-100 dark:border-gray-700/50">
+                            <label class="inline-flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
+                                <input
+                                    type="checkbox"
+                                    :checked="getColumnConfig(column.name).cast_as_enabled"
+                                    @change="updateColumnConfig(column.name, 'cast_as_enabled', $event.target.checked)"
+                                    class="form-checkbox h-3.5 w-3.5"
+                                />
+                                <span>Cast as (show related data)</span>
+                            </label>
+                            
+                            <div v-if="getColumnConfig(column.name).cast_as_enabled" class="mt-3 space-y-3 pl-5 border-l-2 border-blue-200 dark:border-blue-800">
+                                <div>
+                                    <label class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Related Table</label>
+                                    <input
+                                        :value="getColumnConfig(column.name).cast_table"
+                                        @input="updateColumnConfig(column.name, 'cast_table', $event.target.value)"
+                                        type="text"
+                                        class="form-input text-sm py-1.5"
+                                        placeholder="e.g., users"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Foreign Key Column</label>
+                                    <input
+                                        :value="getColumnConfig(column.name).cast_foreign_key"
+                                        @input="updateColumnConfig(column.name, 'cast_foreign_key', $event.target.value)"
+                                        type="text"
+                                        class="form-input text-sm py-1.5"
+                                        placeholder="e.g., id"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Render Template</label>
+                                    <textarea
+                                        :value="getColumnConfig(column.name).cast_template"
+                                        @input="updateColumnConfig(column.name, 'cast_template', $event.target.value)"
+                                        class="form-textarea text-sm py-1.5"
+                                        rows="2"
+                                        placeholder="{first_name} {last_name}"
+                                    />
+                                    <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                        Use {column_name} to insert values from the related table
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
