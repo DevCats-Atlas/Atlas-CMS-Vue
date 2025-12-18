@@ -796,7 +796,7 @@ const reorderAction = (action, direction) => {
     <SystemLayout>
         <Head :title="title" />
 
-        <div class="py-6">
+        <div class="py-6 pb-24">
             <div class="mx-auto max-w-5xl sm:px-6 lg:px-8 space-y-6">
                 <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
                     <div class="flex items-center justify-between">
@@ -1197,20 +1197,6 @@ const reorderAction = (action, direction) => {
                             </div>
                         </div>
                         
-                        <div class="pt-4">
-                            <div class="flex gap-4">
-                                <button
-                                    type="submit"
-                                    class="btn btn-primary"
-                                    :disabled="moduleForm.processing"
-                                >
-                                    {{ moduleForm.processing ? 'Saving…' : 'Save module' }}
-                                </button>
-                                <button type="button" class="btn-text-danger" @click="deleteModule">
-                                    Delete module
-                                </button>
-                            </div>
-                        </div>
                     </form>
                 </div>
 
@@ -1293,6 +1279,35 @@ const reorderAction = (action, direction) => {
                 </div>
             </div>
         </div>
+        
+        <!-- Sticky Bottom Toolbar -->
+        <div class="sticky bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+            <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-3">
+                <div class="flex items-center justify-between gap-4">
+                    <button 
+                        type="button" 
+                        class="btn-text-danger" 
+                        @click="deleteModule"
+                    >
+                        Delete module
+                    </button>
+                    <div class="flex items-center gap-3">
+                        <Link href="/admin/system/modules" class="btn-text">
+                            Cancel
+                        </Link>
+                        <button
+                            type="button"
+                            class="btn btn-primary"
+                            :disabled="moduleForm.processing"
+                            @click="submitModule"
+                        >
+                            {{ moduleForm.processing ? 'Saving…' : 'Save module' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <ToastStack :toasts="toasts" @dismiss="dismissToast" />
         
         <!-- Relationship Modal -->
