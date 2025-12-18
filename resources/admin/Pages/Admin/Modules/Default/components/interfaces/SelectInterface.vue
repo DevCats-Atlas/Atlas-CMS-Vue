@@ -18,7 +18,7 @@ const hideTitle = computed(() => props.field.config?.hide_title === true);
 </script>
 
 <template>
-    <div class="space-y-4 max-w-xs">
+    <div class="space-y-4 ">
         <div class="space-y-1">
             <label v-if="!hideTitle" class="form-label">{{ field.title }}</label>
             <select v-model="model.default" class="form-select">
