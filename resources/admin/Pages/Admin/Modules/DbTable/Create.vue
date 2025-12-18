@@ -52,6 +52,44 @@ const props = defineProps({
 
 const baseUrl = computed(() => `/admin/${props.moduleHandle}`);
 
+// Parse field groups from uiConfig
+const fieldGroups = computed(() => {
+    // field_groups can be at root level or nested
+    if (props.uiConfig.field_groups && Array.isArray(props.uiConfig.field_groups)) {
+        return props.uiConfig.field_groups;
+    }
+    return [];
+});
+
+// Get all field names that are in groups
+const groupedFieldNames = computed(() => {
+    const names = new Set();
+    fieldGroups.value.forEach(group => {
+        (group.fields || []).forEach(fieldName => names.add(fieldName));
+    });
+    return names;
+});
+
+// Fields organized by groups (only groups with existing fields)
+const fieldsInGroups = computed(() => {
+    return fieldGroups.value
+        .map(group => ({
+            ...group,
+            fieldObjects: (group.fields || [])
+                .map(fieldName => props.fields.find(f => f.name === fieldName))
+                .filter(Boolean), // Remove undefined (field not found)
+        }))
+        .filter(group => group.fieldObjects.length > 0); // Only groups with fields
+});
+
+// Fields not in any group
+const ungroupedFields = computed(() => {
+    return props.fields.filter(field => !groupedFieldNames.value.has(field.name));
+});
+
+// Check if we have any field groups defined
+const hasFieldGroups = computed(() => fieldsInGroups.value.length > 0);
+
 // Build form data structure based on fields
 const buildFormData = () => {
     const formData = {};
@@ -285,7 +323,7 @@ const getFieldConfig = (field) => {
     <AdminLayout>
         <Head :title="title || t('admin.db_table.create_record')" />
 
-        <div class="py-6">
+        <div class="py-6 pb-24">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
                 <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6">
                     <div class="flex items-start justify-between gap-4 mb-6">
@@ -323,38 +361,85 @@ const getFieldConfig = (field) => {
                             </p>
                         </div>
 
-                        <div class="grid gap-6 md:grid-cols-2">
-                            <div
-                                v-for="field in fields"
-                                :key="field.name"
-                                :class="{
-                                    'md:col-span-2': field.interface === 'textarea' || field.interface === 'wysiwyg',
-                                }"
+                        <!-- Grouped Fields -->
+                        <template v-if="hasFieldGroups">
+                            <div 
+                                v-for="group in fieldsInGroups" 
+                                :key="group.id"
+                                class="space-y-4"
                             >
-                                <component
-                                    :is="resolveInterfaceComponent(getFieldConfig(field).type)"
-                                    :field="getFieldConfig(field)"
-                                    :model="fieldModels[field.name]"
-                                />
-                                <p v-if="createForm.errors[field.name]" class="mt-1 text-sm text-red-600">
-                                    {{ createForm.errors[field.name] }}
-                                </p>
+                                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
+                                    {{ group.title }}
+                                </h3>
+                                <div class="grid gap-6 md:grid-cols-2">
+                                    <div
+                                        v-for="field in group.fieldObjects"
+                                        :key="field.name"
+                                        :class="{
+                                            'md:col-span-2': field.interface === 'textarea' || field.interface === 'wysiwyg',
+                                        }"
+                                    >
+                                        <component
+                                            :is="resolveInterfaceComponent(getFieldConfig(field).type)"
+                                            :field="getFieldConfig(field)"
+                                            :model="fieldModels[field.name]"
+                                        />
+                                        <p v-if="createForm.errors[field.name]" class="mt-1 text-sm text-red-600">
+                                            {{ createForm.errors[field.name] }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Ungrouped Fields (or all fields if no groups defined) -->
+                        <div v-if="ungroupedFields.length > 0" class="space-y-4">
+                            <h3 
+                                v-if="hasFieldGroups" 
+                                class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2"
+                            >
+                                Other Fields
+                            </h3>
+                            <div class="grid gap-6 md:grid-cols-2">
+                                <div
+                                    v-for="field in ungroupedFields"
+                                    :key="field.name"
+                                    :class="{
+                                        'md:col-span-2': field.interface === 'textarea' || field.interface === 'wysiwyg',
+                                    }"
+                                >
+                                    <component
+                                        :is="resolveInterfaceComponent(getFieldConfig(field).type)"
+                                        :field="getFieldConfig(field)"
+                                        :model="fieldModels[field.name]"
+                                    />
+                                    <p v-if="createForm.errors[field.name]" class="mt-1 text-sm text-red-600">
+                                        {{ createForm.errors[field.name] }}
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <Link :href="baseUrl" class="btn-text">
-                                Cancel
-                            </Link>
-                            <button
-                                type="submit"
-                                class="btn btn-primary"
-                                :disabled="createForm.processing"
-                            >
-                                {{ createForm.processing ? 'Creating...' : 'Create Record' }}
-                            </button>
-                        </div>
                     </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sticky Bottom Toolbar -->
+        <div class="sticky bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
+                <div class="flex items-center justify-between gap-4">
+                    <Link :href="baseUrl" class="btn-text">
+                        Cancel
+                    </Link>
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        :disabled="createForm.processing"
+                        @click="submitCreate"
+                    >
+                        {{ createForm.processing ? 'Creating...' : 'Create Record' }}
+                    </button>
                 </div>
             </div>
         </div>
