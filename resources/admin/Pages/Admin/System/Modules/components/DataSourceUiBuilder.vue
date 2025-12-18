@@ -2,6 +2,7 @@
 import { ref, watch, computed, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { useToast } from '@/composables/useToast.js';
+import FieldGroupsBuilder from './FieldGroupsBuilder.vue';
 
 const props = defineProps({
     tableName: {
@@ -25,8 +26,10 @@ const { showToast } = useToast();
 const tableExists = ref(null);
 const columns = ref([]);
 const uiConfig = ref({});
+const fieldGroups = ref([]);
 const loading = ref(false);
 const errorMessage = ref(null);
+const showGroupsBuilder = ref(false);
 
 const interfaceTypes = [
     { value: 'text', label: 'Text' },
@@ -42,18 +45,32 @@ const interfaceTypes = [
 const initializeUiConfig = () => {
     if (!props.initialUiConfig) {
         uiConfig.value = {};
+        fieldGroups.value = [];
         return;
     }
 
     try {
+        let config;
         if (typeof props.initialUiConfig === 'string') {
-            uiConfig.value = JSON.parse(props.initialUiConfig);
+            config = JSON.parse(props.initialUiConfig);
         } else {
-            uiConfig.value = { ...props.initialUiConfig };
+            config = { ...props.initialUiConfig };
         }
+        
+        // Extract field_groups if present
+        if (config.field_groups) {
+            fieldGroups.value = config.field_groups;
+            delete config.field_groups;
+            showGroupsBuilder.value = fieldGroups.value.length > 0;
+        } else {
+            fieldGroups.value = [];
+        }
+        
+        uiConfig.value = config;
     } catch (e) {
         console.error('Failed to parse UI config:', e);
         uiConfig.value = {};
+        fieldGroups.value = [];
     }
 };
 
@@ -214,7 +231,18 @@ const updateColumnConfig = (columnName, field, value) => {
 };
 
 const emitUiConfig = () => {
-    emit('update:uiConfig', JSON.stringify(uiConfig.value));
+    // Combine column config with field groups
+    const fullConfig = { ...uiConfig.value };
+    if (fieldGroups.value && fieldGroups.value.length > 0) {
+        fullConfig.field_groups = fieldGroups.value;
+    }
+    emit('update:uiConfig', JSON.stringify(fullConfig));
+};
+
+// Handle field groups update
+const onGroupsUpdate = (groups) => {
+    fieldGroups.value = groups;
+    emitUiConfig();
 };
 
 const getColumnConfig = (columnName) => {
@@ -317,7 +345,39 @@ onMounted(() => {
                 </p>
             </div>
             
-            <div v-else-if="tableExists && columns.length > 0" class="space-y-3">
+            <div v-else-if="tableExists && columns.length > 0" class="space-y-6">
+                <!-- Field Groups Section -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                            Field Grouping
+                        </div>
+                        <button
+                            type="button"
+                            @click="showGroupsBuilder = !showGroupsBuilder"
+                            class="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                        >
+                            {{ showGroupsBuilder ? 'Hide' : 'Configure Groups' }}
+                        </button>
+                    </div>
+                    
+                    <div v-if="showGroupsBuilder" class="rounded border border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-800/50">
+                        <FieldGroupsBuilder
+                            :columns="columns"
+                            :initial-groups="fieldGroups"
+                            :ui-config="uiConfig"
+                            @update:groups="onGroupsUpdate"
+                        />
+                    </div>
+                    
+                    <div v-else-if="fieldGroups.length > 0" class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ fieldGroups.length }} group{{ fieldGroups.length !== 1 ? 's' : '' }} configured.
+                        <button type="button" @click="showGroupsBuilder = true" class="text-blue-600 hover:underline ml-1">Edit</button>
+                    </div>
+                </div>
+                
+                <!-- Column Configuration Section -->
+                <div class="space-y-3">
                 <div class="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                     Column Configuration
                 </div>
@@ -474,6 +534,7 @@ onMounted(() => {
                             </div>
                         </div>
                     </div>
+                </div>
                 </div>
             </div>
             
