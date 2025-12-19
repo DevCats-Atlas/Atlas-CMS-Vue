@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
 
 const props = defineProps({
     field: {
@@ -18,10 +18,11 @@ const hideTitle = computed(() => props.field.config?.hide_title === true);
 
 // Search functionality for large option lists
 const searchTerm = ref('');
-const showSearch = computed(() => options.value.length > 50);
+const showSearch = computed(() => options.value.length > 20);
 const isOpen = ref(false);
 const dropdownRef = ref(null);
 const searchInputRef = ref(null);
+const optionsListRef = ref(null);
 
 const filteredOptions = computed(() => {
     if (!showSearch.value || !searchTerm.value.trim()) {
@@ -45,14 +46,58 @@ const displayValue = computed(() => {
     return selectedOption.value?.label || 'Select…';
 });
 
-const toggleDropdown = () => {
+const scrollToSelected = async () => {
+    if (!props.model.default || !optionsListRef.value) return;
+    
+    // Wait for DOM to update and dropdown to be fully rendered
+    await nextTick();
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Check if selected option is in filtered results
+    const selectedInFiltered = filteredOptions.value.some(opt => String(opt.key) === String(props.model.default));
+    if (!selectedInFiltered) {
+        // Selected option is not visible due to search filter, don't scroll
+        return;
+    }
+    
+    // Find the selected option button
+    const selectedButton = optionsListRef.value.querySelector(`[data-option-key="${props.model.default}"]`);
+    if (selectedButton) {
+        // Scroll the container to show the selected option
+        const container = optionsListRef.value;
+        const buttonTop = selectedButton.offsetTop;
+        const buttonHeight = selectedButton.offsetHeight;
+        const containerHeight = container.clientHeight;
+        const scrollTop = buttonTop - (containerHeight / 2) + (buttonHeight / 2);
+        
+        container.scrollTo({
+            top: Math.max(0, scrollTop),
+            behavior: 'smooth'
+        });
+    }
+};
+
+const toggleDropdown = async () => {
     if (showSearch.value) {
+        const wasOpen = isOpen.value;
         isOpen.value = !isOpen.value;
-        if (isOpen.value && searchInputRef.value) {
-            setTimeout(() => searchInputRef.value?.focus(), 50);
+        if (isOpen.value && !wasOpen) {
+            // Clear search when opening to show all options
+            searchTerm.value = '';
+            await nextTick();
+            
+            if (searchInputRef.value) {
+                setTimeout(() => searchInputRef.value?.focus(), 50);
+            }
+            
+            // Scroll to selected option after dropdown is rendered
+            setTimeout(() => {
+                scrollToSelected();
+            }, 150);
         }
     }
 };
+
 
 const selectOption = (option) => {
     props.model.default = option.key;
@@ -65,11 +110,30 @@ const closeDropdown = () => {
     searchTerm.value = '';
 };
 
+// Watch for dropdown opening to scroll to selected option
+watch(isOpen, async (newValue) => {
+    if (newValue && showSearch.value && props.model.default) {
+        // Wait for DOM to update
+        await nextTick();
+        setTimeout(() => {
+            scrollToSelected();
+        }, 150);
+    }
+});
+
 // Close dropdown when clicking outside
 const handleClickOutside = (event) => {
     if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
         closeDropdown();
     }
+};
+
+const formatOptionLabel = (option) => {
+    if (option.depth && option.depth > 0) {
+        const indent = '  '.repeat(option.depth);
+        return indent + '└─ ' + option.label;
+    }
+    return option.label;
 };
 
 onMounted(() => {
@@ -120,7 +184,7 @@ onUnmounted(() => {
                     </div>
                     
                     <!-- Options list -->
-                    <div class="overflow-y-auto max-h-80">
+                    <div ref="optionsListRef" class="overflow-y-auto max-h-80">
                         <div
                             v-if="filteredOptions.length === 0"
                             class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400"
@@ -130,14 +194,18 @@ onUnmounted(() => {
                         <button
                             v-for="option in filteredOptions"
                             :key="option.key"
+                            :data-option-key="option.key"
                             type="button"
                             @click="selectOption(option)"
-                            class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center"
                             :class="{
-                                'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400': String(model.default) === String(option.key)
+                                'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium': String(model.default) === String(option.key)
                             }"
                         >
-                            {{ option.label }}
+                            <span :style="{ paddingLeft: (option.depth || 0) * 16 + 'px' }">
+                                <span v-if="option.depth > 0" class="text-gray-400 dark:text-gray-500 mr-1">└─</span>
+                                {{ option.label }}
+                            </span>
                         </button>
                     </div>
                     
@@ -152,7 +220,7 @@ onUnmounted(() => {
             <select v-else v-model="model.default" class="form-select">
                 <option value="" disabled>Select…</option>
                 <option v-for="option in options" :key="option.key" :value="option.key">
-                    {{ option.label }}
+                    {{ formatOptionLabel(option) }}
                 </option>
             </select>
             
