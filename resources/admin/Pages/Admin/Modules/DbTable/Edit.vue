@@ -660,13 +660,8 @@ const formatCastDisplay = (html) => {
         </div>
         
         <!-- Sticky Bottom Toolbar -->
-        <div class="sticky bottom-0 left-0 right-0 z-40 bg-transparent dark:bg-gray-800   
-        
-        mx-auto max-w-7xl ">
+        <div class="sticky bottom-0 left-0 right-0 z-40 bg-transparent dark:bg-gray-800 mx-auto max-w-7xl">
 
-        <!-- shadow-lg border-t border-gray-200 dark:border-gray-700  -->
-
-        
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 bg-white lg:mx-8 shadow-lg border-t border-gray-200 dark:border-gray-700 rounded-xl">
                 <div class="flex items-center justify-between gap-4">
                     <Link :href="baseUrl" class="btn-text">
