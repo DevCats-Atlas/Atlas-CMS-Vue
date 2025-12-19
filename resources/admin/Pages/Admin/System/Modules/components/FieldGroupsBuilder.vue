@@ -25,6 +25,8 @@ const dragSourceGroup = ref(null);
 const dropTargetGroup = ref(null);
 const editingGroupId = ref(null);
 const editingTitle = ref('');
+const draggedGroup = ref(null);
+const dropTargetGroupIndex = ref(null);
 
 // Initialize groups from props
 const initializeGroups = () => {
@@ -216,6 +218,56 @@ const removeFieldFromGroup = (group, fieldName) => {
     }
 };
 
+// Group drag and drop handlers
+const onGroupDragStart = (event, groupIndex) => {
+    draggedGroup.value = groupIndex;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', `group-${groupIndex}`);
+};
+
+const onGroupDragEnd = () => {
+    draggedGroup.value = null;
+    dropTargetGroupIndex.value = null;
+};
+
+const onGroupDragOver = (event, targetIndex) => {
+    if (draggedGroup.value === null) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'move';
+    dropTargetGroupIndex.value = targetIndex;
+};
+
+const onGroupDragLeave = (event) => {
+    // Only clear if we're actually leaving the group container
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+        dropTargetGroupIndex.value = null;
+    }
+};
+
+const onGroupDrop = (event, targetIndex) => {
+    if (draggedGroup.value === null) return;
+    event.preventDefault();
+    event.stopPropagation();
+    
+    if (draggedGroup.value === targetIndex) {
+        dropTargetGroupIndex.value = null;
+        return;
+    }
+    
+    // Reorder groups
+    const dragged = groups.value[draggedGroup.value];
+    groups.value.splice(draggedGroup.value, 1);
+    
+    // Adjust target index if we removed an item before it
+    const adjustedTargetIndex = draggedGroup.value < targetIndex ? targetIndex - 1 : targetIndex;
+    groups.value.splice(adjustedTargetIndex, 0, dragged);
+    
+    dropTargetGroupIndex.value = null;
+    draggedGroup.value = null;
+    emitGroups();
+};
+
 // Emit groups update
 const emitGroups = () => {
     emit('update:groups', JSON.parse(JSON.stringify(groups.value)));
@@ -300,36 +352,63 @@ watch(() => props.initialGroups, () => {
             </div>
             
             <div v-else class="space-y-3">
-                <div
-                    v-for="(group, groupIndex) in groups"
-                    :key="group.id"
-                    class="rounded border border-gray-200 dark:border-gray-700 overflow-hidden"
-                >
-                    <!-- Group Header -->
-                    <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                        <!-- Reorder buttons -->
-                        <div class="flex flex-col gap-0.5">
-                            <button
-                                type="button"
-                                @click="moveGroupUp(groupIndex)"
-                                :disabled="groupIndex === 0"
-                                class="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                <template v-for="(group, groupIndex) in groups" :key="group.id">
+                    <!-- Drop zone above group (for inserting before this group) -->
+                    <div
+                        class="h-3 -mb-3 transition-all rounded"
+                        :class="[
+                            dropTargetGroupIndex === groupIndex && draggedGroup !== null && draggedGroup !== groupIndex
+                                ? 'bg-blue-400 dark:bg-blue-500 h-6'
+                                : draggedGroup !== null ? 'bg-gray-100 dark:bg-gray-700 h-3 opacity-50' : 'bg-transparent h-0'
+                        ]"
+                        @dragover.prevent="(e) => { if (draggedGroup !== null) { e.stopPropagation(); onGroupDragOver(e, groupIndex); } }"
+                        @drop="(e) => { if (draggedGroup !== null) { e.stopPropagation(); onGroupDrop(e, groupIndex); } }"
+                    ></div>
+                    
+                    <div
+                        class="rounded border border-gray-200 dark:border-gray-700 overflow-hidden transition-all"
+                        :class="[
+                            draggedGroup === groupIndex ? 'opacity-50' : '',
+                            dropTargetGroupIndex === groupIndex && draggedGroup !== null && draggedGroup !== groupIndex ? 'border-blue-400 dark:border-blue-500 shadow-lg' : ''
+                        ]"
+                    >
+                        <!-- Group Header -->
+                        <div
+                            class="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 cursor-grab active:cursor-grabbing"
+                            draggable="true"
+                            @dragstart="(e) => { e.stopPropagation(); onGroupDragStart(e, groupIndex); }"
+                            @dragend="(e) => { e.stopPropagation(); onGroupDragEnd(); }"
+                        >
+                            <!-- Drag handle icon -->
+                            <div class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-grab">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
                                 </svg>
-                            </button>
-                            <button
-                                type="button"
-                                @click="moveGroupDown(groupIndex)"
-                                :disabled="groupIndex === groups.length - 1"
-                                class="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-                        </div>
+                            </div>
+                            
+                            <!-- Reorder buttons -->
+                            <div class="flex flex-col gap-0.5">
+                                <button
+                                    type="button"
+                                    @click.stop="moveGroupUp(groupIndex)"
+                                    :disabled="groupIndex === 0"
+                                    class="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                                    </svg>
+                                </button>
+                                <button
+                                    type="button"
+                                    @click.stop="moveGroupDown(groupIndex)"
+                                    :disabled="groupIndex === groups.length - 1"
+                                    class="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                            </div>
                         
                         <!-- Title (editable) -->
                         <div class="flex-1 min-w-0">
@@ -374,18 +453,18 @@ watch(() => props.initialGroups, () => {
                         </button>
                     </div>
                     
-                    <!-- Group Body (Drop Zone) -->
-                    <div
-                        class="min-h-[60px] p-2 transition-colors"
-                        :class="[
-                            dropTargetGroup === group.id 
-                                ? 'bg-blue-50 dark:bg-blue-900/20' 
-                                : 'bg-white dark:bg-gray-900'
-                        ]"
-                        @dragover.prevent="onDragOver($event, group.id)"
-                        @dragleave="onDragLeave"
-                        @drop="onDropToGroup($event, group.id)"
-                    >
+                        <!-- Group Body (Drop Zone) -->
+                        <div
+                            class="min-h-[60px] p-2 transition-colors"
+                            :class="[
+                                dropTargetGroup === group.id 
+                                    ? 'bg-blue-50 dark:bg-blue-900/20' 
+                                    : 'bg-white dark:bg-gray-900'
+                            ]"
+                            @dragover.prevent="(e) => { if (draggedField && draggedGroup === null) onDragOver(e, group.id); }"
+                            @dragleave="(e) => { if (draggedField && draggedGroup === null) onDragLeave(e); }"
+                            @drop="(e) => { if (draggedField && draggedGroup === null) { e.stopPropagation(); onDropToGroup(e, group.id); } }"
+                        >
                         <div v-if="group.fields.length === 0" class="text-xs text-gray-400 dark:text-gray-500 text-center py-3">
                             Drop fields here
                         </div>
@@ -444,8 +523,21 @@ watch(() => props.initialGroups, () => {
                                 </button>
                             </div>
                         </div>
+                        </div>
                     </div>
-                </div>
+                    
+                    <!-- Drop zone below group (for inserting after this group) -->
+                    <div
+                        class="h-3 -mt-3 transition-all rounded"
+                        :class="[
+                            dropTargetGroupIndex === groupIndex + 1 && draggedGroup !== null && draggedGroup !== groupIndex + 1
+                                ? 'bg-blue-400 dark:bg-blue-500 h-6'
+                                : draggedGroup !== null ? 'bg-gray-100 dark:bg-gray-700 h-3 opacity-50' : 'bg-transparent h-0'
+                        ]"
+                        @dragover.prevent="(e) => { if (draggedGroup !== null) { e.stopPropagation(); onGroupDragOver(e, groupIndex + 1); } }"
+                        @drop="(e) => { if (draggedGroup !== null) { e.stopPropagation(); onGroupDrop(e, groupIndex + 1); } }"
+                    ></div>
+                </template>
             </div>
             
             <p class="text-xs text-gray-500 dark:text-gray-400">
