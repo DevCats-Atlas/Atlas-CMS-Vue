@@ -521,7 +521,8 @@ onMounted(() => {
                                     placeholder="SELECT code, title FROM articles_languages"
                                 />
                                 <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                                    Enter SQL query. First column = value, second column = label. If only one column, it will be used for both.
+                                    Enter SQL query. First column = value, second column = label. If only one column, it will be used for both.<br>
+                                    <strong>Hierarchical:</strong> Use 3 columns (id, title, parent_id) to display options in a tree structure with indentation.
                                 </p>
                             </div>
                         </div>
