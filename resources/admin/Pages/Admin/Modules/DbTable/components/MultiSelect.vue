@@ -80,11 +80,15 @@ const displayValue = computed(() => {
     if (selectedValues.value.length === 0) {
         return props.placeholder;
     }
-    if (selectedValues.value.length === 1) {
-        const option = props.options.find(opt => String(opt.key || opt.id || opt.value) === selectedValues.value[0]);
-        return option?.label || option?.title || option?.name || selectedValues.value[0];
-    }
-    return `${selectedValues.value.length} selected`;
+    
+    // Get labels for all selected values
+    const labels = selectedValues.value.map(val => {
+        const option = props.options.find(opt => String(opt.key || opt.id || opt.value) === val);
+        return option?.label || option?.title || option?.name || val;
+    }).filter(Boolean);
+    
+    // Show comma-separated labels
+    return labels.join(', ');
 });
 
 const toggleDropdown = async () => {
@@ -268,9 +272,10 @@ onUnmounted(() => {
                     <input
                         type="checkbox"
                         :checked="isSelected(option)"
-                        class="form-checkbox"
-                        @change.stop
-                        @click.stop
+                        class="form-checkbox pointer-events-none"
+                        @change.stop.prevent
+                        @click.stop.prevent
+                        tabindex="-1"
                     />
                     <span>{{ option.label || option.title || option.name || option.key || option.id || option.value }}</span>
                 </button>

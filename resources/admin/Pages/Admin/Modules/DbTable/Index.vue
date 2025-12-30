@@ -114,6 +114,8 @@ const initializeFilters = () => {
     // Initialize default search
     defaultSearchValue.value = urlParams.get('search') || '';
     
+    console.log('Index - Initializing filters from URL:', window.location.search);
+    
     // Initialize custom filters
     if (props.filterConfig && props.filterConfig.filters) {
         props.filterConfig.filters.forEach(filter => {
@@ -123,24 +125,35 @@ const initializeFilters = () => {
             const filterKey = `filter[${filterId}]`;
             const value = urlParams.get(filterKey);
             
-            if (value !== null) {
-                // Handle array values (e.g., filter[field][]=value1&filter[field][]=value2)
-                const arrayValues = urlParams.getAll(filterKey + '[]');
-                if (arrayValues.length > 0) {
-                    filterValues.value[filterId] = arrayValues;
-                } else {
-                    // Handle range values (e.g., filter[field][from]=value1&filter[field][to]=value2)
-                    const fromValue = urlParams.get(`${filterKey}[from]`);
-                    const toValue = urlParams.get(`${filterKey}[to]`);
-                    if (fromValue !== null || toValue !== null) {
-                        filterValues.value[filterId] = {
-                            from: fromValue || '',
-                            to: toValue || '',
-                        };
-                    } else {
-                        filterValues.value[filterId] = value;
-                    }
+            // Check for array values (multiple select) - Laravel uses indexed notation: filter[filterId][0], filter[filterId][1]
+            // Only check for arrays if the filter is configured as multiple
+            const arrayValues = [];
+            if (filter.multiple) {
+                let index = 0;
+                while (true) {
+                    const arrayValue = urlParams.get(`${filterKey}[${index}]`);
+                    if (arrayValue === null) break;
+                    arrayValues.push(arrayValue);
+                    index++;
                 }
+            }
+            
+            if (arrayValues.length > 0) {
+                filterValues.value[filterId] = arrayValues;
+                console.log(`Index - Initialized filter ${filterId} as array:`, arrayValues);
+            } else if (value !== null) {
+                // Handle range values (e.g., filter[field][from]=value1&filter[field][to]=value2)
+                const fromValue = urlParams.get(`${filterKey}[from]`);
+                const toValue = urlParams.get(`${filterKey}[to]`);
+                if (fromValue !== null || toValue !== null) {
+                    filterValues.value[filterId] = {
+                        from: fromValue || '',
+                        to: toValue || '',
+                    };
+                } else {
+                    filterValues.value[filterId] = value;
+                }
+                console.log(`Index - Initialized filter ${filterId} as single value:`, filterValues.value[filterId]);
             } else {
                 // Initialize range values for range operators if not in URL
                 if (filter.operator === 'range' && !filterValues.value[filterId]) {
@@ -149,6 +162,8 @@ const initializeFilters = () => {
             }
         });
     }
+    
+    console.log('Index - Initialized filterValues:', filterValues.value);
 };
 
 // Initialize on mount
@@ -164,37 +179,43 @@ const buildFilterParams = () => {
     const params = {};
     
     // Add default search if enabled and has value
-    if (props.filterConfig?.default_search?.enabled && defaultSearchValue.value) {
-        params.search = defaultSearchValue.value;
+    if (props.filterConfig?.default_search?.enabled && defaultSearchValue.value && defaultSearchValue.value.trim() !== '') {
+        params.search = defaultSearchValue.value.trim();
     }
     
     // Add custom filter values
     Object.keys(filterValues.value).forEach(filterId => {
         const value = filterValues.value[filterId];
-        if (value !== null && value !== undefined && value !== '') {
-            // Handle array values
-            if (Array.isArray(value)) {
-                value.forEach(v => {
-                    if (v !== null && v !== undefined && v !== '') {
-                        if (!params[`filter[${filterId}][]`]) {
-                            params[`filter[${filterId}][]`] = [];
-                        }
-                        params[`filter[${filterId}][]`].push(v);
-                    }
-                });
+        
+        // Check if value is not empty
+        const isEmpty = value === null || value === undefined || value === '' || 
+                       (Array.isArray(value) && value.length === 0) ||
+                       (typeof value === 'object' && !Array.isArray(value) && !value.from && !value.to);
+        
+        if (!isEmpty) {
+            // Handle array values (for multiple select)
+            if (Array.isArray(value) && value.length > 0) {
+                // For arrays, use indexed notation: filter[filterId][0], filter[filterId][1], etc.
+                // This is how Laravel expects array parameters
+                const filteredArray = value.filter(v => v !== null && v !== undefined && v !== '');
+                if (filteredArray.length > 0) {
+                    filteredArray.forEach((v, index) => {
+                        params[`filter[${filterId}][${index}]`] = String(v);
+                    });
+                }
             } 
             // Handle range values
-            else if (typeof value === 'object' && (value.from || value.to)) {
-                if (value.from) {
-                    params[`filter[${filterId}][from]`] = value.from;
+            else if (typeof value === 'object' && !Array.isArray(value) && (value.from || value.to)) {
+                if (value.from && value.from.toString().trim() !== '') {
+                    params[`filter[${filterId}][from]`] = value.from.toString().trim();
                 }
-                if (value.to) {
-                    params[`filter[${filterId}][to]`] = value.to;
+                if (value.to && value.to.toString().trim() !== '') {
+                    params[`filter[${filterId}][to]`] = value.to.toString().trim();
                 }
             }
             // Handle single values
-            else {
-                params[`filter[${filterId}]`] = value;
+            else if (!Array.isArray(value)) {
+                params[`filter[${filterId}]`] = String(value).trim();
             }
         }
     });
@@ -205,10 +226,27 @@ const buildFilterParams = () => {
 // Apply filters
 const applyFilters = () => {
     const params = buildFilterParams();
+    console.log('Index - Applying filters with params:', params);
+    console.log('Index - Current filterValues:', filterValues.value);
+    
+    // Build URL with query string for debugging
+    const queryString = Object.keys(params).map(key => {
+        const value = params[key];
+        if (Array.isArray(value)) {
+            return value.map((v, i) => `${encodeURIComponent(key)}[${i}]=${encodeURIComponent(v)}`).join('&');
+        }
+        return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+    }).join('&');
+    console.log('Index - Query string:', queryString);
+    
+    // Use router.get with query parameters - Inertia will add them to URL
     router.get(baseUrl.value, params, {
-        preserveState: true,
+        preserveState: false,
         preserveScroll: true,
         only: ['items', 'search', 'pagination', 'filterConfig'],
+        onSuccess: () => {
+            console.log('Index - Navigation successful, URL:', window.location.href);
+        },
     });
 };
 
@@ -383,6 +421,25 @@ const getSelectOptions = (fieldName) => {
     return [];
 };
 
+// Get display text for select field
+const getSelectDisplayText = (filterId, fieldName) => {
+    const value = filterValues.value[filterId];
+    if (!value || value === '') return '';
+    
+    const options = getSelectOptions(fieldName);
+    if (Array.isArray(value)) {
+        // Multiple select - show comma-separated labels
+        return value.map(v => {
+            const option = options.find(opt => String(opt.key) === String(v));
+            return option ? option.label : v;
+        }).filter(Boolean).join(', ');
+    } else {
+        // Single select - show label
+        const option = options.find(opt => String(opt.key) === String(value));
+        return option ? option.label : String(value);
+    }
+};
+
 // Format filter value for display
 const formatFilterValue = (value, filter) => {
     if (value === null || value === undefined || value === '') {
@@ -401,7 +458,7 @@ const formatFilterValue = (value, filter) => {
     }
     
     // Format based on filter type
-    if (filter.type === 'field' && props.uiConfig[filter.field]?.interface === 'checkbox') {
+    if (filter && filter.type === 'field' && filter.field && props.uiConfig[filter.field]?.interface === 'checkbox') {
         return value === '1' || value === 1 || value === true ? 'Yes' : 'No';
     }
     
@@ -676,9 +733,9 @@ const submitCreateChild = (parentId) => {
 
                                 <!-- Custom Filters -->
                                 <div
-                                    v-for="filter in props.filterConfig.filters"
+                                    v-for="filter in (props.filterConfig?.filters || [])"
                                     :key="filter.id"
-                                    v-show="filter.enabled"
+                                    v-show="filter && filter.enabled"
                                     class="flex items-start gap-2"
                                 >
                                     <div class="flex-1 min-w-0">
@@ -807,21 +864,23 @@ const submitCreateChild = (parentId) => {
                                         ×
                                     </button>
                                 </span>
-                                <span
-                                    v-for="filter in props.filterConfig.filters"
-                                    :key="filter.id"
-                                    v-if="filter.enabled && filterValues[filter.id]"
-                                    class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 rounded text-sm"
-                                >
-                                    {{ filter.label }}: {{ formatFilterValue(filterValues[filter.id], filter) }}
-                                    <button
-                                        type="button"
-                                        @click="clearFilter(filter.id)"
-                                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                                <template v-if="props.filterConfig && props.filterConfig.filters">
+                                    <span
+                                        v-for="filter in props.filterConfig.filters"
+                                        :key="filter.id"
+                                        v-if="filter && filter.enabled && filterValues[filter.id]"
+                                        class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 rounded text-sm"
                                     >
-                                        ×
-                                    </button>
-                                </span>
+                                        {{ filter.label }}: {{ formatFilterValue(filterValues[filter.id], filter) }}
+                                        <button
+                                            type="button"
+                                            @click="clearFilter(filter.id)"
+                                            class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                                        >
+                                            ×
+                                        </button>
+                                    </span>
+                                </template>
                             </div>
                         </form>
                     </div>
