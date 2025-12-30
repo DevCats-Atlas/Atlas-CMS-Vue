@@ -6,6 +6,7 @@ import ToastStack from '@/components/ToastStack.vue';
 import { useToast } from '@/composables/useToast.js';
 import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/components/interfaces';
 import RelationshipManager from './components/RelationshipManager.vue';
+import CustomButtons from '../components/CustomButtons.vue';
 import { useTranslation } from '@/utils/useTranslation.js';
 
 const { t } = useTranslation();
@@ -62,6 +63,14 @@ const props = defineProps({
     relationships: {
         type: Array,
         default: () => [],
+    },
+    customButtons: {
+        type: Array,
+        default: () => [],
+    },
+    dataSource: {
+        type: String,
+        default: 'db_table',
     },
 });
 
@@ -513,9 +522,18 @@ const formatCastDisplay = (html) => {
                                 · ID: <code class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">{{ recordId }}</code>
                             </p>
                         </div>
-                        <Link :href="baseUrl" class="btn btn-outline">
-                            Back to list
-                        </Link>
+                        <div class="flex items-center gap-3">
+                            <CustomButtons
+                                v-if="customButtons && customButtons.length > 0"
+                                :buttons="customButtons"
+                                :module-handle="moduleHandle"
+                                :record-id="recordId"
+                                :data-source="dataSource"
+                            />
+                            <Link :href="baseUrl" class="btn btn-outline">
+                                Back to list
+                            </Link>
+                        </div>
                     </div>
 
                     <form @submit.prevent="submitUpdate" class="space-y-6">

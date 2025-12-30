@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
 import EditForm from './components/EditForm.vue';
+import CustomButtons from '../components/CustomButtons.vue';
 
 const props = defineProps({
     title: {
@@ -48,6 +49,14 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    customButtons: {
+        type: Array,
+        default: () => [],
+    },
+    dataSource: {
+        type: String,
+        default: 'items',
+    },
 });
 </script>
 
@@ -86,9 +95,18 @@ const props = defineProps({
                                 <span class="text-gray-600 dark:text-gray-300 font-medium">{{ item.title || 'Untitled' }}</span>
                             </nav>
                         </div>
-                        <Link :href="indexUrl" class="btn btn-outline" preserve-scroll>
-                            Back to list
-                        </Link>
+                        <div class="flex items-center gap-3">
+                            <CustomButtons
+                                v-if="customButtons && customButtons.length > 0"
+                                :buttons="customButtons"
+                                :module-handle="moduleHandle"
+                                :record-id="item.id"
+                                :data-source="dataSource"
+                            />
+                            <Link :href="indexUrl" class="btn btn-outline" preserve-scroll>
+                                Back to list
+                            </Link>
+                        </div>
                     </div>
                     <EditForm
                         :title="title"

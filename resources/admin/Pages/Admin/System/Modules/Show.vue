@@ -9,6 +9,7 @@ import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/co
 import DataSourceUiBuilder from './components/DataSourceUiBuilder.vue';
 import RelationshipModal from './components/RelationshipModal.vue';
 import FilterBuilder from './components/FilterBuilder.vue';
+import ButtonBuilder from './components/ButtonBuilder.vue';
 import { useTranslation } from '@/utils/useTranslation.js';
 
 const { t } = useTranslation();
@@ -421,6 +422,29 @@ const initialDbTableOrderByDirection = computed(() => {
     return 'asc';
 });
 
+// Initialize module_custom_buttons from custom fields if available
+const initialModuleCustomButtons = computed(() => {
+    const field = settingsFields.value.find(field => field.node === 'module_custom_buttons');
+    if (field && initialCustomFields.value[field.id]) {
+        const value = initialCustomFields.value[field.id].default || '';
+        if (value) {
+            try {
+                const parsed = JSON.parse(value);
+                return {
+                    buttons: parsed.buttons || [],
+                };
+            } catch (e) {
+                return {
+                    buttons: [],
+                };
+            }
+        }
+    }
+    return {
+        buttons: [],
+    };
+});
+
 const moduleForm = useForm({
     title: props.module.title,
     visible: props.module.visible,
@@ -464,6 +488,7 @@ const dbTableSorting = ref(initialDbTableSorting.value);
 const dbTableSortingColumn = ref(initialDbTableSortingColumn.value);
 const dbTableOrderByColumn = ref(initialDbTableOrderByColumn.value);
 const dbTableOrderByDirection = ref(initialDbTableOrderByDirection.value);
+const moduleCustomButtons = ref(JSON.parse(JSON.stringify(initialModuleCustomButtons.value))); // Deep copy
 
 // Watch and sync database connection to form
 watch(dbTableConnection, (newValue) => {
@@ -526,6 +551,15 @@ watch(dbTableFilters, () => {
     if (filtersField) {
         ensureFieldModel(filtersField);
         moduleForm.custom_fields[filtersField.id].default = JSON.stringify(dbTableFilters.value);
+    }
+}, { deep: true, immediate: true });
+
+// Watch and sync module custom buttons to form
+watch(moduleCustomButtons, () => {
+    const buttonsField = settingsFields.value.find(field => field.node === 'module_custom_buttons');
+    if (buttonsField) {
+        ensureFieldModel(buttonsField);
+        moduleForm.custom_fields[buttonsField.id].default = JSON.stringify(moduleCustomButtons.value);
     }
 }, { deep: true, immediate: true });
 
@@ -1301,6 +1335,25 @@ const reorderAction = (action, direction) => {
                     <div v-else class="text-sm text-gray-500 dark:text-gray-400 py-4 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
                         Please specify a table name above to configure filters.
                     </div>
+                </div>
+
+                <!-- Custom Buttons Configuration -->
+                <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Custom Buttons Configuration</h2>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                Configure custom buttons that appear on the edit record page. Buttons can trigger custom routes with proper validation.
+                            </p>
+                        </div>
+                    </div>
+
+                    <ButtonBuilder
+                        :buttons="moduleCustomButtons.buttons"
+                        @update:buttons="(buttons) => { 
+                            moduleCustomButtons.buttons.splice(0, moduleCustomButtons.buttons.length, ...buttons);
+                        }"
+                    />
                 </div>
 
                 <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
