@@ -1,8 +1,14 @@
 <script setup>
-import { Head, Link } from '@inertiajs/vue3';
+import { watch, onMounted } from 'vue';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
 import EditForm from './components/EditForm.vue';
 import CustomButtons from '../components/CustomButtons.vue';
+import ToastStack from '@/components/ToastStack.vue';
+import { useToast } from '@/composables/useToast.js';
+
+const { toasts, showToast, dismissToast } = useToast();
+const page = usePage();
 
 const props = defineProps({
     title: {
@@ -58,11 +64,53 @@ const props = defineProps({
         default: 'items',
     },
 });
+
+// Watch for flash messages and show them as toasts
+watch(() => page.props.flash, (flash) => {
+    if (flash?.error) {
+        showToast({
+            title: 'Error',
+            message: flash.error,
+            intent: 'danger',
+            duration: 6000,
+        });
+    }
+    if (flash?.success) {
+        showToast({
+            title: 'Success',
+            message: flash.success,
+            intent: 'success',
+            duration: 4000,
+        });
+    }
+}, { immediate: true, deep: true });
+
+// Also check on mount for any existing flash messages
+onMounted(() => {
+    const flash = page.props.flash;
+    if (flash?.error) {
+        showToast({
+            title: 'Error',
+            message: flash.error,
+            intent: 'danger',
+            duration: 6000,
+        });
+    }
+    if (flash?.success) {
+        showToast({
+            title: 'Success',
+            message: flash.success,
+            intent: 'success',
+            duration: 4000,
+        });
+    }
+});
 </script>
 
 <template>
     <AdminLayout>
         <Head :title="title" />
+        <ToastStack :toasts="toasts" @dismiss="dismissToast" />
         <div class="py-6">
             <div class="mx-auto max-w-8xl sm:px-6 lg:px-8 space-y-6">
                 <section class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4 relative overflow-visible">

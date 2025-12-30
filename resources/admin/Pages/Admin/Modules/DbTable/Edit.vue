@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { ref, computed, watch, onMounted } from 'vue';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
 import ToastStack from '@/components/ToastStack.vue';
 import { useToast } from '@/composables/useToast.js';
@@ -10,6 +10,7 @@ import CustomButtons from '../components/CustomButtons.vue';
 import { useTranslation } from '@/utils/useTranslation.js';
 
 const { t } = useTranslation();
+const page = usePage();
 
 const props = defineProps({
     title: {
@@ -76,6 +77,47 @@ const props = defineProps({
 
 const baseUrl = computed(() => `/admin/${props.moduleHandle}`);
 const { toasts, showToast, dismissToast } = useToast();
+
+// Watch for flash messages and show them as toasts
+watch(() => page.props.flash, (flash) => {
+    if (flash?.error) {
+        showToast({
+            title: 'Error',
+            message: flash.error,
+            intent: 'danger',
+            duration: 6000,
+        });
+    }
+    if (flash?.success) {
+        showToast({
+            title: 'Success',
+            message: flash.success,
+            intent: 'success',
+            duration: 4000,
+        });
+    }
+}, { immediate: true, deep: true });
+
+// Also check on mount for any existing flash messages
+onMounted(() => {
+    const flash = page.props.flash;
+    if (flash?.error) {
+        showToast({
+            title: 'Error',
+            message: flash.error,
+            intent: 'danger',
+            duration: 6000,
+        });
+    }
+    if (flash?.success) {
+        showToast({
+            title: 'Success',
+            message: flash.success,
+            intent: 'success',
+            duration: 4000,
+        });
+    }
+});
 
 // Parse field groups from uiConfig
 const fieldGroups = computed(() => {
