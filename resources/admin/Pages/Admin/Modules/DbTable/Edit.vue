@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
 import ToastStack from '@/components/ToastStack.vue';
 import { useToast } from '@/composables/useToast.js';
@@ -306,7 +306,7 @@ const submitUpdate = () => {
         forceFormData: true,
         onSuccess: () => {
             // Note: Success toast is handled by the Edit page via flash messages
-            router.visit(`${baseUrl.value}/edit?id=${props.recordId}`);
+            // No need to manually visit - Inertia already follows the redirect from backend
         },
     });
 };
