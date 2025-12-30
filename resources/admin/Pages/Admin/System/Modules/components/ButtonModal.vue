@@ -17,8 +17,8 @@ const emit = defineEmits(['close', 'save']);
 const formData = ref({
     id: '',
     title: '',
-    route: '',
-    method: 'post',
+    action: '',
+    method: '__invoke',
     enabled: true,
     order_index: 0,
     icon: '',
@@ -46,8 +46,8 @@ watch(() => props.open, (isOpen, wasOpen) => {
                 formData.value = {
                     id: button.id || generateButtonId(),
                     title: button.title || '',
-                    route: button.route || '',
-                    method: button.method || 'post',
+                    action: button.action || button.route || '', // Support both for migration
+                    method: button.method || '__invoke',
                     enabled: button.enabled !== undefined ? button.enabled : true,
                     order_index: button.order_index ?? 0,
                     icon: button.icon || '',
@@ -63,8 +63,8 @@ watch(() => props.open, (isOpen, wasOpen) => {
             formData.value = {
                 id: generateButtonId(),
                 title: '',
-                route: '',
-                method: 'post',
+                action: '',
+                method: '__invoke',
                 enabled: true,
                 order_index: 0,
                 icon: '',
@@ -89,6 +89,8 @@ const generateButtonId = () => {
 
 const isEditMode = computed(() => !!props.button);
 
+// Note: HTTP method is no longer used for Action-based buttons
+// Keeping for backward compatibility if route-based buttons are still supported
 const methods = [
     { value: 'get', label: 'GET' },
     { value: 'post', label: 'POST' },
@@ -111,8 +113,8 @@ const validateForm = () => {
     if (!formData.value.title || !formData.value.title.trim()) {
         return { valid: false, error: 'Title is required' };
     }
-    if (!formData.value.route || !formData.value.route.trim()) {
-        return { valid: false, error: 'Route is required' };
+    if (!formData.value.action || !formData.value.action.trim()) {
+        return { valid: false, error: 'Action class is required' };
     }
     return { valid: true };
 };
@@ -166,29 +168,33 @@ const handleClose = () => {
                             />
                         </div>
 
-                        <!-- Route -->
+                        <!-- Action Class -->
                         <div>
-                            <label class="form-label">Route Name <span class="text-red-500">*</span></label>
+                            <label class="form-label">Action Class <span class="text-red-500">*</span></label>
                             <input
-                                v-model="formData.route"
+                                v-model="formData.action"
                                 type="text"
                                 class="form-input"
-                                placeholder="admin.custom.approve"
+                                placeholder="App\Actions\Admin\Venues\ApproveVenueAction"
                                 required
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Laravel route name (e.g., admin.orders.approve)
+                                Fully qualified class name of the Action class (e.g., App\Actions\Admin\Venues\ApproveVenueAction)
                             </p>
                         </div>
 
                         <!-- Method -->
                         <div>
-                            <label class="form-label">HTTP Method</label>
-                            <select v-model="formData.method" class="form-select">
-                                <option v-for="method in methods" :key="method.value" :value="method.value">
-                                    {{ method.label }}
-                                </option>
-                            </select>
+                            <label class="form-label">Method Name</label>
+                            <input
+                                v-model="formData.method"
+                                type="text"
+                                class="form-input"
+                                placeholder="__invoke"
+                            />
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Method name to call on the Action class (default: __invoke for single-action classes)
+                            </p>
                         </div>
 
                         <!-- Variant -->

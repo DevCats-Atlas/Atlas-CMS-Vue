@@ -1,7 +1,8 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { router } from '@inertiajs/vue3';
+import axios from 'axios';
 import { confirmDialog } from '@/utils/confirmDialog.js';
+import { useToast } from '@/composables/useToast.js';
 
 const props = defineProps({
     buttons: {
@@ -23,8 +24,11 @@ const props = defineProps({
 });
 
 const loadingButtons = ref(new Set());
+const { showToast } = useToast();
 
 const handleButtonClick = async (button) => {
+    console.log('Button clicked:', button);
+    
     // Show confirmation if required
     if (button.confirm_message) {
         const confirmed = await confirmDialog({
@@ -35,6 +39,7 @@ const handleButtonClick = async (button) => {
         });
 
         if (!confirmed) {
+            console.log('Action cancelled by user');
             return;
         }
     }
@@ -46,61 +51,112 @@ const handleButtonClick = async (button) => {
 const executeButtonAction = async (button) => {
     const buttonId = button.id;
     if (!buttonId) {
-        console.error('Button ID is required');
+        console.error('Button ID is required', button);
         return;
     }
+
+    console.log('Executing button action:', {
+        buttonId,
+        moduleHandle: props.moduleHandle,
+        recordId: props.recordId,
+        dataSource: props.dataSource,
+        button,
+    });
 
     loadingButtons.value.add(buttonId);
 
     try {
+        // For Action-based buttons, always use POST (Action method name is handled on backend)
+        // For backward compatibility with route-based buttons, check if method is a valid HTTP method
         const method = (button.method || 'post').toLowerCase();
-        // Use route helper to generate URL, or construct it manually
+        const isHttpMethod = ['get', 'post', 'put', 'patch', 'delete'].includes(method);
+        const httpMethod = isHttpMethod ? method : 'post'; // Default to POST for Action methods like '__invoke'
+        
         const url = `/admin/${props.moduleHandle}/button/${buttonId}`;
         
         const payload = {
             [props.dataSource === 'items' ? 'item' : 'id']: props.recordId,
         };
 
-        // Use router based on method
-        if (method === 'get') {
-            router.get(url, payload, {
-                preserveScroll: true,
-                onError: (errors) => {
-                    console.error('Button action failed:', errors);
-                },
-            });
-        } else if (method === 'post') {
-            router.post(url, payload, {
-                preserveScroll: true,
-                onError: (errors) => {
-                    console.error('Button action failed:', errors);
-                },
-            });
-        } else if (method === 'put') {
-            router.put(url, payload, {
-                preserveScroll: true,
-                onError: (errors) => {
-                    console.error('Button action failed:', errors);
-                },
-            });
-        } else if (method === 'patch') {
-            router.patch(url, payload, {
-                preserveScroll: true,
-                onError: (errors) => {
-                    console.error('Button action failed:', errors);
-                },
-            });
-        } else if (method === 'delete') {
-            router.delete(url, {
-                data: payload,
-                preserveScroll: true,
-                onError: (errors) => {
-                    console.error('Button action failed:', errors);
-                },
-            });
+        // Use axios to make the request and handle JSON responses
+        let response;
+        const config = {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+        };
+
+        if (httpMethod === 'get') {
+            response = await axios.get(url, { ...config, params: payload });
+        } else if (httpMethod === 'post') {
+            response = await axios.post(url, payload, config);
+        } else if (httpMethod === 'put') {
+            response = await axios.put(url, payload, config);
+        } else if (httpMethod === 'patch') {
+            response = await axios.patch(url, payload, config);
+        } else if (httpMethod === 'delete') {
+            response = await axios.delete(url, { ...config, data: payload });
+        }
+
+        // Handle response - check if it's JSON or redirect
+        if (response && response.data) {
+            // JSON response - axios automatically parses JSON, so response.data is the parsed object
+            const data = response.data;
+            
+            // Check for success (explicitly check for true, or if success is not false)
+            const isSuccess = data.success === true || (data.success !== false && !data.error);
+            
+            if (isSuccess) {
+                // Success response - use the message from the controller
+                // The message should be directly in data.message from the JSON response
+                const message = data.message || 'Action completed successfully';
+                
+                showToast({
+                    title: 'Success',
+                    message: message,
+                    intent: 'success',
+                    duration: 4000,
+                });
+            } else {
+                // Error in JSON response
+                const errorMessage = data.message || data.error || 'Action failed';
+                showToast({
+                    title: 'Error',
+                    message: errorMessage,
+                    intent: 'danger',
+                    duration: 6000,
+                });
+            }
         }
     } catch (error) {
         console.error('Error executing button action:', error);
+        
+        // Extract error message
+        let errorMessage = 'An error occurred while executing the action';
+        
+        if (error.response) {
+            // Server responded with error
+            const data = error.response.data;
+            if (data?.message) {
+                errorMessage = data.message;
+            } else if (data?.error) {
+                errorMessage = data.error;
+            } else if (typeof data === 'string') {
+                errorMessage = data;
+            } else {
+                errorMessage = error.response.statusText || `Server error (${error.response.status})`;
+            }
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        showToast({
+            title: 'Error',
+            message: errorMessage,
+            intent: 'danger',
+            duration: 6000,
+        });
     } finally {
         // Remove loading state after a short delay to show feedback
         setTimeout(() => {
