@@ -54,8 +54,8 @@ const executeButtonAction = async (button) => {
 
     try {
         const method = (button.method || 'post').toLowerCase();
-        const routeName = `admin.modules.button.handle`;
-        const url = `/admin/modules/${props.moduleHandle}/button/${buttonId}`;
+        // Use route helper to generate URL, or construct it manually
+        const url = `/admin/${props.moduleHandle}/button/${buttonId}`;
         
         const payload = {
             [props.dataSource === 'items' ? 'item' : 'id']: props.recordId,
