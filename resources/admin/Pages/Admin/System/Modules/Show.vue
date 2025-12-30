@@ -8,6 +8,7 @@ import { confirmDialog } from '@/utils/confirmDialog.js';
 import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/components/interfaces';
 import DataSourceUiBuilder from './components/DataSourceUiBuilder.vue';
 import RelationshipModal from './components/RelationshipModal.vue';
+import FilterBuilder from './components/FilterBuilder.vue';
 import { useTranslation } from '@/utils/useTranslation.js';
 
 const { t } = useTranslation();
@@ -161,6 +162,7 @@ const filteredSettingsFields = computed(() => {
         field.node !== 'db_table_deep_structure' &&
         field.node !== 'db_table_parent_column' &&
         field.node !== 'db_table_relationships' &&
+        field.node !== 'db_table_filters' &&
         field.node !== 'db_table_order_by_column' &&
         field.node !== 'db_table_order_by_direction' &&
         field.node !== 'db_table_sorting' &&
@@ -341,6 +343,47 @@ const initialDbTableRelationships = computed(() => {
     return { relationships: [] };
 });
 
+// Initialize db_table_filters from custom fields if available
+const initialDbTableFilters = computed(() => {
+    const field = settingsFields.value.find(field => field.node === 'db_table_filters');
+    if (field && initialCustomFields.value[field.id]) {
+        const value = initialCustomFields.value[field.id].default || '';
+        if (value) {
+            try {
+                const parsed = JSON.parse(value);
+                return {
+                    filters: parsed.filters || [],
+                    default_search: parsed.default_search || {
+                        enabled: true,
+                        label: 'Search',
+                        placeholder: 'Search across all columns',
+                        columns: [],
+                    },
+                };
+            } catch (e) {
+                return {
+                    filters: [],
+                    default_search: {
+                        enabled: true,
+                        label: 'Search',
+                        placeholder: 'Search across all columns',
+                        columns: [],
+                    },
+                };
+            }
+        }
+    }
+    return {
+        filters: [],
+        default_search: {
+            enabled: true,
+            label: 'Search',
+            placeholder: 'Search across all columns',
+            columns: [],
+        },
+    };
+});
+
 // Initialize db_table_sorting from custom fields if available
 const initialDbTableSorting = computed(() => {
     const field = settingsFields.value.find(field => field.node === 'db_table_sorting');
@@ -392,6 +435,21 @@ const moduleForm = useForm({
 
 const currentUiConfig = ref(initialDataSourceUi.value || '');
 
+// Parse uiConfig for FilterBuilder
+const parsedUiConfig = computed(() => {
+    if (!currentUiConfig.value) {
+        return {};
+    }
+    try {
+        if (typeof currentUiConfig.value === 'string') {
+            return JSON.parse(currentUiConfig.value);
+        }
+        return currentUiConfig.value;
+    } catch (e) {
+        return {};
+    }
+});
+
 // Local state for data_source_table input (separate from form to prevent auto-save)
 const dataSourceTableInput = ref(initialDataSourceTable.value);
 
@@ -401,6 +459,7 @@ const dbTableHandlerClass = ref(initialDbTableHandlerClass.value);
 const dbTableDeepStructure = ref(initialDbTableDeepStructure.value);
 const dbTableParentColumn = ref(initialDbTableParentColumn.value);
 const dbTableRelationships = ref(JSON.parse(JSON.stringify(initialDbTableRelationships.value))); // Deep copy
+const dbTableFilters = ref(JSON.parse(JSON.stringify(initialDbTableFilters.value))); // Deep copy
 const dbTableSorting = ref(initialDbTableSorting.value);
 const dbTableSortingColumn = ref(initialDbTableSortingColumn.value);
 const dbTableOrderByColumn = ref(initialDbTableOrderByColumn.value);
@@ -458,6 +517,15 @@ watch(dbTableRelationships, () => {
     if (relationshipsField) {
         ensureFieldModel(relationshipsField);
         moduleForm.custom_fields[relationshipsField.id].default = JSON.stringify(dbTableRelationships.value);
+    }
+}, { deep: true, immediate: true });
+
+// Watch and sync filters to form
+watch(dbTableFilters, () => {
+    const filtersField = settingsFields.value.find(field => field.node === 'db_table_filters');
+    if (filtersField) {
+        ensureFieldModel(filtersField);
+        moduleForm.custom_fields[filtersField.id].default = JSON.stringify(dbTableFilters.value);
     }
 }, { deep: true, immediate: true });
 
@@ -1202,6 +1270,37 @@ const reorderAction = (action, direction) => {
                         </div>
                         
                     </form>
+                </div>
+
+                <!-- Filter Configuration -->
+                <div v-if="isDbTableSource" class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Filter Configuration</h2>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                Configure custom filters for the index page. Define search filters, field-based filters, and relationship filters.
+                            </p>
+                        </div>
+                    </div>
+
+                    <FilterBuilder
+                        v-if="dataSourceTableValue && dataSourceTableValue.trim() !== ''"
+                        :filters="dbTableFilters.filters"
+                        :default-search="dbTableFilters.default_search"
+                        :table-name="dataSourceTableValue"
+                        :module-id="module.id"
+                        :ui-config="parsedUiConfig"
+                        :relationships="dbTableRelationships.relationships"
+                        @update:filters="(filters) => { 
+                            dbTableFilters.filters.splice(0, dbTableFilters.filters.length, ...filters);
+                        }"
+                        @update:default-search="(defaultSearch) => { 
+                            Object.assign(dbTableFilters.default_search, defaultSearch);
+                        }"
+                    />
+                    <div v-else class="text-sm text-gray-500 dark:text-gray-400 py-4 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                        Please specify a table name above to configure filters.
+                    </div>
                 </div>
 
                 <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
