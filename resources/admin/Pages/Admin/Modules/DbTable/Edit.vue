@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
 import ToastStack from '@/components/ToastStack.vue';
@@ -97,27 +97,6 @@ watch(() => page.props.flash, (flash) => {
         });
     }
 }, { immediate: true, deep: true });
-
-// Also check on mount for any existing flash messages
-onMounted(() => {
-    const flash = page.props.flash;
-    if (flash?.error) {
-        showToast({
-            title: 'Error',
-            message: flash.error,
-            intent: 'danger',
-            duration: 6000,
-        });
-    }
-    if (flash?.success) {
-        showToast({
-            title: 'Success',
-            message: flash.success,
-            intent: 'success',
-            duration: 4000,
-        });
-    }
-});
 
 // Parse field groups from uiConfig
 const fieldGroups = computed(() => {
@@ -326,11 +305,7 @@ const submitUpdate = () => {
         preserveScroll: true,
         forceFormData: true,
         onSuccess: () => {
-            showToast({
-                title: t('admin.common.success'),
-                message: t('admin.success.record_updated'),
-                intent: 'success',
-            });
+            // Note: Success toast is handled by the Edit page via flash messages
             router.visit(`${baseUrl.value}/edit?id=${props.recordId}`);
         },
     });

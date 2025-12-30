@@ -1,5 +1,5 @@
 <script setup>
-import { watch, onMounted } from 'vue';
+import { watch } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
 import EditForm from './components/EditForm.vue';
@@ -84,27 +84,6 @@ watch(() => page.props.flash, (flash) => {
         });
     }
 }, { immediate: true, deep: true });
-
-// Also check on mount for any existing flash messages
-onMounted(() => {
-    const flash = page.props.flash;
-    if (flash?.error) {
-        showToast({
-            title: 'Error',
-            message: flash.error,
-            intent: 'danger',
-            duration: 6000,
-        });
-    }
-    if (flash?.success) {
-        showToast({
-            title: 'Success',
-            message: flash.success,
-            intent: 'success',
-            duration: 4000,
-        });
-    }
-});
 </script>
 
 <template>

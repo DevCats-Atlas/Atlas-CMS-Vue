@@ -58,7 +58,7 @@ const props = defineProps({
 
 const emit = defineEmits(['saved', 'cancel']);
 
-const { toasts, showToast, dismissToast } = useToast();
+const { toasts, dismissToast } = useToast();
 const languages = computed(() => usePage().props.languages || []);
 
 const normalizeCheckboxValue = (value) => {
@@ -222,12 +222,7 @@ const submit = () => {
             submitting.value = false;
         },
         onSuccess: () => {
-            showToast({
-                title: 'Saved',
-                message: 'Item updated successfully.',
-                intent: 'success',
-            });
-            
+            // Note: Success toast is handled by the parent Edit page via flash messages
             // Reset all file inputs after successful save
             // Reset item_file input
             const itemFileInput = document.getElementById('field-item_file');
