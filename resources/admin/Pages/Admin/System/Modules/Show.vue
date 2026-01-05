@@ -167,7 +167,8 @@ const filteredSettingsFields = computed(() => {
         field.node !== 'db_table_order_by_column' &&
         field.node !== 'db_table_order_by_direction' &&
         field.node !== 'db_table_sorting' &&
-        field.node !== 'db_table_sorting_column'
+        field.node !== 'db_table_sorting_column' &&
+        field.node !== 'module_custom_buttons'
     );
     
     // Hide deep_structure, sorting, and columns_to_show for db_table modules
