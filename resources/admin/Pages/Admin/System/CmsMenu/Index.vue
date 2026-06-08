@@ -29,13 +29,13 @@ const props = defineProps({
 
 const newGroupForm = useForm({
     title: '',
-    visible: true,
+    is_visible: true,
     roles: [],
 });
 
 const editGroupForm = useForm({
     title: '',
-    visible: true,
+    is_visible: true,
     roles: [],
 });
 
@@ -43,7 +43,7 @@ const editingGroupId = ref(null);
 
 const itemForm = useForm({
     title: '',
-    visible: true,
+    is_visible: true,
     module_id: '',
     module_action_id: '',
     query_params: '',
@@ -72,7 +72,7 @@ const submitNewGroup = () => {
 const startEditGroup = (group) => {
     editingGroupId.value = group.id;
     editGroupForm.title = group.title;
-    editGroupForm.visible = group.visible;
+    editGroupForm.is_visible = group.is_visible;
     editGroupForm.roles = group.roleIds ? group.roleIds.map((id) => String(id)) : [];
 };
 
@@ -119,7 +119,7 @@ const deleteGroup = async (group) => {
 const startCreateItem = (group) => {
     activeItemContext.value = { groupId: group.id, itemId: null };
     itemForm.reset();
-    itemForm.visible = true;
+    itemForm.is_visible = true;
     itemForm.module_id = '';
     itemForm.module_action_id = '';
     itemForm.query_params = '';
@@ -129,7 +129,7 @@ const startCreateItem = (group) => {
 const startEditItem = (group, item) => {
     activeItemContext.value = { groupId: group.id, itemId: item.id };
     itemForm.title = item.title;
-    itemForm.visible = item.visible;
+    itemForm.is_visible = item.is_visible;
     suppressNextActionReset.value = true;
     itemForm.module_id = item.moduleId ? String(item.moduleId) : '';
     itemForm.module_action_id = item.moduleActionId ? String(item.moduleActionId) : '';
@@ -140,7 +140,7 @@ const startEditItem = (group, item) => {
 const cancelItemForm = () => {
     activeItemContext.value = { groupId: null, itemId: null };
     itemForm.reset();
-    itemForm.visible = true;
+    itemForm.is_visible = true;
     itemForm.module_id = '';
     itemForm.module_action_id = '';
     itemForm.query_params = '';
@@ -162,7 +162,7 @@ const submitItemForm = () => {
             preserveScroll: true,
             onSuccess: () => {
                 itemForm.reset();
-                itemForm.visible = true;
+                itemForm.is_visible = true;
                 itemForm.module_id = '';
                 itemForm.module_action_id = '';
                 itemForm.query_params = '';
@@ -256,7 +256,7 @@ const deleteItem = async (item) => {
                             </div>
                             <label class="inline-flex items-center text-sm text-gray-700 dark:text-gray-300">
                                 <input
-                                    v-model="newGroupForm.visible"
+                                    v-model="newGroupForm.is_visible"
                                     type="checkbox"
                                     class="form-checkbox"
                                 />
@@ -303,11 +303,11 @@ const deleteItem = async (item) => {
                                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ group.title }}</h3>
                                     <span
                                         class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold"
-                                        :class="group.visible
+                                        :class="group.is_visible
                                             ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
                                             : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'"
                                     >
-                                        {{ group.visible ? t('admin.cms_menu.visible') : t('admin.cms_menu.hidden') }}
+                                        {{ group.is_visible ? t('admin.cms_menu.visible') : t('admin.cms_menu.hidden') }}
                                     </span>
                                 </div>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('admin.cms_menu.items_count', { count: group.items.length }) }}</p>
@@ -321,7 +321,7 @@ const deleteItem = async (item) => {
                                 <button class="btn btn-outline" @click="reorderGroup(group, 'up')">↑</button>
                                 <button class="btn btn-outline" @click="reorderGroup(group, 'down')">↓</button>
                                 <button class="btn btn-outline" @click="toggleGroupVisible(group)">
-                                    {{ group.visible ? t('admin.cms_menu.hide') : t('admin.cms_menu.show') }}
+                                    {{ group.is_visible ? t('admin.cms_menu.hide') : t('admin.cms_menu.show') }}
                                 </button>
                                 <button class="btn btn-outline" @click="startEditGroup(group)">
                                     {{ t('admin.common.edit') }}
@@ -363,16 +363,16 @@ const deleteItem = async (item) => {
                                         <div class="flex flex-wrap items-center gap-2">
                                             <span
                                                 class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold"
-                                                :class="item.visible
+                                                :class="item.is_visible
                                                     ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
                                                     : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'"
                                             >
-                                                {{ item.visible ? t('admin.cms_menu.visible') : t('admin.cms_menu.hidden') }}
+                                                {{ item.is_visible ? t('admin.cms_menu.visible') : t('admin.cms_menu.hidden') }}
                                             </span>
                                             <button class="px-2 py-1 rounded border border-gray-300 dark:border-gray-600" @click="reorderItem(item, 'up')">↑</button>
                                             <button class="px-2 py-1 rounded border border-gray-300 dark:border-gray-600" @click="reorderItem(item, 'down')">↓</button>
                                             <button class="btn btn-outline" @click="toggleItemVisible(item)">
-                                                {{ item.visible ? t('admin.cms_menu.hide') : t('admin.cms_menu.show') }}
+                                                {{ item.is_visible ? t('admin.cms_menu.hide') : t('admin.cms_menu.show') }}
                                             </button>
                                             <button class="btn btn-outline" @click="startEditItem(group, item)">
                                                 {{ t('admin.common.edit') }}
@@ -412,7 +412,7 @@ const deleteItem = async (item) => {
                 </div>
                 <label class="inline-flex items-center text-sm text-gray-700 dark:text-gray-300">
                     <input
-                        v-model="editGroupForm.visible"
+                        v-model="editGroupForm.is_visible"
                         type="checkbox"
                         class="form-checkbox"
                     />
@@ -520,7 +520,7 @@ const deleteItem = async (item) => {
                 </div>
                 <label class="inline-flex items-center text-sm text-gray-700 dark:text-gray-300">
                     <input
-                        v-model="itemForm.visible"
+                        v-model="itemForm.is_visible"
                         type="checkbox"
                         class="form-checkbox"
                     />
