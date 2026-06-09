@@ -31,6 +31,8 @@ const interfaceComponents = {
 // Using relative path from interfaces directory
 const customInterfaces = import.meta.glob('../../../../../../Custom/Interfaces/**/*.vue', { eager: false });
 
+const customInterfaceCache = new Map();
+
 /**
  * Resolve interface component by type and optional config.
  * For custom interfaces, dynamically imports from Custom/Interfaces directory.
@@ -61,23 +63,26 @@ export const resolveInterfaceComponent = (type, config = null) => {
             
             // Check if the custom interface exists in our glob
             if (customInterfaces[interfacePath]) {
-                // Return async component that will load the custom interface
-                return defineAsyncComponent(() => 
-                    customInterfaces[interfacePath]()
-                        .then(module => {
-                            const component = module.default || module;
-                            if (!component) {
-                                throw new Error('Custom interface component does not have a default export');
-                            }
-                            return component;
-                        })
-                        .catch((error) => {
-                            console.error(`Failed to load custom interface: ${interfacePath}`, error);
-                            console.error('Config:', config);
-                            console.error('Custom path:', customPath);
-                            return UnknownInterface;
-                        })
-                );
+                if (!customInterfaceCache.has(interfacePath)) {
+                    customInterfaceCache.set(interfacePath, defineAsyncComponent(() =>
+                        customInterfaces[interfacePath]()
+                            .then(module => {
+                                const component = module.default || module;
+                                if (!component) {
+                                    throw new Error('Custom interface component does not have a default export');
+                                }
+                                return component;
+                            })
+                            .catch((error) => {
+                                console.error(`Failed to load custom interface: ${interfacePath}`, error);
+                                console.error('Config:', config);
+                                console.error('Custom path:', customPath);
+                                return UnknownInterface;
+                            })
+                    ));
+                }
+
+                return customInterfaceCache.get(interfacePath);
             } else {
                 console.warn(`Custom interface not found: ${interfacePath}`);
                 console.log('Available custom interfaces:', Object.keys(customInterfaces));
