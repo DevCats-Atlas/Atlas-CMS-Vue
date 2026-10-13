@@ -289,11 +289,13 @@ npm run build
 
 ## Requirements
 
-- Node.js 18+
-- npm 9+
-- Vite 5+
-- Laravel Vite Plugin 2+
-- Vue 3+
+This package ships Vue/JavaScript sources and Vite utilities. Its manifest has no standalone build/test scripts or `engines.node` constraint. The consumer owns the build toolchain and must satisfy the engines and peer requirements of its selected Vite plugins.
+
+Package dependencies are declared in `package.json`: Vue `^3.5.44`, `@inertiajs/vue3` `^3.9.1`, CKEditor `^49.0.0`, and `@ckeditor/ckeditor5-vue` `^9.0.0`. Install the matching AtlasCMS backend for the Inertia page/prop contracts.
+
+The current My Atlas CMS integration host requires **Node >=22.12.0** and uses Vite `^8.3.4`, `@vitejs/plugin-vue` `^6.0.10`, Laravel Vite plugin `^3.2.0`, and Tailwind Vite plugin `^4.3.3`. Its Laravel Vite plugin requires Vite 8. These are the tested consumer versions, not independently declared package-wide minimums. Node 18 or a generic Node 20 installation is insufficient for that host.
+
+Use npm from a compatible Node installation and the consumer's lock with `npm ci`. Run `npm run build` from the consumer root; in My Atlas CMS, `node --test tests/Frontend/*.test.mjs` verifies package helpers. The package does not compile TypeScript; AtlasShop's separate browser library uses the host compiler.
 
 ## License
 
