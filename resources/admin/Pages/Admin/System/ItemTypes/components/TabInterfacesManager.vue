@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { ref, computed, watch } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
 import ModalDialog from '@/components/ModalDialog.vue';
@@ -189,8 +190,8 @@ const resetForm = () => {
 
 const submit = () => {
     const url = editingField.value
-        ? `/admin/system/item-types/${props.itemTypeId}/tabs/${props.tabId}/interfaces/${editingField.value.id}`
-        : `/admin/system/item-types/${props.itemTypeId}/tabs/${props.tabId}/interfaces`;
+        ? adminUrl(`system/item-types/${props.itemTypeId}/tabs/${props.tabId}/interfaces/${editingField.value.id}`)
+        : adminUrl(`system/item-types/${props.itemTypeId}/tabs/${props.tabId}/interfaces`);
 
     if (editingField.value) {
         form.put(url, {
@@ -207,7 +208,7 @@ const submit = () => {
 
 const toggleInterface = (field) => {
     router.patch(
-        `/admin/system/item-types/${props.itemTypeId}/tabs/${props.tabId}/interfaces/${field.id}/toggle-visible`,
+        adminUrl(`system/item-types/${props.itemTypeId}/tabs/${props.tabId}/interfaces/${field.id}/toggle-visible`),
         {},
         { preserveScroll: true }
     );
@@ -215,7 +216,7 @@ const toggleInterface = (field) => {
 
 const reorderInterface = (field, direction) => {
     router.patch(
-        `/admin/system/item-types/${props.itemTypeId}/tabs/${props.tabId}/interfaces/${field.id}/reorder`,
+        adminUrl(`system/item-types/${props.itemTypeId}/tabs/${props.tabId}/interfaces/${field.id}/reorder`),
         { direction },
         { preserveScroll: true }
     );
@@ -234,7 +235,7 @@ const deleteInterface = async (field) => {
     }
 
     router.delete(
-        `/admin/system/item-types/${props.itemTypeId}/tabs/${props.tabId}/interfaces/${field.id}`,
+        adminUrl(`system/item-types/${props.itemTypeId}/tabs/${props.tabId}/interfaces/${field.id}`),
         { preserveScroll: true }
     );
 };

@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { ref, watch, computed } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import SystemLayout from '@admin/Layouts/SystemLayout.vue';
@@ -818,7 +819,7 @@ const submitModule = () => {
         moduleForm.custom_fields[handlerClassField.id].default = dbTableHandlerClass.value || '';
     }
     
-    moduleForm.put(`/admin/system/modules/${props.module.id}`, {
+    moduleForm.put(adminUrl(`system/modules/${props.module.id}`), {
         preserveScroll: true,
         forceFormData: hasFileFields, // Only enable if we have file uploads
         onSuccess: () => {
@@ -843,7 +844,7 @@ const deleteModule = async () => {
         return;
     }
 
-    router.delete(`/admin/system/modules/${props.module.id}`);
+    router.delete(adminUrl(`system/modules/${props.module.id}`));
 };
 
 const startEditAction = (action) => {
@@ -860,12 +861,12 @@ const cancelActionEdit = () => {
 
 const submitAction = () => {
     if (editingActionId.value) {
-        actionForm.put(`/admin/system/modules/actions/${editingActionId.value}`, {
+        actionForm.put(adminUrl(`system/modules/actions/${editingActionId.value}`), {
             preserveScroll: true,
             onSuccess: () => cancelActionEdit(),
         });
     } else {
-        actionForm.post(`/admin/system/modules/${props.module.id}/actions`, {
+        actionForm.post(adminUrl(`system/modules/${props.module.id}/actions`), {
             preserveScroll: true,
             onSuccess: () => {
                 actionForm.reset();
@@ -887,15 +888,15 @@ const deleteAction = async (action) => {
         return;
     }
 
-    router.delete(`/admin/system/modules/actions/${action.id}`, { preserveScroll: true });
+    router.delete(adminUrl(`system/modules/actions/${action.id}`), { preserveScroll: true });
 };
 
 const toggleAction = (action) => {
-    router.patch(`/admin/system/modules/actions/${action.id}/toggle-visible`, {}, { preserveScroll: true });
+    router.patch(adminUrl(`system/modules/actions/${action.id}/toggle-visible`), {}, { preserveScroll: true });
 };
 
 const reorderAction = (action, direction) => {
-    router.patch(`/admin/system/modules/actions/${action.id}/reorder`, { direction }, { preserveScroll: true });
+    router.patch(adminUrl(`system/modules/actions/${action.id}/reorder`), { direction }, { preserveScroll: true });
 };
 </script>
 
@@ -911,7 +912,7 @@ const reorderAction = (action, direction) => {
                             <h1 class="heading-1">{{ module.title }}</h1>
                             <p class="text-sm text-gray-500 dark:text-gray-400">Manage module details and actions.</p>
                         </div>
-                        <Link href="/admin/system/modules" class="btn-text">
+                        <Link :href="adminUrl('system/modules')" class="btn-text">
                             Back to list
                         </Link>
                     </div>
@@ -1449,7 +1450,7 @@ const reorderAction = (action, direction) => {
                         Delete module
                     </button>
                     <div class="flex items-center gap-3">
-                        <Link href="/admin/system/modules" class="btn-text">
+                        <Link :href="adminUrl('system/modules')" class="btn-text">
                             Cancel
                         </Link>
                         <button

@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import SystemLayout from '@admin/Layouts/SystemLayout.vue';
 
@@ -17,7 +18,7 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.post('/admin/system/item-types');
+    form.post(adminUrl('system/item-types'));
 };
 </script>
 
@@ -33,7 +34,7 @@ const submit = () => {
                             <h1 class="heading-1">Create item type</h1>
                             <p class="text-gray-500 dark:text-gray-400 mt-1">Define a new polymorphic content type.</p>
                         </div>
-                        <Link href="/admin/system/item-types" class="btn-text">
+                        <Link :href="adminUrl('system/item-types')" class="btn-text">
                             Back to list
                         </Link>
                     </div>
@@ -107,7 +108,7 @@ const submit = () => {
                         </div>
                     
                         <div class="actions-footer">
-                            <Link href="/admin/system/item-types" class="btn-text">
+                            <Link :href="adminUrl('system/item-types')" class="btn-text">
                                 Cancel
                             </Link>
                             <button

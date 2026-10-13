@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl, adminModuleHandle } from '@/utils/adminUrl';
 import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue';
 import { usePage, useForm, router } from '@inertiajs/vue3';
 import ModalDialog from '@/components/ModalDialog.vue';
@@ -62,9 +63,7 @@ const currentItemId = computed(() => {
 const moduleHandle = computed(() => {
     // If we have a parentItemId prop and are in a modal, we might need to use a different module handle
     // For now, still use URL-based module handle, but this could be enhanced if needed
-    const path = page.url;
-    const match = path.match(/\/admin\/([^/]+)/);
-    return match ? match[1] : '';
+    return adminModuleHandle();
 });
 
 // Get module handle for children requests - use parent module or child module based on context
@@ -78,7 +77,7 @@ const baseUrl = computed(() => {
     if (!childrenModuleHandle.value) {
         return '';
     }
-    return `/admin/${childrenModuleHandle.value}`;
+    return adminUrl(`${childrenModuleHandle.value}`);
 });
 
 const fetchChildren = async () => {
@@ -202,7 +201,7 @@ const openEditModal = async (itemModuleHandle, itemId, fieldId = null) => {
 
     try {
         // Build URL with field_id if provided
-        const url = new URL(`/admin/${itemModuleHandle}/item-edit-data`, window.location.origin);
+        const url = new URL(adminUrl(`${itemModuleHandle}/item-edit-data`), window.location.origin);
         url.searchParams.set('item', itemId.toString());
         if (fieldId) {
             url.searchParams.set('field_id', fieldId.toString());

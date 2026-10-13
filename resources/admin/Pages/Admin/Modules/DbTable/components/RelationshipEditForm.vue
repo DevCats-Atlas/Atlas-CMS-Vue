@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/components/interfaces';
@@ -226,7 +227,7 @@ const loadData = async () => {
     
     try {
         // Load structure
-        const structureResponse = await axios.get(`/admin/${props.moduleHandle}/relationships/${getRelationshipName()}/structure`);
+        const structureResponse = await axios.get(adminUrl(`${props.moduleHandle}/relationships/${getRelationshipName()}/structure`));
         
         if (!structureResponse.data.success) {
             errors.value = { general: structureResponse.data.message || t('admin.errors.error_occurred') };
@@ -236,7 +237,7 @@ const loadData = async () => {
         fields.value = structureResponse.data.fields || [];
         
         // Load existing record data (pass module_handle so backend can use module's DB connection)
-        const recordDataResponse = await axios.get(`/admin/api/tables/${props.relatedTableName}/record`, {
+        const recordDataResponse = await axios.get(adminUrl(`api/tables/${props.relatedTableName}/record`), {
             params: {
                 id: props.relatedRecordId,
                 module_handle: props.moduleHandle,
@@ -276,7 +277,7 @@ const submitForm = async () => {
         });
         
         // Use the relationship update endpoint
-        const response = await axios.put(`/admin/${props.moduleHandle}/relationships/${getRelationshipName()}/update`, {
+        const response = await axios.put(adminUrl(`${props.moduleHandle}/relationships/${getRelationshipName()}/update`), {
             record_id: props.recordId,
             related_record_id: props.relatedRecordId,
             ...payload,

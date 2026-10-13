@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { ref, computed, onMounted, watch } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import axios from 'axios';
@@ -123,7 +124,7 @@ const checkBelongsToCount = async () => {
     }
     
     try {
-        const response = await axios.get(`/admin/api/tables/${props.relatedTableName}/count`);
+        const response = await axios.get(adminUrl(`api/tables/${props.relatedTableName}/count`));
         belongsToTotalCount.value = response.data.count || 0;
         belongsToRequiresSearch.value = belongsToTotalCount.value >= 100;
         
@@ -152,7 +153,7 @@ const loadBelongsToOptions = async () => {
     }
     
     belongsToLoading.value = true;
-    const url = `/admin/api/tables/${props.relatedTableName}/records`;
+    const url = adminUrl(`api/tables/${props.relatedTableName}/records`);
     const params = {
         search: belongsToSearchQuery.value || '',
         per_page: belongsToRequiresSearch.value ? 50 : 100,
@@ -246,7 +247,7 @@ const handleBelongsToUpdate = async () => {
     
     // Allow null/empty to unset the relationship
     try {
-        const response = await axios.put(`/admin/${props.moduleHandle}/relationships/${props.relationship.name || props.relationship.related_table}/update`, {
+        const response = await axios.put(adminUrl(`${props.moduleHandle}/relationships/${props.relationship.name || props.relationship.related_table}/update`), {
             record_id: props.recordId,
             related_record_id: newRelatedId || null,
         });
@@ -363,7 +364,7 @@ const removeRelationship = async (relatedRecordId, event) => {
     const relationshipName = props.relationship.name || props.relationship.related_table || 'relationship';
     
     try {
-        const response = await axios.delete(`/admin/${props.moduleHandle}/relationships/${relationshipName}/detach`, {
+        const response = await axios.delete(adminUrl(`${props.moduleHandle}/relationships/${relationshipName}/detach`), {
             data: {
                 record_id: props.recordId,
                 related_id: relatedRecordId,
@@ -529,7 +530,7 @@ const formatValue = (value, column) => {
                                 <div class="flex items-center justify-end gap-2">
                                     <Link
                                         v-if="showViewButton"
-                                        :href="`/admin/${relatedTableName}/edit?id=${getRecordId(record)}`"
+                                        :href="adminUrl(`${relatedTableName}/edit?id=${getRecordId(record)}`)"
                                         class="btn btn-sm btn-outline"
                                         target="_blank"
                                     >
@@ -657,7 +658,7 @@ const formatValue = (value, column) => {
                     <div class="flex items-center gap-2">
                         <Link
                             v-if="showViewButton"
-                            :href="`/admin/${relatedTableName}/edit?id=${getRecordId(record)}`"
+                            :href="adminUrl(`${relatedTableName}/edit?id=${getRecordId(record)}`)"
                             class="btn btn-sm btn-outline"
                             target="_blank"
                         >

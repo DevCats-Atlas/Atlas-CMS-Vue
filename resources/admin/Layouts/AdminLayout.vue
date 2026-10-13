@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { Link, usePage } from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
@@ -16,11 +17,11 @@ const fallbackNavigation = [
         id: 'default',
         title: 'Navigation',
         items: [
-            { id: 'dashboard', title: 'Dashboard', href: '/admin', exact: true },
-            { id: 'websites', title: 'Websites', href: '/admin/websites' },
-            { id: 'pages', title: 'Pages', href: '/admin/pages' },
-            { id: 'users', title: 'Users', href: '/admin/users' },
-            { id: 'settings', title: 'Settings', href: '/admin/settings' },
+            { id: 'dashboard', title: 'Dashboard', href: adminUrl(''), exact: true },
+            { id: 'websites', title: 'Websites', href: adminUrl('websites') },
+            { id: 'pages', title: 'Pages', href: adminUrl('pages') },
+            { id: 'users', title: 'Users', href: adminUrl('users') },
+            { id: 'settings', title: 'Settings', href: adminUrl('settings') },
         ],
     },
 ];
@@ -91,8 +92,8 @@ const isActive = (item) => {
     return currentUrl === target || currentUrl.startsWith(`${target}/`);
 };
 
-const isSystemSection = computed(() => page.url.startsWith('/admin/system'));
-const isAdminSection = computed(() => page.url.startsWith('/admin') && !isSystemSection.value);
+const isSystemSection = computed(() => page.url.startsWith(adminUrl('system')));
+const isAdminSection = computed(() => page.url.startsWith(adminUrl('')) && !isSystemSection.value);
 
 // Theme toggle functionality
 // Initialize from current state (theme was already applied by script in head)
@@ -211,7 +212,7 @@ onMounted(() => {
                             </svg>
                         </button>
                         <Link
-                            href="/admin"
+                            :href="adminUrl('')"
                             class="nav-tab"
                             :class="{ 'nav-tab-active': isAdminSection }"
                         >
@@ -219,7 +220,7 @@ onMounted(() => {
                         </Link>
                         <Link
                             v-if="user?.is_superadmin"
-                            href="/admin/system"
+                            :href="adminUrl('system')"
                             class="nav-tab"
                             :class="{ 'nav-tab-active': isSystemSection }"
                         >
@@ -270,7 +271,7 @@ onMounted(() => {
                                 />
                             </svg>
                         </button>
-                        <Link href="/admin/logout" method="post" as="button" class="btn-text-danger">
+                        <Link :href="adminUrl('logout')" method="post" as="button" class="btn-text-danger">
                             {{ t('admin.layout.sign_out') }}
                         </Link>
                     </div>

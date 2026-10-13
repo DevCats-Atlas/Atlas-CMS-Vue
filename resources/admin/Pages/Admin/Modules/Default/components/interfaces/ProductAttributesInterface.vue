@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl, adminModuleHandle } from '@/utils/adminUrl';
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { useToast } from '@/composables/useToast.js';
@@ -39,16 +40,14 @@ const currentItemId = computed(() => {
 
 // Get module handle from URL path (e.g., /admin/content/edit -> content)
 const moduleHandle = computed(() => {
-    const path = page.url;
-    const match = path.match(/\/admin\/([^/]+)/);
-    return match ? match[1] : '';
+    return adminModuleHandle();
 });
 
 const baseUrl = computed(() => {
     if (!moduleHandle.value) {
         return '';
     }
-    return `/admin/${moduleHandle.value}`;
+    return adminUrl(`${moduleHandle.value}`);
 });
 
 const fetchProductAttributes = async () => {

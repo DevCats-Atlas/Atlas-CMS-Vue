@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { ref, computed, watch } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
@@ -50,7 +51,7 @@ const props = defineProps({
     },
 });
 
-const baseUrl = computed(() => `/admin/${props.moduleHandle}`);
+const baseUrl = computed(() => adminUrl(`${props.moduleHandle}`));
 
 // Parse field groups from uiConfig
 const fieldGroups = computed(() => {

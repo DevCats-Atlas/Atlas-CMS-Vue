@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { Head, Link } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
 import { useTranslation } from '@/utils/useTranslation.js';
@@ -42,7 +43,7 @@ const props = defineProps({
                     </p>
                     
                     <div class="flex items-center justify-center gap-4">
-                        <Link href="/admin" class="btn btn-primary">
+                        <Link :href="adminUrl('')" class="btn btn-primary">
                             {{ t('admin.access_denied.go_to_dashboard') }}
                         </Link>
                     </div>

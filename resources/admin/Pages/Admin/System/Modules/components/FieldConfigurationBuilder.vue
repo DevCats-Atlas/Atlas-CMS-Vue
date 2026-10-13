@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { ref, watch, computed, onMounted } from 'vue';
 
 const props = defineProps({
@@ -79,8 +80,8 @@ const checkTableWithFetch = async () => {
         // If moduleId is provided, use the module endpoint
         // Otherwise, use the generic endpoint for relationship tables
         const url = props.moduleId 
-            ? `/admin/system/modules/${props.moduleId}/check-table-columns`
-            : `/admin/system/modules/check-table-columns`;
+            ? adminUrl(`system/modules/${props.moduleId}/check-table-columns`)
+            : adminUrl(`system/modules/check-table-columns`);
         
         const response = await fetch(url, {
             method: 'POST',

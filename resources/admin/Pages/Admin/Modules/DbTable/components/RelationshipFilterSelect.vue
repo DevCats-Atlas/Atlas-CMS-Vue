@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { ref, computed, watch, onMounted } from 'vue';
 import axios from 'axios';
 import MultiSelect from './MultiSelect.vue';
@@ -44,7 +45,7 @@ const checkRecordCount = async () => {
     if (!relatedTableName.value) return;
     
     try {
-        const response = await axios.get(`/admin/api/tables/${relatedTableName.value}/count`);
+        const response = await axios.get(adminUrl(`api/tables/${relatedTableName.value}/count`));
         const count = response.data.count || 0;
         requiresSearch.value = count >= 100;
         
@@ -70,7 +71,7 @@ const loadAvailableRecords = async () => {
     
     loading.value = true;
     try {
-        const response = await axios.get(`/admin/api/tables/${relatedTableName.value}/records`, {
+        const response = await axios.get(adminUrl(`api/tables/${relatedTableName.value}/records`), {
             params: {
                 search: searchQuery.value || '',
                 per_page: requiresSearch.value ? 50 : 100,

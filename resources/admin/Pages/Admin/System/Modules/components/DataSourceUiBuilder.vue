@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { ref, watch, computed, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { useToast } from '@/composables/useToast.js';
@@ -87,7 +88,7 @@ const checkTable = async () => {
 
     try {
         const response = await router.post(
-            `/admin/system/modules/${props.moduleId}/check-table-columns`,
+            adminUrl(`system/modules/${props.moduleId}/check-table-columns`),
             { table_name: props.tableName.trim() },
             {
                 preserveState: true,
@@ -134,7 +135,7 @@ const checkTableWithFetch = async () => {
 
     try {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-        const response = await fetch(`/admin/system/modules/${props.moduleId}/check-table-columns`, {
+        const response = await fetch(adminUrl(`system/modules/${props.moduleId}/check-table-columns`), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

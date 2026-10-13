@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import SystemLayout from '@admin/Layouts/SystemLayout.vue';
@@ -60,7 +61,7 @@ const activeItemContext = ref({
 const isEditingItem = computed(() => activeItemContext.value.itemId !== null);
 
 const submitNewGroup = () => {
-    newGroupForm.post('/admin/system/cms-menu/groups', {
+    newGroupForm.post(adminUrl('system/cms-menu/groups'), {
         preserveScroll: true,
         onSuccess: () => {
             newGroupForm.reset('title');
@@ -83,19 +84,19 @@ const cancelEditGroup = () => {
 };
 
 const submitEditGroup = (group) => {
-    editGroupForm.put(`/admin/system/cms-menu/groups/${group.id}`, {
+    editGroupForm.put(adminUrl(`system/cms-menu/groups/${group.id}`), {
         preserveScroll: true,
         onSuccess: () => cancelEditGroup(),
     });
 };
 
 const toggleGroupVisible = (group) => {
-    router.patch(`/admin/system/cms-menu/groups/${group.id}/toggle-visible`, {}, { preserveScroll: true });
+    router.patch(adminUrl(`system/cms-menu/groups/${group.id}/toggle-visible`), {}, { preserveScroll: true });
 };
 
 const reorderGroup = (group, direction) => {
     router.patch(
-        `/admin/system/cms-menu/groups/${group.id}/reorder`,
+        adminUrl(`system/cms-menu/groups/${group.id}/reorder`),
         { direction },
         { preserveScroll: true },
     );
@@ -113,7 +114,7 @@ const deleteGroup = async (group) => {
         return;
     }
 
-    router.delete(`/admin/system/cms-menu/groups/${group.id}`, { preserveScroll: true });
+    router.delete(adminUrl(`system/cms-menu/groups/${group.id}`), { preserveScroll: true });
 };
 
 const startCreateItem = (group) => {
@@ -153,12 +154,12 @@ const submitItemForm = () => {
     }
 
     if (activeItemContext.value.itemId) {
-        itemForm.put(`/admin/system/cms-menu/items/${activeItemContext.value.itemId}`, {
+        itemForm.put(adminUrl(`system/cms-menu/items/${activeItemContext.value.itemId}`), {
             preserveScroll: true,
             onSuccess: () => cancelItemForm(),
         });
     } else {
-        itemForm.post(`/admin/system/cms-menu/groups/${activeItemContext.value.groupId}/items`, {
+        itemForm.post(adminUrl(`system/cms-menu/groups/${activeItemContext.value.groupId}/items`), {
             preserveScroll: true,
             onSuccess: () => {
                 itemForm.reset();
@@ -196,12 +197,12 @@ watch(
 );
 
 const toggleItemVisible = (item) => {
-    router.patch(`/admin/system/cms-menu/items/${item.id}/toggle-visible`, {}, { preserveScroll: true });
+    router.patch(adminUrl(`system/cms-menu/items/${item.id}/toggle-visible`), {}, { preserveScroll: true });
 };
 
 const reorderItem = (item, direction) => {
     router.patch(
-        `/admin/system/cms-menu/items/${item.id}/reorder`,
+        adminUrl(`system/cms-menu/items/${item.id}/reorder`),
         { direction },
         { preserveScroll: true },
     );
@@ -219,7 +220,7 @@ const deleteItem = async (item) => {
         return;
     }
 
-    router.delete(`/admin/system/cms-menu/items/${item.id}`, { preserveScroll: true });
+    router.delete(adminUrl(`system/cms-menu/items/${item.id}`), { preserveScroll: true });
 };
 </script>
 

@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { ref, onMounted, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
@@ -64,7 +65,7 @@ const loadRelationship = async (relationship, index, page = 1) => {
             params.per_page = 50; // 50 records per page
         }
         
-        const response = await axios.get(`/admin/${props.moduleHandle}/relationships/${name}`, {
+        const response = await axios.get(adminUrl(`${props.moduleHandle}/relationships/${name}`), {
             params,
         });
         relationshipData.value[name] = response.data.records || [];
@@ -160,7 +161,7 @@ const saveRelationship = async (relationship) => {
     
     try {
         // All relationship types use the sync endpoint
-        const response = await axios.put(`/admin/${props.moduleHandle}/relationships/${name}/sync`, {
+        const response = await axios.put(adminUrl(`${props.moduleHandle}/relationships/${name}/sync`), {
             record_id: props.recordId,
             related_ids: editingRelationships.value[name] || [],
         });

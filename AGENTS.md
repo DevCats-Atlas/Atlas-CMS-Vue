@@ -14,6 +14,8 @@ Independent npm repository: `@devcats-atlas/atlas-cms-vue`. Owns admin Vue pages
 - Static npm page globs enumerate known packages; a newly discovered Vite package does not automatically gain an npm page glob.
 - This manifest has no build/test scripts and is marked private. The Laravel consumer performs bundling.
 
+Admin URLs use `adminUrl()` from `@/utils/adminUrl`, backed by the shared Inertia `adminPrefix` prop. Pass paths relative to the admin prefix. Use `adminModuleHandle()` for module extraction; do not hardcode `/admin` in links, form endpoints, or path parsing.
+
 ## Verification and Git
 
 In My Atlas CMS, run `npm run build` from the host root. For visible UI changes also verify the affected screen, validation, navigation, and dark mode when a running host is available. In a separate clone, use a consumer configured with these Vite utilities; do not invent a package-local build command.

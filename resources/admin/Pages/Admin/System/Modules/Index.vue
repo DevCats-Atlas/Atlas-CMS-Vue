@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { computed, ref, watch } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import SystemLayout from '@admin/Layouts/SystemLayout.vue';
@@ -86,7 +87,7 @@ const deleteModule = async (module) => {
         return;
     }
 
-    createForm.delete(`/admin/system/modules/${module.id}`, {
+    createForm.delete(adminUrl(`system/modules/${module.id}`), {
         preserveScroll: true,
     });
 };
@@ -169,7 +170,7 @@ watch(
 );
 
 const submitNewModule = () => {
-    createForm.post('/admin/system/modules', {
+    createForm.post(adminUrl('system/modules'), {
         onSuccess: () => closeCreateModal(),
     });
 };
@@ -202,7 +203,7 @@ const submitNewModule = () => {
                         class="bg-white dark:bg-gray-800 shadow rounded-xl p-5 flex flex-wrap items-center justify-between gap-4"
                     >
                         <div>
-                            <Link :href="`/admin/system/modules/${module.id}`" class="text-lg font-semibold text-gray-900 dark:text-white hover:underline">
+                            <Link :href="adminUrl(`system/modules/${module.id}`)" class="text-lg font-semibold text-gray-900 dark:text-white hover:underline">
                                 {{ module.title }}
                             </Link>
                             <p class="text-sm text-gray-500 dark:text-gray-400">
@@ -218,7 +219,7 @@ const submitNewModule = () => {
                             >
                                 {{ module.visible ? 'Visible' : 'Hidden' }}
                             </span>
-                            <Link :href="`/admin/system/modules/${module.id}`" class="btn btn-outline">
+                            <Link :href="adminUrl(`system/modules/${module.id}`)" class="btn btn-outline">
                                 Manage
                             </Link>
                             <button

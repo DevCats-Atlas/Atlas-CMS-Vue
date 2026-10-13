@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { ref, onMounted, watch, computed } from 'vue';
 import axios from 'axios';
 import { useTranslation } from '@admin/js/utils/useTranslation';
@@ -46,7 +47,7 @@ const checkRecordCount = async () => {
     
     loadingCount.value = true;
     try {
-        const response = await axios.get(`/admin/api/tables/${props.relatedTableName}/count`);
+        const response = await axios.get(adminUrl(`api/tables/${props.relatedTableName}/count`));
         totalCount.value = response.data.count || 0;
         requiresSearch.value = totalCount.value >= 100;
         
@@ -78,7 +79,7 @@ const loadAvailableRecords = async () => {
     }
     
     loading.value = true;
-    const url = `/admin/api/tables/${props.relatedTableName}/records`;
+    const url = adminUrl(`api/tables/${props.relatedTableName}/records`);
     const params = {
         search: searchQuery.value || '',
         per_page: requiresSearch.value ? 50 : 100, // Limit results when searching

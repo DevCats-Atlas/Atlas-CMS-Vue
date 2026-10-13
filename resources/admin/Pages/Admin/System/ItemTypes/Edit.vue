@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import SystemLayout from '@admin/Layouts/SystemLayout.vue';
 import TabsManager from './components/TabsManager.vue';
@@ -35,7 +36,7 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.put(`/admin/system/item-types/${props.itemType.id}`);
+    form.put(adminUrl(`system/item-types/${props.itemType.id}`));
 };
 
 const destroyType = async () => {
@@ -50,7 +51,7 @@ const destroyType = async () => {
         return;
     }
 
-    router.delete(`/admin/system/item-types/${props.itemType.id}`);
+    router.delete(adminUrl(`system/item-types/${props.itemType.id}`));
 };
 
 </script>
@@ -67,7 +68,7 @@ const destroyType = async () => {
                             <h1 class="heading-1">Edit item type</h1>
                             <p class="text-gray-500 dark:text-gray-400 mt-1">Update the definition for {{ itemType.code }}.</p>
                         </div>
-                        <Link href="/admin/system/item-types" class="btn-text">
+                        <Link :href="adminUrl('system/item-types')" class="btn-text">
                             Back to list
                         </Link>
                     </div>
@@ -145,7 +146,7 @@ const destroyType = async () => {
                                 Delete type
                             </button>
                             <div class="flex items-center gap-3">
-                                <Link href="/admin/system/item-types" class="btn-text">
+                                <Link :href="adminUrl('system/item-types')" class="btn-text">
                                     Cancel
                                 </Link>
                                 <button

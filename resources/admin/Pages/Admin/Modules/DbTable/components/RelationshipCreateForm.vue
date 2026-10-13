@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/components/interfaces';
@@ -59,7 +60,7 @@ const loadStructure = async () => {
     errors.value = {};
     
     try {
-        const response = await axios.get(`/admin/${props.moduleHandle}/relationships/${getRelationshipName()}/structure`);
+        const response = await axios.get(adminUrl(`${props.moduleHandle}/relationships/${getRelationshipName()}/structure`));
         
         if (response.data.success) {
             fields.value = response.data.fields || [];
@@ -183,7 +184,7 @@ const submitForm = async () => {
             }
         });
         
-        const response = await axios.post(`/admin/${props.moduleHandle}/relationships/${getRelationshipName()}/create`, payload);
+        const response = await axios.post(adminUrl(`${props.moduleHandle}/relationships/${getRelationshipName()}/create`), payload);
         
         if (response.data.success) {
             emit('created', response.data.record_id);

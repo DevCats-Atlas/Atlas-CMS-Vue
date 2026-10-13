@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { ref, computed } from 'vue';
 import axios from 'axios';
 import { confirmDialog } from '@/utils/confirmDialog.js';
@@ -72,7 +73,7 @@ const executeButtonAction = async (button) => {
         const isHttpMethod = ['get', 'post', 'put', 'patch', 'delete'].includes(method);
         const httpMethod = isHttpMethod ? method : 'post'; // Default to POST for Action methods like '__invoke'
         
-        const url = `/admin/${props.moduleHandle}/button/${buttonId}`;
+        const url = adminUrl(`${props.moduleHandle}/button/${buttonId}`);
         
         const payload = {
             [props.dataSource === 'items' ? 'item' : 'id']: props.recordId,

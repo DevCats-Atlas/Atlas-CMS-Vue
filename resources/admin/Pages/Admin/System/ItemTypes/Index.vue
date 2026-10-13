@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { Head, Link, router } from '@inertiajs/vue3';
 import SystemLayout from '@admin/Layouts/SystemLayout.vue';
 import { confirmDialog } from '@/utils/confirmDialog.js';
@@ -26,7 +27,7 @@ const deleteType = async (type) => {
         return;
     }
 
-    router.delete(`/admin/system/item-types/${type.id}`);
+    router.delete(adminUrl(`system/item-types/${type.id}`));
 };
 </script>
 
@@ -44,7 +45,7 @@ const deleteType = async (type) => {
                                 View the polymorphic content types that power collections, languages, and CMS entities.
                             </p>
                         </div>
-                        <Link href="/admin/system/item-types/create" class="btn btn-outline">
+                        <Link :href="adminUrl('system/item-types/create')" class="btn btn-outline">
                             Add type
                         </Link>
                     </div>
@@ -78,7 +79,7 @@ const deleteType = async (type) => {
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex flex-col">
                                         <Link
-                                            :href="`/admin/system/item-types/${type.id}/edit`"
+                                            :href="adminUrl(`system/item-types/${type.id}/edit`)"
                                             class="text-sm font-semibold text-gray-900 dark:text-gray-100 hover:underline"
                                         >
                                             {{ type.code }}

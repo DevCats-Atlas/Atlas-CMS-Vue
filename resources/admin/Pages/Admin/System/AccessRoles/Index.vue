@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import SystemLayout from '@admin/Layouts/SystemLayout.vue';
 import { ref, computed, watch } from 'vue';
@@ -39,7 +40,7 @@ const editingRoleId = ref(null);
 const { toasts, showToast, dismissToast } = useToast();
 
 const submitNewRole = () => {
-    createForm.post('/admin/system/access-roles', {
+    createForm.post(adminUrl('system/access-roles'), {
         preserveScroll: true,
         onSuccess: () => {
             createForm.reset('title');
@@ -65,7 +66,7 @@ const cancelEdit = () => {
 };
 
 const submitEditRole = (role) => {
-    editForm.put(`/admin/system/access-roles/${role.id}`, {
+    editForm.put(adminUrl(`system/access-roles/${role.id}`), {
         preserveScroll: true,
         onSuccess: () => {
             showToast({
@@ -95,11 +96,11 @@ watch(
 );
 
 const toggleRole = (role) => {
-    router.patch(`/admin/system/access-roles/${role.id}/toggle-visible`, {}, { preserveScroll: true });
+    router.patch(adminUrl(`system/access-roles/${role.id}/toggle-visible`), {}, { preserveScroll: true });
 };
 
 const reorderRole = (role, direction) => {
-    router.patch(`/admin/system/access-roles/${role.id}/reorder`, { direction }, { preserveScroll: true });
+    router.patch(adminUrl(`system/access-roles/${role.id}/reorder`), { direction }, { preserveScroll: true });
 };
 
 const deleteRole = async (role) => {
@@ -114,7 +115,7 @@ const deleteRole = async (role) => {
         return;
     }
 
-    router.delete(`/admin/system/access-roles/${role.id}`, { preserveScroll: true });
+    router.delete(adminUrl(`system/access-roles/${role.id}`), { preserveScroll: true });
 };
 
 // Select all modules functionality

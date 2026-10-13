@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { ref, computed, watch } from 'vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
@@ -75,7 +76,7 @@ const props = defineProps({
     },
 });
 
-const baseUrl = computed(() => `/admin/${props.moduleHandle}`);
+const baseUrl = computed(() => adminUrl(`${props.moduleHandle}`));
 const { toasts, showToast, dismissToast } = useToast();
 
 // Watch for flash messages and show them as toasts

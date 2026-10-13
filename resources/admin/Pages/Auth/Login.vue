@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { Head, useForm } from '@inertiajs/vue3';
 import { useTranslation } from '@admin/js/utils/useTranslation';
 import { onMounted, onUnmounted, ref } from 'vue';
@@ -65,7 +66,7 @@ const submit = async () => {
         }
     }
 
-    form.post('/admin/login', {
+    form.post(adminUrl('login'), {
         onFinish: () => form.reset('password'),
     });
 };

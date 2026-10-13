@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { computed, ref, watch } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
@@ -88,7 +89,7 @@ const props = defineProps({
     },
 });
 
-const baseUrl = computed(() => `/admin/${props.moduleHandle}`);
+const baseUrl = computed(() => adminUrl(`${props.moduleHandle}`));
 const createChildUrl = computed(() => `${baseUrl.value}/create-child`);
 
 // Debug: Log hasDeepStructure to ensure it's being passed correctly
@@ -567,7 +568,7 @@ const handleDrop = async (event, dropItem, dropIndex) => {
     // If only order_index is enabled (no tree structure), just reorder within the same level
     
     try {
-        await axios.post(`/admin/${props.moduleHandle}/reorder`, {
+        await axios.post(adminUrl(`${props.moduleHandle}/reorder`), {
             record_id: draggedId,
             new_parent_id: newParentId,
             new_order_index: newOrderIndex,

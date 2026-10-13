@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { ref } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
 import ModalDialog from '@/components/ModalDialog.vue';
@@ -57,8 +58,8 @@ const resetForm = () => {
 
 const submit = () => {
     const url = editingTab.value
-        ? `/admin/system/item-types/${props.itemTypeId}/tabs/${editingTab.value.id}`
-        : `/admin/system/item-types/${props.itemTypeId}/tabs`;
+        ? adminUrl(`system/item-types/${props.itemTypeId}/tabs/${editingTab.value.id}`)
+        : adminUrl(`system/item-types/${props.itemTypeId}/tabs`);
     if (editingTab.value) {
         form.put(url, {
             preserveScroll: true,
@@ -73,12 +74,12 @@ const submit = () => {
 };
 
 const toggleTab = (tab) => {
-    router.patch(`/admin/system/item-types/${props.itemTypeId}/tabs/${tab.id}/toggle-visible`, {}, { preserveScroll: true });
+    router.patch(adminUrl(`system/item-types/${props.itemTypeId}/tabs/${tab.id}/toggle-visible`), {}, { preserveScroll: true });
 };
 
 const reorderTab = (tab, direction) => {
     router.patch(
-        `/admin/system/item-types/${props.itemTypeId}/tabs/${tab.id}/reorder`,
+        adminUrl(`system/item-types/${props.itemTypeId}/tabs/${tab.id}/reorder`),
         { direction },
         { preserveScroll: true }
     );
@@ -96,7 +97,7 @@ const deleteTab = async (tab) => {
         return;
     }
 
-    router.delete(`/admin/system/item-types/${props.itemTypeId}/tabs/${tab.id}`, { preserveScroll: true });
+    router.delete(adminUrl(`system/item-types/${props.itemTypeId}/tabs/${tab.id}`), { preserveScroll: true });
 };
 </script>
 

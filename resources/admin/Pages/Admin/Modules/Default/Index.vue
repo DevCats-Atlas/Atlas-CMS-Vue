@@ -1,4 +1,5 @@
 <script setup>
+import { adminUrl } from '@/utils/adminUrl';
 import { computed, ref, watch, onMounted, nextTick } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
@@ -72,7 +73,7 @@ const props = defineProps({
     },
 });
 
-const baseUrl = computed(() => `/admin/${props.moduleHandle}`);
+const baseUrl = computed(() => adminUrl(`${props.moduleHandle}`));
 const createUrl = computed(() => `${baseUrl.value}/create`);
 const deleteUrl = computed(() => `${baseUrl.value}/delete`);
 const createChildUrl = computed(() => `${baseUrl.value}/create-child`);
