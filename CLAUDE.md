@@ -25,6 +25,8 @@ First match wins. This lets the main app override any package page by placing a 
 
 **Package resolution order:** environment variable → `file:` path from package.json → `node_modules`
 
+Environment names are `ATLAS_CMS_VUE_PATH` and `ATLAS_SHOP_VUE_PATH`, read from `process.env` before Vite's `loadEnv()` in the documented consumer config. Overrides select config/resource paths for declared dependencies; keep AtlasCMS-Vue installed so its utility import resolves. For local, pinned Git, or archive installation of the private manifests, use [README installation instructions](README.md#installation).
+
 ### Module Page Types
 
 **Default** (`Pages/Admin/Modules/Default/`) — for items-based modules (polymorphic `items` table):

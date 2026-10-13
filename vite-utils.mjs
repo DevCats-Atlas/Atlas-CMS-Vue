@@ -15,7 +15,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * Resolve package path with fallback strategies
  * @param {string} npmPackage - npm package name (e.g., '@devcats-atlas/atlas-cms-vue')
  * @param {string} packagePathFromJson - Path from package.json (e.g., 'file:./packages/AtlasCMS-Vue')
- * @param {string} envVar - Environment variable name (e.g., 'ATLASCMSVUE_PATH')
+ * @param {string} envVar - Environment variable name (e.g., 'ATLAS_CMS_VUE_PATH')
  * @param {string} projectRoot - Path to project root directory
  * @returns {string} Resolved package path
  */
