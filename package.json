@@ -16,10 +16,10 @@
         "vite-utils.mjs"
     ],
     "dependencies": {
-        "@ckeditor/ckeditor5-vue": "^7.3.0",
-        "@inertiajs/vue3": "^3.0.0",
-        "ckeditor5": "^47.2.0",
-        "vue": "^3.5.24"
+        "@ckeditor/ckeditor5-vue": "^9.0.0",
+        "@inertiajs/vue3": "^3.9.1",
+        "ckeditor5": "^49.0.0",
+        "vue": "^3.5.44"
     }
 }
 
