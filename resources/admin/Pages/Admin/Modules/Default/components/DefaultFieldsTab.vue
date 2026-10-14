@@ -1,8 +1,9 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, defineAsyncComponent } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 
-import WysiwigEditor from '@/components/WysiwigEditor.vue';
+// CKEditor (~1 MB) loads only when an editor field is rendered
+const WysiwigEditor = defineAsyncComponent(() => import('@/components/WysiwigEditor.vue'));
 
 const props = defineProps({
     fields: {

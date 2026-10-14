@@ -299,6 +299,12 @@ const submitUpdate = () => {
     editForm.transform((data) => {
         const payload = { ...data };
         payload._method = 'put';
+        // FileInterface marks a cleared current file with delete_default; the backend reads {column}_delete
+        props.fields.forEach((field) => {
+            if (field.interface === 'file' && fieldModels.value[field.name]?.delete_default) {
+                payload[`${field.name}_delete`] = 1;
+            }
+        });
         return payload;
     });
     

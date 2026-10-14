@@ -18,6 +18,6 @@ Admin URLs use `adminUrl()` from `@/utils/adminUrl`, backed by the shared Inerti
 
 ## Verification and Git
 
-In My Atlas CMS, run `npm run build` from the host root. For visible UI changes also verify the affected screen, validation, navigation, and dark mode when a running host is available. In a separate clone, use a consumer configured with these Vite utilities; do not invent a package-local build command.
+In Atlas CMS, run `npm run build` from the host root. For visible UI changes also verify the affected screen, validation, navigation, and dark mode when a running host is available. In a separate clone, use a consumer configured with these Vite utilities; do not invent a package-local build command.
 
 Inspect this repository's Git status separately. Commit/push only on explicit request.
