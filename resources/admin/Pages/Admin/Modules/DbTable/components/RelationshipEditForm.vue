@@ -1,9 +1,10 @@
 <script setup>
 import { adminUrl } from '@/utils/adminUrl';
-import { ref, onMounted, computed } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import axios from 'axios';
-import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/components/interfaces';
 import { useTranslation } from '@admin/js/utils/useTranslation';
+import { createModels, submitValues } from '@/dbTable/formModel.js';
+import DbTableRecordForm from './DbTableRecordForm.vue';
 
 const { t } = useTranslation();
 
@@ -37,278 +38,54 @@ const props = defineProps({
 const emit = defineEmits(['updated', 'cancel']);
 
 const fields = ref([]);
+const models = reactive({});
 const loading = ref(false);
 const submitting = ref(false);
 const errors = ref({});
-const formData = ref({});
-const fieldModels = ref({});
 
-// Format field value for display in read-only mode
-const formatFieldValue = (field) => {
-    const value = field.value;
-    
-    if (value === null || value === undefined || value === '') {
-        return '—';
-    }
-    
-    // Handle checkbox
-    if (field.interface === 'checkbox') {
-        return value ? 'Yes' : 'No';
-    }
-    
-    // Handle select - try to find label from options
-    if (field.interface === 'select' && field.options && Array.isArray(field.options)) {
-        const option = field.options.find(opt => {
-            const optValue = typeof opt === 'object' ? (opt.value ?? opt.key) : opt;
-            return String(optValue) === String(value);
-        });
-        if (option) {
-            return typeof option === 'object' ? (option.label ?? option.value ?? option.key) : option;
-        }
-    }
-    
-    // Handle date/datetime
-    if (field.interface === 'date' || field.interface === 'datetime' || field.interface === 'datetime-local') {
-        if (value) {
-            try {
-                const date = new Date(value);
-                if (!isNaN(date.getTime())) {
-                    if (field.interface === 'date') {
-                        return date.toLocaleDateString();
-                    }
-                    return date.toLocaleString();
-                }
-            } catch (e) {
-                // Fall through to return raw value
-            }
-        }
-    }
-    
-    // Handle file
-    if (field.interface === 'file' && field.value_url) {
-        return field.value || '—';
-    }
-    
-    // Default: return string representation
-    return String(value);
-};
+const relationshipUrl = (action) => adminUrl(`${props.moduleHandle}/relationships/${props.relationship.name || props.relationship.related_table || 'unknown'}/${action}`);
 
-// Get field config for interface component
-const getFieldConfig = (field) => {
-    const config = {
-        name: field.name,
-        type: field.interface || 'text',
-        title: field.title || field.name,
-        required: !field.nullable,
-        config: {
-            type: field.interface || 'text',
-        },
-        // For file fields, add value and value_url
-        values: field.interface === 'file' ? {
-            default: field.value || null,
-            default_url: field.value_url || null,
-        } : undefined,
-    };
-    
-    // Only set options for select interfaces
-    // Backend now sends options as an array, so use it directly
-    if (field.interface === 'select') {
-        // If options is already an array (from backend), use it directly
-        // Otherwise, parse it (for backward compatibility)
-        if (Array.isArray(field.options)) {
-            config.config.options = field.options;
-        } else {
-            const inputType = field.select_input_type || 'comma';
-            config.config.options = field.options ? parseSelectOptions(field.options, inputType) : [];
-        }
-    }
-    
-    return config;
-};
-
-// Parse select options from string based on input type
-const parseSelectOptions = (optionsString, inputType = 'comma') => {
-    // Convert to string if it's not already (handles numbers, null, undefined)
-    if (optionsString == null) {
-        return [];
-    }
-    optionsString = String(optionsString);
-    if (!optionsString.trim()) {
-        return [];
-    }
-    
-    // Handle different input types
-    switch (inputType) {
-        case 'comma':
-            // Comma-separated values
-            return optionsString.split(',').map(opt => opt.trim()).filter(opt => opt).map(opt => ({
-                key: opt,
-                label: opt,
-            }));
-            
-        case 'newline':
-            // Line break separated values
-            return optionsString.split('\n').map(opt => opt.trim()).filter(opt => opt).map(opt => ({
-                key: opt,
-                label: opt,
-            }));
-            
-        case 'value_label':
-            // Value=Label format (line break separated)
-            const valueLabelLines = optionsString.split('\n').map(opt => opt.trim()).filter(opt => opt);
-            return valueLabelLines.map(line => {
-                if (line.includes('=')) {
-                    const [key, ...labelParts] = line.split('=');
-                    const label = labelParts.join('='); // In case label contains '='
-                    return {
-                        key: key.trim(),
-                        label: label.trim() || key.trim(),
-                    };
-                } else {
-                    // If no '=' found, use the whole line as both key and label
-                    return {
-                        key: line,
-                        label: line,
-                    };
-                }
-            });
-            
-        default:
-            // Fallback: try comma-separated
-            return optionsString.split(',').map(opt => opt.trim()).filter(opt => opt).map(opt => ({
-                key: opt,
-                label: opt,
-            }));
-    }
-};
-
-// Build form data structure based on fields and existing record
-const buildFormData = (recordData) => {
-    const data = {};
-    fields.value.forEach((field) => {
-        // Use existing value from record if available
-        const existingValue = recordData[field.name];
-        
-        if (existingValue !== null && existingValue !== undefined) {
-            if (field.interface === 'checkbox') {
-                data[field.name] = existingValue ? true : false;
-            } else {
-                data[field.name] = existingValue;
-            }
-        } else if (field.default !== null && field.default !== undefined) {
-            if (field.interface === 'checkbox') {
-                data[field.name] = field.default ? true : false;
-            } else {
-                data[field.name] = field.default;
-            }
-        } else {
-            if (field.interface === 'checkbox') {
-                data[field.name] = false;
-            } else if (field.interface === 'select') {
-                data[field.name] = '';
-            } else {
-                data[field.name] = '';
-            }
-        }
-        
-        // Initialize field model for interface components
-        fieldModels.value[field.name] = {
-            default: data[field.name],
-            translations: {},
-        };
-    });
-    return data;
-};
-
-// Load table structure and record data
+// The structure endpoint returns the record's current values when given related_record_id
 const loadData = async () => {
     loading.value = true;
     errors.value = {};
-    
+
     try {
-        // Load structure
-        const structureResponse = await axios.get(adminUrl(`${props.moduleHandle}/relationships/${getRelationshipName()}/structure`));
-        
-        if (!structureResponse.data.success) {
-            errors.value = { general: structureResponse.data.message || t('admin.errors.error_occurred') };
-            return;
-        }
-        
-        fields.value = structureResponse.data.fields || [];
-        
-        // Load existing record data (pass module_handle so backend can use module's DB connection)
-        const recordDataResponse = await axios.get(adminUrl(`api/tables/${props.relatedTableName}/record`), {
-            params: {
-                id: props.relatedRecordId,
-                module_handle: props.moduleHandle,
-            },
+        const response = await axios.get(relationshipUrl('structure'), {
+            params: { related_record_id: props.relatedRecordId },
         });
-        
-        if (!recordDataResponse.data.success) {
-            errors.value = { general: recordDataResponse.data.error || t('admin.errors.error_occurred') };
-            return;
-        }
-        
-        const recordData = recordDataResponse.data.record || {};
-        formData.value = buildFormData(recordData);
+        fields.value = response.data.fields || [];
+        Object.assign(models, createModels(fields.value, { useDefault: false }));
     } catch (error) {
         console.error('Error loading data:', error);
-        errors.value = { 
-            general: error.response?.data?.message || error.message || t('admin.errors.error_occurred')
-        };
+        errors.value = { general: error.response?.data?.message || error.message || t('admin.errors.error_occurred') };
     } finally {
         loading.value = false;
     }
 };
 
-// Submit form
 const submitForm = async () => {
     submitting.value = true;
     errors.value = {};
-    
+
     try {
-        // Build payload from field models
-        const payload = {};
-        
-        fields.value.forEach((field) => {
-            if (fieldModels.value[field.name]) {
-                payload[field.name] = fieldModels.value[field.name].default;
-            }
-        });
-        
-        // Use the relationship update endpoint
-        const response = await axios.put(adminUrl(`${props.moduleHandle}/relationships/${getRelationshipName()}/update`), {
+        await axios.put(relationshipUrl('update'), {
             record_id: props.recordId,
             related_record_id: props.relatedRecordId,
-            ...payload,
+            ...submitValues(fields.value, models),
         });
-        
-        if (response.data.success) {
-            emit('updated', props.relatedRecordId);
-        } else {
-            errors.value = { general: response.data.message || t('admin.errors.error_updating_record') };
-        }
+        emit('updated', props.relatedRecordId);
     } catch (error) {
         console.error('Error updating record:', error);
-        if (error.response?.status === 422 && error.response?.data?.errors) {
-            errors.value = error.response.data.errors;
-        } else {
-            errors.value = { 
-                general: error.response?.data?.message || error.message || t('admin.errors.error_updating_record')
-            };
-        }
+        errors.value = error.response?.status === 422 && error.response?.data?.errors
+            ? error.response.data.errors
+            : { general: error.response?.data?.message || error.message || t('admin.errors.error_updating_record') };
     } finally {
         submitting.value = false;
     }
 };
 
-const getRelationshipName = () => {
-    return props.relationship.name || props.relationship.related_table || 'unknown';
-};
-
-onMounted(() => {
-    loadData();
-});
+onMounted(loadData);
 </script>
 
 <template>
@@ -326,29 +103,7 @@ onMounted(() => {
 
         <!-- Form -->
         <form v-else @submit.prevent="submitForm" class="space-y-4">
-            <div v-for="field in fields" :key="field.name" class="space-y-1">
-                <!-- Non-editable fields shown as read-only text -->
-                <div v-if="field.editable === false" class="space-y-1">
-                    <label class="form-label">{{ field.title || field.name }}</label>
-                    <div class="form-input bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 cursor-not-allowed">
-                        {{ formatFieldValue(field) }}
-                    </div>
-                </div>
-                
-                <!-- Editable fields shown as input components -->
-                <template v-else>
-                    <component
-                        :is="resolveInterfaceComponent(getFieldConfig(field).type)"
-                        :field="getFieldConfig(field)"
-                        :model="fieldModels[field.name]"
-                    />
-                </template>
-                
-                <!-- Field error -->
-                <p v-if="errors[field.name]" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                    {{ Array.isArray(errors[field.name]) ? errors[field.name][0] : errors[field.name] }}
-                </p>
-            </div>
+            <DbTableRecordForm :fields="fields" :models="models" :errors="errors" compact />
 
             <!-- Form actions -->
             <div class="flex gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">

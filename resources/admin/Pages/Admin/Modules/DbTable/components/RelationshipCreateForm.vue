@@ -1,9 +1,10 @@
 <script setup>
 import { adminUrl } from '@/utils/adminUrl';
-import { ref, onMounted, computed } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import axios from 'axios';
-import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/components/interfaces';
 import { useTranslation } from '@admin/js/utils/useTranslation';
+import { createModels, submitValues } from '@/dbTable/formModel.js';
+import DbTableRecordForm from './DbTableRecordForm.vue';
 
 const { t } = useTranslation();
 
@@ -29,191 +30,56 @@ const props = defineProps({
 const emit = defineEmits(['created', 'cancel']);
 
 const fields = ref([]);
+const models = reactive({});
 const loading = ref(false);
 const submitting = ref(false);
 const errors = ref({});
-const formData = ref({});
-const fieldModels = ref({});
 
-// Build form data structure based on fields
-const buildFormData = () => {
-    const data = {};
-    fields.value.forEach((field) => {
-        const defaultValue = field.default !== null && field.default !== undefined
-            ? (field.interface === 'checkbox' ? (field.default ? true : false) : field.default)
-            : (field.interface === 'checkbox' ? false : '');
-        
-        data[field.name] = defaultValue;
-        
-        // Initialize field model for interface components
-        fieldModels.value[field.name] = {
-            default: defaultValue,
-            translations: {},
-        };
-    });
-    return data;
+const relationshipUrl = (action) => adminUrl(`${props.moduleHandle}/relationships/${props.relationship.name || props.relationship.related_table || 'unknown'}/${action}`);
+
+const resetModels = () => {
+    Object.keys(models).forEach((key) => delete models[key]);
+    Object.assign(models, createModels(fields.value));
 };
 
-// Load table structure
 const loadStructure = async () => {
     loading.value = true;
     errors.value = {};
-    
+
     try {
-        const response = await axios.get(adminUrl(`${props.moduleHandle}/relationships/${getRelationshipName()}/structure`));
-        
-        if (response.data.success) {
-            fields.value = response.data.fields || [];
-            formData.value = buildFormData();
-        } else {
-            errors.value = { general: response.data.message || t('admin.errors.error_occurred') };
-        }
+        const response = await axios.get(relationshipUrl('structure'));
+        fields.value = response.data.fields || [];
+        resetModels();
     } catch (error) {
         console.error('Error loading table structure:', error);
-        errors.value = { 
-            general: error.response?.data?.message || error.message || t('admin.errors.error_occurred')
-        };
+        errors.value = { general: error.response?.data?.message || error.message || t('admin.errors.error_occurred') };
     } finally {
         loading.value = false;
     }
 };
 
-// Get field config for interface component
-const getFieldConfig = (field) => {
-    const config = {
-        name: field.name,
-        type: field.interface || 'text',
-        title: field.title || field.name,
-        required: !field.nullable,
-        config: {
-            type: field.interface || 'text',
-        },
-        // For file fields, add value and value_url
-        values: field.interface === 'file' ? {
-            default: field.value || null,
-            default_url: field.value_url || null,
-        } : undefined,
-    };
-    
-    // Only set options for select interfaces
-    // Backend now sends options as an array, so use it directly
-    if (field.interface === 'select') {
-        // If options is already an array (from backend), use it directly
-        // Otherwise, parse it (for backward compatibility)
-        if (Array.isArray(field.options)) {
-            config.config.options = field.options;
-        } else {
-            const inputType = field.select_input_type || 'comma';
-            config.config.options = field.options ? parseSelectOptions(field.options, inputType) : [];
-        }
-    }
-    
-    return config;
-};
-
-// Parse select options from string based on input type
-const parseSelectOptions = (optionsString, inputType = 'comma') => {
-    // Convert to string if it's not already (handles numbers, null, undefined)
-    if (optionsString == null) {
-        return [];
-    }
-    optionsString = String(optionsString);
-    if (!optionsString.trim()) {
-        return [];
-    }
-    
-    // Handle different input types
-    switch (inputType) {
-        case 'comma':
-            // Comma-separated values
-            return optionsString.split(',').map(opt => opt.trim()).filter(opt => opt).map(opt => ({
-                key: opt,
-                label: opt,
-            }));
-            
-        case 'newline':
-            // Line break separated values
-            return optionsString.split('\n').map(opt => opt.trim()).filter(opt => opt).map(opt => ({
-                key: opt,
-                label: opt,
-            }));
-            
-        case 'value_label':
-            // Value=Label format (line break separated)
-            const valueLabelLines = optionsString.split('\n').map(opt => opt.trim()).filter(opt => opt);
-            return valueLabelLines.map(line => {
-                if (line.includes('=')) {
-                    const [key, ...labelParts] = line.split('=');
-                    const label = labelParts.join('='); // In case label contains '='
-                    return {
-                        key: key.trim(),
-                        label: label.trim() || key.trim(),
-                    };
-                } else {
-                    // If no '=' found, use the whole line as both key and label
-                    return {
-                        key: line,
-                        label: line,
-                    };
-                }
-            });
-            
-        default:
-            // Fallback: try comma-separated
-            return optionsString.split(',').map(opt => opt.trim()).filter(opt => opt).map(opt => ({
-                key: opt,
-                label: opt,
-            }));
-    }
-};
-
-// Submit form
 const submitForm = async () => {
     submitting.value = true;
     errors.value = {};
-    
+
     try {
-        // Build payload from field models
-        const payload = {
+        const response = await axios.post(relationshipUrl('create'), {
             record_id: props.recordId,
-        };
-        
-        fields.value.forEach((field) => {
-            if (fieldModels.value[field.name]) {
-                payload[field.name] = fieldModels.value[field.name].default;
-            }
+            ...submitValues(fields.value, models),
         });
-        
-        const response = await axios.post(adminUrl(`${props.moduleHandle}/relationships/${getRelationshipName()}/create`), payload);
-        
-        if (response.data.success) {
-            emit('created', response.data.record_id);
-            // Reset form
-            formData.value = buildFormData();
-        } else {
-            errors.value = { general: response.data.message || t('admin.errors.error_creating_record') };
-        }
+        emit('created', response.data.record_id);
+        resetModels();
     } catch (error) {
         console.error('Error creating record:', error);
-        if (error.response?.status === 422 && error.response?.data?.errors) {
-            errors.value = error.response.data.errors;
-        } else {
-            errors.value = { 
-                general: error.response?.data?.message || error.message || t('admin.errors.error_creating_record')
-            };
-        }
+        errors.value = error.response?.status === 422 && error.response?.data?.errors
+            ? error.response.data.errors
+            : { general: error.response?.data?.message || error.message || t('admin.errors.error_creating_record') };
     } finally {
         submitting.value = false;
     }
 };
 
-const getRelationshipName = () => {
-    return props.relationship.name || props.relationship.related_table || 'unknown';
-};
-
-onMounted(() => {
-    loadStructure();
-});
+onMounted(loadStructure);
 </script>
 
 <template>
@@ -231,19 +97,7 @@ onMounted(() => {
 
         <!-- Form -->
         <form v-else @submit.prevent="submitForm" class="space-y-4">
-            <div v-for="field in fields" :key="field.name" class="space-y-1">
-                <!-- Dynamic field component -->
-                <component
-                    :is="resolveInterfaceComponent(getFieldConfig(field).type)"
-                    :field="getFieldConfig(field)"
-                    :model="fieldModels[field.name]"
-                />
-                
-                <!-- Field error -->
-                <p v-if="errors[field.name]" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                    {{ Array.isArray(errors[field.name]) ? errors[field.name][0] : errors[field.name] }}
-                </p>
-            </div>
+            <DbTableRecordForm :fields="fields" :models="models" :errors="errors" compact />
 
             <!-- Form actions -->
             <div class="flex gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
