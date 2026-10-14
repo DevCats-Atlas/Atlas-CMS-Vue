@@ -67,7 +67,7 @@ npm run build
 
 `loadAllPackages()` reads this variable from `process.env`; the documented Vite config calls it before `loadEnv()`, so a value only in `.env` is not loaded by that call. Relative overrides resolve from the consumer root. The selected directory must contain `resources/` and a working `vite.config.mjs`.
 
-An override changes config/resource resolution; it does not install dependencies or add a package to discovery. Keep the package declared in `package.json` and AtlasCMS-Vue installed in `node_modules` so `@devcats-atlas/atlas-cms-vue/vite-utils.mjs` can be imported. Override precedence is environment → local `file:` directory → installed `node_modules`. A missing override directory falls back to the remaining locations. Page discovery still follows the static globs in AtlasCMS-Vue's `page-resolver.js`; an arbitrary external directory is not automatically a page source.
+An override changes config/resource/page resolution; it does not install dependencies or add a package to discovery. Keep the package declared in `package.json` and AtlasCMS-Vue installed in `node_modules` so `@devcats-atlas/atlas-cms-vue/vite-utils.mjs` can be imported. Override precedence is environment → local `file:` directory → installed `node_modules`. A missing override directory falls back to the remaining locations. With the `atlasPages()` plugin below, pages are loaded from the selected package's `resources/admin/Pages/`, including external override directories.
 
 ## Vite Configuration
 
@@ -87,7 +87,7 @@ import path from 'path';
 
 // Import AtlasCMS-Vue utilities
 const utils = await import('@devcats-atlas/atlas-cms-vue/vite-utils.mjs');
-const { loadAllPackages } = utils;
+const { loadAllPackages, atlasPages } = utils;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -97,7 +97,7 @@ const parsePort = (value, fallback) => {
 };
 
 // Load all packages automatically from package.json
-const { inputs, aliases } = await loadAllPackages(__dirname);
+const { inputs, aliases, pageRoots } = await loadAllPackages(__dirname);
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
@@ -106,6 +106,7 @@ export default defineConfig(({ mode }) => {
 
     return {
         plugins: [
+            atlasPages({ projectRoot: __dirname, pageRoots }),
             laravel({
                 input: inputs,
                 refresh: true,
@@ -162,7 +163,33 @@ Keep `@devcats-atlas/atlas-cms-vue` listed in the consumer dependencies. For loc
    - Resource files (CSS, JS) to include in the build
    - Path aliases for imports
 
-4. **Automatic Integration**: All resources and aliases are automatically added to your Vite configuration.
+4. **Page Integration**: Pass the returned `pageRoots` to `atlasPages()`. The plugin generates lazy imports for admin pages alongside the resources/aliases configuration.
+
+## Page Resolution
+
+Register `atlasPages({ projectRoot: __dirname, pageRoots })` in the consumer's Vite plugins. `page-resolver.js` imports its `virtual:atlas-admin-pages` registry; the plugin is required for both build and dev.
+
+An Inertia name such as `Admin/Orders/Index` maps exactly to `Admin/Orders/Index.vue` below a page root. Backslashes are normalized to slashes. Resolution priority is:
+
+1. Host `resources/admin/Pages/` (always included). Add a file with the same relative name to override a CMS or package page.
+2. AtlasCMS-Vue's selected `resources/admin/Pages/`.
+3. Other successfully loaded, declared `@devcats/*-vue` or `@devcats-atlas/*-vue` dependencies in manifest order (`dependencies`, then `devDependencies`; a repeated dependency uses its dev spec).
+4. Explicit extra roots appended by the consumer.
+
+The first exact name wins. Only the winning file is imported for a collision. An unknown name rejects with `Page not found: <name>`. Imports remain lazy. No suffix matching or directory-name convention is used to select pages.
+
+`loadAllPackages()` resolves each declared package through environment → `file:` → `node_modules`; its `pageRoots` use that same selected directory. A new scoped Vue dependency with a working `vite.config.mjs` (`resources` array and `aliases` object) and `resources/admin/Pages/` participates without a new resolver glob. Undeclared sibling folders and Composer packages are not scanned automatically.
+
+For a Composer package or another page directory, append its root explicitly (relative paths resolve from the consumer):
+
+```javascript
+atlasPages({
+    projectRoot: __dirname,
+    pageRoots: [...pageRoots, 'vendor/acme/reports/resources/admin/Pages'],
+})
+```
+
+Configure that package's component aliases/dependencies separately if its pages need them. In dev, adding/removing a `.vue` page invalidates the registry and reloads the browser, including host overrides; ordinary component edits use Vue HMR. Vite normally ignores edits inside `node_modules`; restart after changing installed npm pages. Restart Vite after changing dependency declarations, environment paths or plugin configuration. Production deployments need a new build after page changes.
 
 ## Package Structure
 
@@ -208,7 +235,7 @@ For AtlasShop-Vue, populate `packages/AtlasShop-Vue` and install it from the con
 npm install ./packages/AtlasShop-Vue
 ```
 
-Alternatively, use the Git or archive method in [Installation](#installation) with the AtlasShop-Vue repository/archive. Keep both Vue dependencies declared using the delivery method you selected. `loadAllPackages()` loads their resources and aliases from `vite.config.mjs`; page discovery uses the known static globs in `page-resolver.js`.
+Alternatively, use the Git or archive method in [Installation](#installation) with the AtlasShop-Vue repository/archive. Keep both Vue dependencies declared using the delivery method you selected. `loadAllPackages()` loads their resources and aliases from `vite.config.mjs`; pass their returned `pageRoots` to `atlasPages()` to register Inertia pages.
 
 ## Package Configuration (`vite.config.mjs`)
 

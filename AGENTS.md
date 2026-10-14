@@ -9,9 +9,9 @@ Independent npm repository: `@devcats-atlas/atlas-cms-vue`. Owns admin Vue pages
 - Reuse shared layouts, confirmation dialogs, toasts, translation helpers, and CSS component classes. Maintain dark-mode variants.
 - Field interfaces live under `resources/admin/Pages/Admin/Modules/Default/components/interfaces/`; inspect their registry before adding a field type. Coordinate metadata and persistence with AtlasCMS.
 - Aliases `@atlas-cms/admin` / `@admin` point to this package's admin directory; `@` points to its admin JS directory.
-- The page resolver's first glob is `../Pages/**/*.vue` relative to its JS file. It is not a host `resources/admin/Pages` override glob. Verify all static patterns and lookup order when changing discovery.
+- For page discovery/overrides, read README's Page Resolution contract. Preserve the `atlasPages()` registry priority: host → CMS → other declared Vue dependencies → explicit extra roots, exact names and lazy imports.
 - `loadAllPackages()` discovers dependency names and computes environment variables such as `ATLAS_CMS_VUE_PATH`. Preserve environment → `file:` path → `node_modules` resolution.
-- Static npm page globs enumerate known packages; a newly discovered Vite package does not automatically gain an npm page glob.
+- Pass the selected package `pageRoots` from `loadAllPackages()` to the consumer plugin; coordinate registry/runtime changes with host Vite configuration and packaging. Test local, npm, external and symlink sources plus dev additions/removals.
 - This manifest has no build/test scripts and is marked private. The Laravel consumer performs bundling.
 
 Admin URLs use `adminUrl()` from `@/utils/adminUrl`, backed by the shared Inertia `adminPrefix` prop. Pass paths relative to the admin prefix. Use `adminModuleHandle()` for module extraction; do not hardcode `/admin` in links, form endpoints, or path parsing.

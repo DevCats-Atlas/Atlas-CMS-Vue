@@ -9,6 +9,8 @@ import path from 'path';
 import { existsSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 
+export { atlasPages } from './page-registry.mjs';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
@@ -111,11 +113,12 @@ export function getVuePackagesFromPackageJson(projectRoot) {
 /**
  * Load all Vue packages and their configurations
  * @param {string} projectRoot - Path to project root directory
- * @returns {Object} Object with inputs and aliases
+ * @returns {Object} Object with inputs, aliases and ordered admin page roots
  */
 export async function loadAllPackages(projectRoot) {
     const inputs = [];
     const aliases = {};
+    const pagePackages = [];
 
     // Get packages from package.json
     const vuePackages = getVuePackagesFromPackageJson(projectRoot);
@@ -153,6 +156,7 @@ export async function loadAllPackages(projectRoot) {
                         : path.join(packagePath, aliasPath);
                     aliases[aliasName] = absoluteAlias;
                 });
+                pagePackages.push({ name: pkg.name, root: path.join(packagePath, 'resources/admin/Pages') });
             } else {
                 console.warn(`⚠️  No vite.config.mjs found for ${pkg.name}, skipping...`);
             }
@@ -173,6 +177,12 @@ export async function loadAllPackages(projectRoot) {
     aliases['@packages'] = path.resolve(projectRoot, 'packages');
     aliases['@vendor'] = path.resolve(projectRoot, 'vendor');
 
-    return { inputs, aliases };
+    const isCms = name => name === '@devcats/atlas-cms-vue' || name === '@devcats-atlas/atlas-cms-vue';
+    const pageRoots = [
+        ...pagePackages.filter(pkg => isCms(pkg.name)),
+        ...pagePackages.filter(pkg => !isCms(pkg.name)),
+    ].map(pkg => pkg.root);
+
+    return { inputs, aliases, pageRoots };
 }
 

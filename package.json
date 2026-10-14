@@ -13,7 +13,8 @@
     "files": [
         "resources/**/*",
         "vite.config.mjs",
-        "vite-utils.mjs"
+        "vite-utils.mjs",
+        "page-registry.mjs"
     ],
     "dependencies": {
         "@ckeditor/ckeditor5-vue": "^9.0.0",
