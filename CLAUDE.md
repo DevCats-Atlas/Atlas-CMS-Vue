@@ -127,7 +127,8 @@ router.get('/admin/posts', { search: 'query' }, {
 import { usePage } from '@inertiajs/vue3';
 const page = usePage();
 // Available: page.props.auth, page.props.cmsNavigation, page.props.flash,
-//            page.props.translations, page.props.languages
+//            page.props.translations, page.props.adminLocale, page.props.availableLanguages
+// Items forms separately receive page.props.languages for content translations.
 ```
 
 ## Conventions
