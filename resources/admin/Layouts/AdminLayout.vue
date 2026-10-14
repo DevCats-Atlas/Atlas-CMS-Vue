@@ -1,5 +1,5 @@
 <script setup>
-import { adminUrl } from '@/utils/adminUrl';
+import { adminUrl, isAdminUrl } from '@/utils/adminUrl';
 import { Link, usePage } from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
@@ -92,8 +92,8 @@ const isActive = (item) => {
     return currentUrl === target || currentUrl.startsWith(`${target}/`);
 };
 
-const isSystemSection = computed(() => page.url.startsWith(adminUrl('system')));
-const isAdminSection = computed(() => page.url.startsWith(adminUrl('')) && !isSystemSection.value);
+const isSystemSection = computed(() => isAdminUrl('system'));
+const isAdminSection = computed(() => isAdminUrl() && !isSystemSection.value);
 
 // Theme toggle functionality
 // Initialize from current state (theme was already applied by script in head)
