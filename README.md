@@ -326,9 +326,9 @@ Use npm from a compatible Node installation and the consumer's lock with `npm ci
 
 ## License
 
-[Your License Here]
+This private package declares no license in `package.json` and ships no LICENSE file. Its license terms are unspecified by the repository metadata.
 
 ## Support
 
-For issues and questions, please [create an issue](https://github.com/your-org/atlas-cms-vue/issues).
+For support and source context, see [the package repository](https://github.com/DevCats-Atlas/Atlas-CMS-Vue).
 
