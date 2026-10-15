@@ -1,6 +1,6 @@
 <script setup>
 import { adminUrl, isAdminUrl } from '@/utils/adminUrl';
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { useTranslation } from '@admin/js/utils/useTranslation';
@@ -11,6 +11,11 @@ const isSidebarOpen = ref(false);
 const userToggled = ref(false); // Track if user manually toggled
 const page = usePage();
 const user = computed(() => page.props.auth?.user ?? null);
+// Interface language selector; hidden while only one language is configured.
+const availableLanguages = computed(() => page.props.availableLanguages ?? []);
+const changeLanguage = (event) => {
+    router.post(adminUrl('language/set'), { language: event.target.value }, { preserveScroll: true });
+};
 
 const fallbackNavigation = [
     {
@@ -232,6 +237,16 @@ onMounted(() => {
                     </div>
 
                     <div class="flex items-center space-x-4">
+                        <select
+                            v-if="availableLanguages.length > 1"
+                            :value="page.props.adminLocale"
+                            :aria-label="t('admin.language.label')"
+                            :title="t('admin.language.label')"
+                            class="form-select w-auto py-1 text-sm uppercase"
+                            @change="changeLanguage"
+                        >
+                            <option v-for="code in availableLanguages" :key="code" :value="code">{{ code }}</option>
+                        </select>
                         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                             {{ user?.name || t('admin.layout.admin') }}
                         </span>
