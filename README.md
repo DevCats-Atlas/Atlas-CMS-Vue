@@ -13,7 +13,7 @@ The manifest is `private`, so there is no npm registry release. Install from the
 | Source | `package.json` dependency |
 | --- | --- |
 | Local checkout (`git submodule update --init --recursive` in Atlas CMS) | `"@devcats-atlas/atlas-cms-vue": "file:./packages/AtlasCMS-Vue"` |
-| Git, pinned to a tested commit | `npm install '@devcats-atlas/atlas-cms-vue@git+https://github.com/DevCats-Atlas/Atlas-CMS-Vue.git#<commit-sha>'` |
+| Git, pinned to a release tag | `npm install '@devcats-atlas/atlas-cms-vue@git+https://github.com/DevCats-Atlas/Atlas-CMS-Vue.git#v1.3.0'` |
 | Archive | `npm pack --ignore-scripts --pack-destination <dir>` in the package, then `npm install <dir>/devcats-atlas-atlas-cms-vue-<version>.tgz` |
 
 Commit the host `package-lock.json`; keep an archive at the path recorded in the lock. To build against another checkout without changing `package.json`, export `ATLAS_CMS_VUE_PATH` (or `ATLAS_SHOP_VUE_PATH`) before starting Vite; it must be a process variable, not only in `.env`. The package must still be declared and installed.
