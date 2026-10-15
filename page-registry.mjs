@@ -1,10 +1,10 @@
 import path from 'node:path';
 import { existsSync, readdirSync, realpathSync, statSync } from 'node:fs';
 
-const moduleId = 'virtual:atlas-admin-pages';
-const resolvedId = `\0${moduleId}`;
+const pagesModuleId = 'virtual:atlas-admin-pages';
+const interfacesModuleId = 'virtual:atlas-admin-interfaces';
 
-function pageFiles(directory, ancestors = new Set()) {
+function vueFiles(directory, ancestors = new Set()) {
     if (!existsSync(directory)) return [];
     const realDirectory = realpathSync(directory);
     if (ancestors.has(realDirectory)) return [];
@@ -14,50 +14,75 @@ function pageFiles(directory, ancestors = new Set()) {
         .flatMap(entry => {
             const file = path.join(directory, entry.name);
             const stats = entry.isSymbolicLink() ? statSync(file) : entry;
-            if (stats.isDirectory()) return pageFiles(file, nextAncestors);
+            if (stats.isDirectory()) return vueFiles(file, nextAncestors);
             return stats.isFile() && entry.name.endsWith('.vue') ? [file] : [];
         });
 }
 
-/** Build lazy page imports from the consumer and selected package directories. */
-export function atlasPages({ projectRoot, pageRoots = [] }) {
-    const roots = [...new Set([
-        path.resolve(projectRoot, 'resources/admin/Pages'),
-        ...pageRoots.map(root => path.resolve(projectRoot, root)),
-    ])];
-    const containsPage = file => file.endsWith('.vue') && roots.some(root => {
+/** One virtual module mapping `Relative/Name` to a lazy import; the first root containing a name wins. */
+function registry(moduleId, roots) {
+    const contains = file => file.endsWith('.vue') && roots.some(root => {
         const relative = path.relative(root, file);
         return relative && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
     });
 
     return {
-        name: 'atlas-admin-pages',
-        resolveId(id) {
-            if (id === moduleId) return resolvedId;
-        },
-        load(id) {
-            if (id !== resolvedId) return;
-            const pages = new Map();
+        moduleId,
+        resolvedId: `\0${moduleId}`,
+        roots,
+        contains,
+        source() {
+            const entries = new Map();
             for (const root of roots) {
-                for (const file of pageFiles(root)) {
+                for (const file of vueFiles(root)) {
                     const name = path.relative(root, file).split(path.sep).join('/').slice(0, -4);
-                    if (!pages.has(name)) pages.set(name, file);
+                    if (!entries.has(name)) entries.set(name, file);
                 }
             }
-            const entries = [...pages].map(([name, file]) =>
+            const lines = [...entries].map(([name, file]) =>
                 `[${JSON.stringify(name)}, () => import(${JSON.stringify(file.split(path.sep).join('/'))})]`
             );
-            return `export default Object.fromEntries([${entries.join(',\n')}]);`;
+            return `export default Object.fromEntries([${lines.join(',\n')}]);`;
+        },
+    };
+}
+
+const unique = paths => [...new Set(paths)];
+
+/**
+ * Build lazy admin page and custom field interface registries from the consumer and selected package directories.
+ * Without `interfaceRoots`, each page root `…/admin/Pages` contributes `…/admin/Custom/Interfaces`.
+ */
+export function atlasPages({ projectRoot, pageRoots = [], interfaceRoots = null }) {
+    const resolve = root => path.resolve(projectRoot, root);
+    const packageInterfaceRoots = interfaceRoots
+        ?? pageRoots.map(root => path.join(path.dirname(resolve(root)), 'Custom/Interfaces'));
+    const registries = [
+        registry(pagesModuleId, unique([resolve('resources/admin/Pages'), ...pageRoots.map(resolve)])),
+        registry(interfacesModuleId, unique([resolve('resources/admin/Custom/Interfaces'), ...packageInterfaceRoots.map(resolve)])),
+    ];
+
+    return {
+        name: 'atlas-admin-pages',
+        resolveId(id) {
+            return registries.find(entry => entry.moduleId === id)?.resolvedId;
+        },
+        load(id) {
+            return registries.find(entry => entry.resolvedId === id)?.source();
         },
         configureServer(server) {
             // Selected sources can be outside the consumer (environment/file overrides).
+            const roots = registries.flatMap(entry => entry.roots);
             server.config.server.fs.allow.push(...roots);
             server.watcher.add(roots);
             const refresh = file => {
-                if (!containsPage(file)) return;
+                const changed = registries.filter(entry => entry.contains(file));
+                if (changed.length === 0) return;
                 const graph = server.environments.client.moduleGraph;
-                const registry = graph.getModuleById(resolvedId);
-                if (registry) graph.invalidateModule(registry);
+                for (const entry of changed) {
+                    const module = graph.getModuleById(entry.resolvedId);
+                    if (module) graph.invalidateModule(module);
+                }
                 server.ws.send({ type: 'full-reload' });
             };
             server.watcher.on('add', refresh);

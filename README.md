@@ -53,7 +53,7 @@ export default defineConfig(({ mode }) => {
 });
 ```
 
-`loadAllPackages()` reads the host `package.json`, takes every `@devcats/*-vue` and `@devcats-atlas/*-vue` dependency, resolves its directory (environment variable `{NAME}_PATH` → `file:` path → `node_modules`), loads its `vite.config.mjs` and returns the Vite `inputs` (its `resources`), `aliases` and admin `pageRoots`. The AtlasCMS Blade shell loads the admin entries with `@vite`.
+`loadAllPackages()` reads the host `package.json`, takes every `@devcats/*-vue` and `@devcats-atlas/*-vue` dependency, resolves its directory (environment variable `{NAME}_PATH` → `file:` path → `node_modules`), loads its `vite.config.mjs` and returns the Vite `inputs` (its `resources`), `aliases`, admin `pageRoots` and custom field `interfaceRoots`. The AtlasCMS Blade shell loads the admin entries with `@vite`.
 
 ## Page resolution
 
@@ -95,7 +95,7 @@ const save = () => form.post(adminUrl(`${props.moduleHandle}/create`));
 - Reuse `AdminLayout`, `ModalDialog`, `ConfirmDialog` / `confirmDialog()`, `useToast()`, the CSS component classes (`.btn-*`, `.form-input`, …) and their `dark:` variants.
 - Uploads on update: `form.post(url, { forceFormData: true })` with `_method: 'put'`.
 
-Custom field interfaces (field type `custom`) are loaded from this package's `resources/admin/Custom/Interfaces/{interface_path}.vue`.
+Custom field interfaces (field type `custom`, setting `interface_path` such as `Posts/Analytics`) come from the `virtual:atlas-admin-interfaces` registry that `atlasPages()` builds with the page rules: host `resources/admin/Custom/Interfaces/` first, then AtlasCMS-Vue (which ships `LanguageLocaleData`), then other declared Vue packages; the first `{interface_path}.vue` wins. Without the `interfaceRoots` option each page root `…/admin/Pages` contributes `…/admin/Custom/Interfaces`; `loadAllPackages()` also returns `interfaceRoots` to pass explicitly. An interface receives `field` and `model` props like the built-in ones.
 
 ## Writing a Vue package
 

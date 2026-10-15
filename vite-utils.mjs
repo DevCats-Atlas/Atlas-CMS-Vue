@@ -182,7 +182,8 @@ export async function loadAllPackages(projectRoot) {
         ...pagePackages.filter(pkg => isCms(pkg.name)),
         ...pagePackages.filter(pkg => !isCms(pkg.name)),
     ].map(pkg => pkg.root);
+    const interfaceRoots = pageRoots.map(root => path.join(path.dirname(root), 'Custom/Interfaces'));
 
-    return { inputs, aliases, pageRoots };
+    return { inputs, aliases, pageRoots, interfaceRoots };
 }
 

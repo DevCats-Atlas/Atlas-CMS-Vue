@@ -38,7 +38,7 @@ Installation, Vite integration, page resolution and aliases: [README.md](README.
 | `Pages/Admin/Modules/Default/` | Items modules: tree list, drag & drop, bulk delete, tabbed edit form, field interfaces |
 | `Pages/Admin/Modules/DbTable/` | Table modules: filters, tree, sorting, relationship manager, `DbTableRecordForm` |
 | `Pages/Admin/System/`, `Pages/Admin/Users/`, `Pages/Auth/` | System screens, users, login |
-| `Custom/Interfaces/` | Auto-discovered custom field interfaces (`{ "type": "custom", "interface_path": "Posts/Analytics" }`) |
+| `Custom/Interfaces/` | Package custom field interfaces (`{ "type": "custom", "interface_path": "Posts/Analytics" }`); the `virtual:atlas-admin-interfaces` registry (`page-registry.mjs`) puts host interfaces first |
 | `css/app.css` | Component classes (`.btn-*`, `.form-input`, tables, modals) with `dark:` variants |
 
 ### Field interfaces
