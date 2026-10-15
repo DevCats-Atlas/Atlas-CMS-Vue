@@ -1,81 +1,26 @@
 # AtlasCMS-Vue
 
-Vue.js frontend package for AtlasCMS admin panel. Provides Vue components, Inertia.js pages, and all frontend assets for the CMS admin interface.
+The Atlas CMS admin frontend: Vue 3 Inertia pages, layouts, field interfaces, shared components and CSS, plus the Vite utilities that discover Atlas Vue packages and register their pages. It has no build of its own — the Laravel host's Vite compiles it. Backend controllers and props are in AtlasCMS.
+
+## Requirements
+
+Dependencies (installed with the package): Vue `^3.5.44`, `@inertiajs/vue3` `^3.9.1`, `ckeditor5` `^49` and `@ckeditor/ckeditor5-vue` `^9` (loaded on demand by WYSIWYG fields). The host provides the toolchain; Atlas CMS is tested with Node `>=22.12.0`, Vite `^8.3.4`, `@vitejs/plugin-vue` `^6.0.10`, `laravel-vite-plugin` `^3.2.0` and `@tailwindcss/vite` `^4.3.3`. Use the host's lock with `npm ci`.
 
 ## Installation
 
-The current manifest has `private: true`: [npm refuses to publish it](https://docs.npmjs.com/cli/v11/configuring-npm/package-json/#private). Supported delivery for this checkout is local source, Git, or an npm archive. A registry release needs a separately prepared publishable manifest and release process.
+The manifest is `private`, so there is no npm registry release. Install from the Laravel host root in one of three ways (AtlasShop-Vue the same way):
 
-Run installation commands from the Laravel/Vite consumer root. AtlasCMS-Vue's third-party dependencies still need registry access or a populated npm cache. AtlasShop-Vue also needs AtlasCMS-Vue installed in that consumer.
+| Source | `package.json` dependency |
+| --- | --- |
+| Local checkout (`git submodule update --init --recursive` in Atlas CMS) | `"@devcats-atlas/atlas-cms-vue": "file:./packages/AtlasCMS-Vue"` |
+| Git, pinned to a tested commit | `npm install '@devcats-atlas/atlas-cms-vue@git+https://github.com/DevCats-Atlas/Atlas-CMS-Vue.git#<commit-sha>'` |
+| Archive | `npm pack --ignore-scripts --pack-destination <dir>` in the package, then `npm install <dir>/devcats-atlas-atlas-cms-vue-<version>.tgz` |
 
-### Local Sources
+Commit the host `package-lock.json`; keep an archive at the path recorded in the lock. To build against another checkout without changing `package.json`, export `ATLAS_CMS_VUE_PATH` (or `ATLAS_SHOP_VUE_PATH`) before starting Vite; it must be a process variable, not only in `.env`. The package must still be declared and installed.
 
-In Atlas CMS, populate the submodules first:
+## Vite configuration
 
-```bash
-git submodule update --init --recursive
-```
-
-For another consumer, clone the package repositories into the matching `packages/` directories. Then declare the local paths in the consumer's `package.json`:
-
-```json
-{
-  "dependencies": {
-    "@devcats-atlas/atlas-cms-vue": "file:./packages/AtlasCMS-Vue"
-  }
-}
-```
-
-```bash
-npm install
-```
-
-### Git Dependency
-
-Use [npm's Git dependency syntax](https://docs.npmjs.com/cli/v11/configuring-npm/package-json/#git-urls-as-dependencies), replacing `<commit-sha>` with the full commit SHA of the tested revision:
-
-```bash
-npm install '@devcats-atlas/atlas-cms-vue@git+https://github.com/DevCats-Atlas/Atlas-CMS-Vue.git#<commit-sha>'
-```
-
-For AtlasShop-Vue, install AtlasCMS-Vue by the same method or from local sources first. Keep the dependency entries and `package-lock.json` in the consumer repository; with an existing lock, use `npm ci` in CI. The Git URL requires access to the repository. A commit SHA pins the Atlas package; the lock pins resolved third-party dependencies.
-
-### npm Archive
-
-From this package's source directory, create an archive in an existing output directory:
-
-```bash
-npm pack --ignore-scripts --pack-destination /absolute/path/to/artifacts
-```
-
-Use the filename returned by `npm pack` (currently `devcats-atlas-atlas-cms-vue-1.0.0.tgz`). Install it from the consumer root:
-
-```bash
-npm install /absolute/path/to/artifacts/devcats-atlas-atlas-cms-vue-1.0.0.tgz
-```
-
-Keep the archive available at the path recorded in the consumer dependency and lock, including in CI. AtlasShop-Vue consumers need archives or source dependencies for both Vue packages. Packing works with `private: true`; publishing is a separate operation.
-
-### Environment Path Override
-
-After installing and declaring the dependency, export the variable before starting Vite:
-
-```bash
-export ATLAS_CMS_VUE_PATH=/absolute/path/to/AtlasCMS-Vue
-npm run build
-```
-
-`loadAllPackages()` reads this variable from `process.env`; the documented Vite config calls it before `loadEnv()`, so a value only in `.env` is not loaded by that call. Relative overrides resolve from the consumer root. The selected directory must contain `resources/` and a working `vite.config.mjs`.
-
-An override changes config/resource/page resolution; it does not install dependencies or add a package to discovery. Keep the package declared in `package.json` and AtlasCMS-Vue installed in `node_modules` so `@devcats-atlas/atlas-cms-vue/vite-utils.mjs` can be imported. Override precedence is environment → local `file:` directory → installed `node_modules`. A missing override directory falls back to the remaining locations. With the `atlasPages()` plugin below, pages are loaded from the selected package's `resources/admin/Pages/`, including external override directories.
-
-## Vite Configuration
-
-AtlasCMS-Vue automatically integrates with your Vite configuration. You need to add a simple import to your root `vite.config.js`.
-
-### Step 1: Update `vite.config.js`
-
-Add this import at the top of your `vite.config.js`:
+The host `vite.config.js`:
 
 ```javascript
 import { defineConfig, loadEnv } from 'vite';
@@ -85,161 +30,76 @@ import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'url';
 import path from 'path';
 
-// Import AtlasCMS-Vue utilities
-const utils = await import('@devcats-atlas/atlas-cms-vue/vite-utils.mjs');
-const { loadAllPackages, atlasPages } = utils;
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const parsePort = (value, fallback) => {
-    const parsed = Number.parseInt(value ?? '', 10);
-    return Number.isNaN(parsed) ? fallback : parsed;
-};
-
-// Load all packages automatically from package.json
+const { loadAllPackages, atlasPages } = await import('@devcats-atlas/atlas-cms-vue/vite-utils.mjs');
 const { inputs, aliases, pageRoots } = await loadAllPackages(__dirname);
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
     const host = env.VITE_DEV_HOST || 'localhost';
-    const port = parsePort(env.VITE_DEV_PORT, 5174);
+    const port = Number.parseInt(env.VITE_DEV_PORT ?? '', 10) || 5174;
 
     return {
         plugins: [
             atlasPages({ projectRoot: __dirname, pageRoots }),
-            laravel({
-                input: inputs,
-                refresh: true,
-            }),
-            vue({
-                template: {
-                    transformAssetUrls: {
-                        base: null,
-                        includeAbsolute: false,
-                    },
-                },
-            }),
+            laravel({ input: inputs, refresh: true }),
+            vue({ template: { transformAssetUrls: { base: null, includeAbsolute: false } } }),
             tailwindcss(),
         ],
-        resolve: {
-            alias: aliases,
-        },
-        server: {
-            host,
-            port,
-            strictPort: true,
-            cors: true,
-            hmr: {
-                host,
-                port,
-            },
-        },
+        resolve: { alias: aliases },
+        build: { chunkSizeWarningLimit: 1024 },   // the CKEditor chunk
+        server: { host, port, strictPort: true, cors: true, hmr: { host, port } },
     };
 });
 ```
 
-### Step 2: Ensure Package is in `package.json`
+`loadAllPackages()` reads the host `package.json`, takes every `@devcats/*-vue` and `@devcats-atlas/*-vue` dependency, resolves its directory (environment variable `{NAME}_PATH` → `file:` path → `node_modules`), loads its `vite.config.mjs` and returns the Vite `inputs` (its `resources`), `aliases` and admin `pageRoots`. The AtlasCMS Blade shell loads the admin entries with `@vite`.
 
-Keep `@devcats-atlas/atlas-cms-vue` listed in the consumer dependencies. For local sources use the example below; retain the Git or archive spec if you chose that installation method:
+## Page resolution
 
-```json
-{
-  "dependencies": {
-    "@devcats-atlas/atlas-cms-vue": "file:./packages/AtlasCMS-Vue"
-  }
-}
-```
+`atlasPages()` generates the `virtual:atlas-admin-pages` registry that `page-resolver.js` uses; register it for both build and dev. An Inertia name such as `Admin/Orders/Index` maps exactly to `Admin/Orders/Index.vue` under a page root (backslashes are normalized). Priority:
 
-### How It Works
+1. host `resources/admin/Pages/` (always included) — add a file with the same name to override a CMS or package page;
+2. AtlasCMS-Vue's `resources/admin/Pages/`;
+3. other declared Vue dependencies in manifest order (`dependencies`, then `devDependencies`);
+4. extra roots you append.
 
-1. **Automatic Discovery**: The `loadAllPackages()` function reads your `package.json` and automatically finds `@devcats/*-vue` and `@devcats-atlas/*-vue` dependencies.
-
-2. **Package Resolution**: Each package is resolved using this priority:
-   - Environment variable (e.g., `ATLAS_CMS_VUE_PATH`)
-   - Path from `package.json` (for `file:` protocol)
-   - npm package in `node_modules`
-
-3. **Config Loading**: Each package's `vite.config.mjs` file is automatically loaded, which defines:
-   - Resource files (CSS, JS) to include in the build
-   - Path aliases for imports
-
-4. **Page Integration**: Pass the returned `pageRoots` to `atlasPages()`. The plugin generates lazy imports for admin pages alongside the resources/aliases configuration.
-
-## Page Resolution
-
-Register `atlasPages({ projectRoot: __dirname, pageRoots })` in the consumer's Vite plugins. `page-resolver.js` imports its `virtual:atlas-admin-pages` registry; the plugin is required for both build and dev.
-
-An Inertia name such as `Admin/Orders/Index` maps exactly to `Admin/Orders/Index.vue` below a page root. Backslashes are normalized to slashes. Resolution priority is:
-
-1. Host `resources/admin/Pages/` (always included). Add a file with the same relative name to override a CMS or package page.
-2. AtlasCMS-Vue's selected `resources/admin/Pages/`.
-3. Other successfully loaded, declared `@devcats/*-vue` or `@devcats-atlas/*-vue` dependencies in manifest order (`dependencies`, then `devDependencies`; a repeated dependency uses its dev spec).
-4. Explicit extra roots appended by the consumer.
-
-The first exact name wins. Only the winning file is imported for a collision. An unknown name rejects with `Page not found: <name>`. Imports remain lazy. No suffix matching or directory-name convention is used to select pages.
-
-`loadAllPackages()` resolves each declared package through environment → `file:` → `node_modules`; its `pageRoots` use that same selected directory. A new scoped Vue dependency with a working `vite.config.mjs` (`resources` array and `aliases` object) and `resources/admin/Pages/` participates without a new resolver glob. Undeclared sibling folders and Composer packages are not scanned automatically.
-
-For a Composer package or another page directory, append its root explicitly (relative paths resolve from the consumer):
+The first exact match wins and only it is imported; imports stay lazy. An unknown name rejects with `Page not found: <name>`. There is no suffix or directory-name matching, and undeclared folders or Composer packages are not scanned. To add one, append its root:
 
 ```javascript
-atlasPages({
-    projectRoot: __dirname,
-    pageRoots: [...pageRoots, 'vendor/acme/reports/resources/admin/Pages'],
-})
+atlasPages({ projectRoot: __dirname, pageRoots: [...pageRoots, 'vendor/acme/reports/resources/admin/Pages'] })
 ```
 
-Configure that package's component aliases/dependencies separately if its pages need them. In dev, adding/removing a `.vue` page invalidates the registry and reloads the browser, including host overrides; ordinary component edits use Vue HMR. Vite normally ignores edits inside `node_modules`; restart after changing installed npm pages. Restart Vite after changing dependency declarations, environment paths or plugin configuration. Production deployments need a new build after page changes.
+In dev, adding or removing a page reloads the registry (host overrides included); component edits use HMR. Vite ignores edits inside `node_modules` — restart after changing installed packages, dependency declarations, environment paths or plugin options. Production needs a rebuild after page changes.
 
-## Package Structure
+## Writing admin pages
 
-```
-AtlasCMS-Vue/
-├── vite.config.mjs          # Package Vite configuration
-├── vite-utils.mjs           # Utilities for package resolution
-├── resources/
-│   └── admin/
-│       ├── css/
-│       │   └── app.css     # Admin styles
-│       ├── js/
-│       │   ├── app.js      # Main admin app entry
-│       │   └── page-resolver.js  # Inertia.js page resolver
-│       ├── Pages/          # Vue/Inertia pages
-│       ├── Layouts/        # Layout components
-│       └── Custom/         # Custom components
-└── package.json
-```
-
-## Available Aliases
-
-After installation, the following aliases are available in your Vue components:
-
-- `@atlas-cms/admin` - Points to `resources/admin` directory
-- `@admin` - Legacy alias for `resources/admin`
-- `@` - Points to `resources/admin/js` directory
-
-### Usage in Components
+Aliases: `@atlas-cms/admin` and `@admin` → `resources/admin`, `@` → `resources/admin/js`.
 
 ```vue
 <script setup>
+import { useForm } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
-import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import { adminUrl } from '@/utils/adminUrl';
+import { useTranslation } from '@/utils/useTranslation';
+
+const props = defineProps({ title: String, moduleHandle: String, rows: Object });
+const { t } = useTranslation();
+const form = useForm({ name: '' });
+const save = () => form.post(adminUrl(`${props.moduleHandle}/create`));
 </script>
 ```
 
-## Adding Additional Vue Packages
+- Build every admin URL with `adminUrl()` (relative to the configured prefix); never hardcode `/admin`.
+- Shared props on every page: `auth`, `cmsNavigation`, `flash`, `translations`, `adminLocale`, `availableLanguages`, `adminPrefix`.
+- Reuse `AdminLayout`, `ModalDialog`, `ConfirmDialog` / `confirmDialog()`, `useToast()`, the CSS component classes (`.btn-*`, `.form-input`, …) and their `dark:` variants.
+- Uploads on update: `form.post(url, { forceFormData: true })` with `_method: 'put'`.
 
-For AtlasShop-Vue, populate `packages/AtlasShop-Vue` and install it from the consumer root:
+Custom field interfaces (field type `custom`) are loaded from this package's `resources/admin/Custom/Interfaces/{interface_path}.vue`.
 
-```bash
-npm install ./packages/AtlasShop-Vue
-```
+## Writing a Vue package
 
-Alternatively, use the Git or archive method in [Installation](#installation) with the AtlasShop-Vue repository/archive. Keep both Vue dependencies declared using the delivery method you selected. `loadAllPackages()` loads their resources and aliases from `vite.config.mjs`; pass their returned `pageRoots` to `atlasPages()` to register Inertia pages.
-
-## Package Configuration (`vite.config.mjs`)
-
-Each Vue package should have a `vite.config.mjs` file that exports its configuration:
+A package named `@devcats-atlas/{name}-vue` and declared in the host `package.json` is discovered automatically. Its root needs a `vite.config.mjs` and, for pages, `resources/admin/Pages/`:
 
 ```javascript
 import path from 'path';
@@ -248,87 +108,13 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default {
-    // Resource files to include in Vite build
-    resources: [
-        { type: 'css', file: 'resources/admin/css/app.css', context: 'admin' },
-        { type: 'js', file: 'resources/admin/js/app.js', context: 'admin' },
-    ],
-    
-    // Path aliases for this package
-    aliases: {
-        '@atlas-cms/admin': path.resolve(__dirname, 'resources/admin'),
-        '@admin': path.resolve(__dirname, 'resources/admin'),
-        '@': path.resolve(__dirname, 'resources/admin/js'),
-    },
+    resources: [],     // Vite entries, e.g. { type: 'css', file: 'resources/admin/css/app.css', context: 'admin' }
+    aliases: { '@acme/admin': path.resolve(__dirname, 'resources/admin') },
 };
 ```
 
-## Troubleshooting
+List `vite.config.mjs` and `resources/**/*` in the manifest's `files` so Git and archive installs include them; check with `npm pack --dry-run --ignore-scripts --json`. AtlasShop-Vue is the reference.
 
-### Package Not Found
+## Verification
 
-If you see an error that the package is not found:
-
-1. **Check `package.json`**: Ensure `@devcats-atlas/atlas-cms-vue` is listed in dependencies
-2. **Run `npm install`**: Make sure dependencies are installed
-3. **Check path**: If using `file:` protocol, verify the path is correct
-4. **Environment variable**: You can override the path with `ATLAS_CMS_VUE_PATH`
-
-### Resources Not Loading
-
-If resources aren't loading:
-
-1. **Check `vite.config.mjs`**: Ensure the package has a valid `vite.config.mjs` file
-2. **Verify file paths**: Check that resource files exist at the specified paths
-3. **Check Vite build**: Run `npm run dev` and check for errors in the console
-
-### Aliases Not Working
-
-If aliases aren't resolving:
-
-1. **Check import path**: Ensure you're using the correct alias (e.g., `@admin` not `@/admin`)
-2. **Rebuild**: Try running `npm run build` or restarting the dev server
-3. **Check alias definition**: Verify aliases are correctly defined in the package's `vite.config.mjs`
-
-## Development
-
-### Local Development Setup
-
-For local development, use the `file:` protocol in `package.json`:
-
-```json
-{
-  "dependencies": {
-    "@devcats-atlas/atlas-cms-vue": "file:./packages/AtlasCMS-Vue"
-  }
-}
-```
-
-This creates a symlink in `node_modules`, so changes to the package are immediately reflected.
-
-### Building
-
-The package resources are automatically included when you build your main project:
-
-```bash
-npm run build
-```
-
-## Requirements
-
-This package ships Vue/JavaScript sources and Vite utilities. Its manifest has no standalone build/test scripts or `engines.node` constraint. The consumer owns the build toolchain and must satisfy the engines and peer requirements of its selected Vite plugins.
-
-Package dependencies are declared in `package.json`: Vue `^3.5.44`, `@inertiajs/vue3` `^3.9.1`, CKEditor `^49.0.0`, and `@ckeditor/ckeditor5-vue` `^9.0.0`. Install the matching AtlasCMS backend for the Inertia page/prop contracts.
-
-The current Atlas CMS integration host requires **Node >=22.12.0** and uses Vite `^8.3.4`, `@vitejs/plugin-vue` `^6.0.10`, Laravel Vite plugin `^3.2.0`, and Tailwind Vite plugin `^4.3.3`. Its Laravel Vite plugin requires Vite 8. These are the tested consumer versions, not independently declared package-wide minimums. Node 18 or a generic Node 20 installation is insufficient for that host.
-
-Use npm from a compatible Node installation and the consumer's lock with `npm ci`. Run `npm run build` from the consumer root; in Atlas CMS, `node --test tests/Frontend/*.test.mjs` verifies package helpers. The package does not compile TypeScript; AtlasShop's separate browser library uses the host compiler.
-
-## License
-
-This private package declares no license in `package.json` and ships no LICENSE file. Its license terms are unspecified by the repository metadata.
-
-## Support
-
-For support and source context, see [the package repository](https://github.com/DevCats-Atlas/Atlas-CMS-Vue).
-
+From the Atlas CMS host: `npm run build`, and `node --test tests/Frontend/*.test.mjs` (page registry, package discovery, packing and installing archives, DbTable form model). The package declares no license. Repository: [Atlas-CMS-Vue](https://github.com/DevCats-Atlas/Atlas-CMS-Vue).
