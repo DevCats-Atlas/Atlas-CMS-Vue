@@ -13,7 +13,7 @@ const props = defineProps({
     },
     placeholder: {
         type: String,
-        default: 'Select...',
+        default: '',
     },
     searchable: {
         type: Boolean,
@@ -81,7 +81,7 @@ const selectedValues = computed(() => {
 
 const displayValue = computed(() => {
     if (selectedValues.value.length === 0) {
-        return props.placeholder;
+        return props.placeholder || t('admin.common.select_placeholder');
     }
     
     // Get labels for all selected values
@@ -213,7 +213,7 @@ onUnmounted(() => {
             :class="{ 'ring-2 ring-indigo-500': isOpen }"
         >
             <div class="flex-1 flex items-center gap-2 flex-wrap">
-                <span v-if="selectedValues.length === 0" class="text-gray-400">{{ placeholder }}</span>
+                <span v-if="selectedValues.length === 0" class="text-gray-400">{{ placeholder || t('admin.common.select_placeholder') }}</span>
                 <template v-else>
                     <span
                         v-for="value in selectedValues.slice(0, 2)"

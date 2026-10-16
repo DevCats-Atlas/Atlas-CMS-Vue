@@ -83,7 +83,7 @@ const loadRelationship = async (relationship, index, page = 1) => {
         relationshipPagination.value[name] = null;
         
         // Extract error message from response
-        const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to load relationship';
+        const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || t('admin.errors.error_loading_relationship');
         relationshipErrors.value[name] = errorMessage;
         
         // Show toast notification
@@ -166,7 +166,7 @@ const saveRelationship = async (relationship) => {
         });
         
         if (!response.data.success) {
-            throw new Error(response.data.error || 'Failed to sync relationships');
+            throw new Error(response.data.error || t('admin.errors.failed_to_sync'));
         }
         
         // Reload relationship data

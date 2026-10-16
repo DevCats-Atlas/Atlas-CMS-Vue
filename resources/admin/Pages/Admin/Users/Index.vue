@@ -15,7 +15,7 @@ import ListToolbar from '@/lists/ListToolbar.vue';
 const { t } = useTranslation();
 
 const props = defineProps({
-    title: { type: String, default: 'Users' },
+    title: { type: String, default: '' },
     moduleHandle: { type: String, default: 'users' },
     module: { type: Object, required: true },
     action: { type: Object, required: true },

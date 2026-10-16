@@ -14,7 +14,7 @@ import RelationshipsSection from './sections/RelationshipsSection.vue';
 import ModuleActionsSection from './sections/ModuleActionsSection.vue';
 
 const props = defineProps({
-    title: { type: String, default: 'Module' },
+    title: { type: String, default: '' },
     module: { type: Object, required: true },
     actions: { type: Array, default: () => [] },
     itemTypes: { type: Array, default: () => [] },

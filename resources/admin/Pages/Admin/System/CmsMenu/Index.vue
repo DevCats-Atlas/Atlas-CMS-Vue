@@ -12,7 +12,7 @@ const { t } = useTranslation();
 const props = defineProps({
     title: {
         type: String,
-        default: 'CMS Menu',
+        default: '',
     },
     groups: {
         type: Array,

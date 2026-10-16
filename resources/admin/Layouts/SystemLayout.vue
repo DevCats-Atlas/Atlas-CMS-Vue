@@ -1,24 +1,27 @@
 <script setup>
 import { adminUrl } from '@/utils/adminUrl';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
+import { useTranslation } from '@/utils/useTranslation.js';
+
+const { t } = useTranslation();
 
 const systemNavigation = [
     {
         id: 'system',
-        title: 'System',
+        title: t('admin.layout.system'),
         items: [
-            { id: 'overview', title: 'Overview', href: adminUrl('system'), exact: true },
-            { id: 'cms-menu', title: 'CMS Menu', href: adminUrl('system/cms-menu') },
-            { id: 'modules', title: 'Modules', href: adminUrl('system/modules') },
-            { id: 'access-roles', title: 'Access Roles', href: adminUrl('system/access-roles') },
-            { id: 'item-types', title: 'Item Types', href: adminUrl('system/item-types') },
+            { id: 'overview', title: t('admin.layout.nav_overview'), href: adminUrl('system'), exact: true },
+            { id: 'cms-menu', title: t('admin.layout.nav_cms_menu'), href: adminUrl('system/cms-menu') },
+            { id: 'modules', title: t('admin.layout.nav_modules'), href: adminUrl('system/modules') },
+            { id: 'access-roles', title: t('admin.layout.nav_access_roles'), href: adminUrl('system/access-roles') },
+            { id: 'item-types', title: t('admin.layout.nav_item_types'), href: adminUrl('system/item-types') },
         ],
     },
 ];
 </script>
 
 <template>
-    <AdminLayout :navigation="systemNavigation" sidebar-title="System Console">
+    <AdminLayout :navigation="systemNavigation" :sidebar-title="t('admin.layout.system_console')">
         <slot />
     </AdminLayout>
 </template>

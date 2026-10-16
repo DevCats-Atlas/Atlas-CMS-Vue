@@ -2,6 +2,9 @@
 import { computed, ref, watch } from 'vue';
 import CustomFieldsTab from './CustomFieldsTab.vue';
 import DefaultFieldsTab from './DefaultFieldsTab.vue';
+import { useTranslation } from '@/utils/useTranslation.js';
+
+const { t } = useTranslation();
 
 const props = defineProps({
     fields: {
@@ -33,7 +36,7 @@ const props = defineProps({
 const activeTabId = ref('default');
 
 const tabItems = computed(() => {
-    const base = [{ id: 'default', title: 'Default', kind: 'default', payload: null }];
+    const base = [{ id: 'default', title: t('admin.items.default_tab'), kind: 'default', payload: null }];
 
     const custom = (props.customTabs || []).map((tab) => ({
         id: tab.id,

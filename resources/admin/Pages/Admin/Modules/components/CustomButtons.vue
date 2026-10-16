@@ -36,9 +36,9 @@ const handleButtonClick = async (button) => {
     // Show confirmation if required
     if (button.confirm_message) {
         const confirmed = await confirmDialog({
-            title: button.title || 'Confirm Action',
+            title: button.title || t('admin.common.confirm_title'),
             message: button.confirm_message,
-            confirmLabel: 'Continue',
+            confirmLabel: t('admin.common.continue'),
             intent: button.variant === 'danger' ? 'danger' : 'primary',
         });
 
@@ -114,19 +114,19 @@ const executeButtonAction = async (button) => {
             if (isSuccess) {
                 // Success response - use the message from the controller
                 // The message should be directly in data.message from the JSON response
-                const message = data.message || 'Action completed successfully';
+                const message = data.message || t('admin.success.action_completed');
                 
                 showToast({
-                    title: 'Success',
+                    title: t('admin.common.success'),
                     message: message,
                     intent: 'success',
                     duration: 4000,
                 });
             } else {
                 // Error in JSON response
-                const errorMessage = data.message || data.error || 'Action failed';
+                const errorMessage = data.message || data.error || t('admin.errors.action_failed');
                 showToast({
-                    title: 'Error',
+                    title: t('admin.common.error'),
                     message: errorMessage,
                     intent: 'danger',
                     duration: 6000,
@@ -137,7 +137,7 @@ const executeButtonAction = async (button) => {
         console.error('Error executing button action:', error);
         
         // Extract error message
-        let errorMessage = 'An error occurred while executing the action';
+        let errorMessage = t('admin.errors.action_error');
         
         if (error.response) {
             // Server responded with error
@@ -149,14 +149,14 @@ const executeButtonAction = async (button) => {
             } else if (typeof data === 'string') {
                 errorMessage = data;
             } else {
-                errorMessage = error.response.statusText || `Server error (${error.response.status})`;
+                errorMessage = error.response.statusText || t('admin.errors.server_error', { status: error.response.status });
             }
         } else if (error.message) {
             errorMessage = error.message;
         }
         
         showToast({
-            title: 'Error',
+            title: t('admin.common.error'),
             message: errorMessage,
             intent: 'danger',
             duration: 6000,

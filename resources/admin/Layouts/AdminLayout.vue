@@ -26,17 +26,12 @@ const changeLanguage = (event) => {
     router.post(adminUrl('language/set'), { language: event.target.value }, { preserveScroll: true });
 };
 
+// Without a CMS menu (no menu items yet) the sidebar links to the dashboard only
 const fallbackNavigation = [
     {
         id: 'default',
-        title: 'Navigation',
-        items: [
-            { id: 'dashboard', title: 'Dashboard', href: adminUrl(''), exact: true },
-            { id: 'websites', title: 'Websites', href: adminUrl('websites') },
-            { id: 'pages', title: 'Pages', href: adminUrl('pages') },
-            { id: 'users', title: 'Users', href: adminUrl('users') },
-            { id: 'settings', title: 'Settings', href: adminUrl('settings') },
-        ],
+        title: t('admin.layout.navigation'),
+        items: [{ id: 'dashboard', title: t('admin.layout.dashboard'), href: adminUrl(''), exact: true }],
     },
 ];
 
@@ -46,7 +41,7 @@ const props = defineProps({
     },
     sidebarTitle: {
         type: String,
-        default: 'CMS Admin',
+        default: '',
     },
 });
 

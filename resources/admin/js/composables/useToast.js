@@ -3,7 +3,7 @@ import { ref } from 'vue';
 const toasts = ref([]);
 let nextId = 1;
 
-const showToast = ({ title = 'Notification', message = '', intent = 'default', duration = 4000 } = {}) => {
+const showToast = ({ title = '', message = '', intent = 'default', duration = 4000 } = {}) => {
     const id = nextId++;
     const toast = {
         id,

@@ -11,7 +11,7 @@ const { t } = useTranslation();
 const props = defineProps({
     title: {
         type: String,
-        default: 'Edit User',
+        default: '',
     },
     moduleHandle: {
         type: String,

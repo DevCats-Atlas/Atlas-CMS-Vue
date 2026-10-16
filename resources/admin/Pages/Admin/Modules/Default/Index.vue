@@ -18,7 +18,7 @@ import ListSearch from '@/lists/ListSearch.vue';
 import ListToolbar from '@/lists/ListToolbar.vue';
 
 const props = defineProps({
-    title: { type: String, default: 'Module View' },
+    title: { type: String, default: '' },
     moduleHandle: { type: String, required: true },
     module: { type: Object, required: true },
     action: { type: Object, required: true },

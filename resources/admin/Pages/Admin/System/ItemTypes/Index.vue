@@ -8,7 +8,7 @@ import { useTranslation } from '@/utils/useTranslation.js';
 const props = defineProps({
     title: {
         type: String,
-        default: 'Item Types',
+        default: '',
     },
     itemTypes: {
         type: Array,

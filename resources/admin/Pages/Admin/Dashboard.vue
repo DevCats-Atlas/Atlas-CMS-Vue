@@ -8,7 +8,7 @@ const { t } = useTranslation();
 defineProps({
     title: {
         type: String,
-        default: 'Dashboard',
+        default: '',
     },
 });
 </script>

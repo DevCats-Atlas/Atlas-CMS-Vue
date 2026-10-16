@@ -52,7 +52,7 @@ const ensureSlugTranslations = () => {
 };
 
 const slugLanguageCode = (language, index) => language?.slug || language?.code || language?.id || `lang-${index}`;
-const slugLanguageLabel = (language) => language?.title || language?.name || language?.label || language?.slug || 'Language';
+const slugLanguageLabel = (language) => language?.title || language?.name || language?.label || language?.slug || '';
 const isDefaultLanguage = (language) => Boolean(language?.is_default);
 
 const slugTranslationValue = (language, index) => {
@@ -192,7 +192,7 @@ const getCustomFieldModel = (fieldId) => {
 
 // Helper for language handling
 const languageKey = (language, index) => language?.id ?? language?.slug ?? language?.code ?? index;
-const languageLabel = (language) => language?.title || language?.name || language?.label || language?.slug || 'Language';
+const languageLabel = (language) => language?.title || language?.name || language?.label || language?.slug || '';
 const ensureTranslationKey = (language, index, model) => {
     const key = language?.slug ?? language?.code ?? language?.id ?? index;
     if (!model.translations) {

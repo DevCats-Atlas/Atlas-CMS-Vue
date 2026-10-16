@@ -21,7 +21,7 @@ const { showToast } = useToast();
 const props = defineProps({
     title: {
         type: String,
-        default: 'Module View',
+        default: '',
     },
     moduleHandle: {
         type: String,

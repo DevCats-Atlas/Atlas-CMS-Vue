@@ -7,7 +7,7 @@ import { useTranslation } from '@/utils/useTranslation.js';
 const props = defineProps({
     title: {
         type: String,
-        default: 'Edit Entry',
+        default: '',
     },
     moduleHandle: {
         type: String,

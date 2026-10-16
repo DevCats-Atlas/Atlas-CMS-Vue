@@ -13,7 +13,7 @@ const page = usePage();
 const props = defineProps({
     title: {
         type: String,
-        default: 'Edit Entry',
+        default: '',
     },
     moduleHandle: {
         type: String,

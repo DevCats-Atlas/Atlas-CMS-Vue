@@ -218,8 +218,8 @@ const openEditModal = async (itemModuleHandle, itemId, fieldId = null) => {
         });
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: 'Failed to fetch item data' }));
-            throw new Error(errorData.error || 'Failed to fetch item data');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `HTTP ${response.status}`);
         }
 
         const data = await response.json();

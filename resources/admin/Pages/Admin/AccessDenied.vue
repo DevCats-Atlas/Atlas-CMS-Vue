@@ -9,7 +9,7 @@ const { t } = useTranslation();
 const props = defineProps({
     title: {
         type: String,
-        default: 'Access Denied',
+        default: '',
     },
     module: {
         type: String,

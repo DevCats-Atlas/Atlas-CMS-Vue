@@ -10,7 +10,7 @@ import { useTranslation } from '@/utils/useTranslation.js';
 const props = defineProps({
     title: {
         type: String,
-        default: 'Modules',
+        default: '',
     },
     modules: {
         type: Array,

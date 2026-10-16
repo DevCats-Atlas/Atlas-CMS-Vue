@@ -18,7 +18,7 @@ const hasTranslations = computed(() => props.field.multilanguage && languages.va
 const hideTitle = computed(() => props.field.config?.hide_title === true);
 
 const languageKey = (language, index) => language?.id ?? language?.slug ?? language?.code ?? index;
-const languageLabel = (language) => language?.title || language?.name || language?.label || language?.slug || 'Language';
+const languageLabel = (language) => language?.title || language?.name || language?.label || language?.slug || '';
 const ensureTranslationKey = (language, index) => {
     const key = language?.slug ?? language?.code ?? language?.id ?? index;
 

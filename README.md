@@ -94,7 +94,7 @@ const save = () => form.post(adminUrl(`${props.moduleHandle}/create`));
 - Shared props on every page: `auth`, `cmsNavigation`, `flash`, `translations`, `adminLocale`, `availableLanguages`, `adminPrefix`, `atlasVersion`.
 - Reuse `AdminLayout`, `ModalDialog`, `ConfirmDialog` / `confirmDialog()`, `useToast()`, the CSS component classes (`.btn-*`, `.form-input`, …) and their `dark:` variants.
 - Toasts: call `useToast().showToast({ title, message, intent })`. `AdminLayout` (and `SystemLayout`, which wraps it) renders the only `ToastStack`; a page inside it must not render its own, or every toast shows twice.
-- Texts go through `t()` with keys in AtlasCMS `admin.php` (see its `docs/i18n.md`); the host test `tests/Frontend/adminTranslations.test.mjs` rejects untranslated template text in this package.
+- Texts go through `t()` with keys in AtlasCMS `admin.php` (see its `docs/i18n.md`); the host test `tests/Frontend/adminTranslations.test.mjs` rejects untranslated text in templates and UI texts in scripts (menu items, toast titles, prop defaults) of this package.
 - Uploads on update: `form.post(url, { forceFormData: true })` with `_method: 'put'`.
 
 ### Lists and column settings

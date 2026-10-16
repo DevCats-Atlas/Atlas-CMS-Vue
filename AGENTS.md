@@ -54,6 +54,6 @@ Installation, Vite integration, page resolution and aliases: [README.md](README.
 - Forms: `useForm()`; uploads on update post with `forceFormData: true` and `_method: 'put'`.
 - Lists: `router.get(url, query, { preserveState: true, preserveScroll: true, only: [...] })`.
 - Shared props: `auth`, `cmsNavigation`, `flash`, `translations`, `adminLocale`, `availableLanguages`, `adminPrefix`, `atlasVersion`; Items forms also get content `languages`.
-- Texts: `t()` keys from AtlasCMS `admin.php`; `tests/Frontend/adminTranslations.test.mjs` fails on untranslated template text (skip with `translate="no"` only for code-like values).
+- Texts: `t()` keys from AtlasCMS `admin.php`; `tests/Frontend/adminTranslations.test.mjs` fails on untranslated template text (skip with `translate="no"` only for code-like values) and on UI texts in scripts (`title: '…'`, prop `default: '…'`, `|| '…'` fallbacks); console messages and `new Error()` texts are not checked.
 - Lists: reuse `js/lists/`; toasts via `useToast().showToast()` — never render a second `ToastStack` inside `AdminLayout`.
 - Validation is server-driven through `form.errors`.

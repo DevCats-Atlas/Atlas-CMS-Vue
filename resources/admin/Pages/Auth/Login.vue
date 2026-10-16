@@ -9,7 +9,7 @@ const { t } = useTranslation();
 const props = defineProps({
     title: {
         type: String,
-        default: 'Sign in',
+        default: '',
     },
     recaptcha: {
         type: Object,

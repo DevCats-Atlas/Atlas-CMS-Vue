@@ -29,7 +29,7 @@ const inputType = computed(() => {
 });
 
 const languageKey = (language, index) => language?.id ?? language?.slug ?? language?.code ?? index;
-const languageLabel = (language) => language?.title || language?.name || language?.label || language?.slug || 'Language';
+const languageLabel = (language) => language?.title || language?.name || language?.label || language?.slug || '';
 const ensureTranslationKey = (language, index) => {
     const key = language?.slug ?? language?.code ?? language?.id ?? index;
 

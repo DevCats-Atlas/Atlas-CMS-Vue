@@ -12,7 +12,7 @@ const { t } = useTranslation();
 const props = defineProps({
     title: {
         type: String,
-        default: 'Access Roles',
+        default: '',
     },
     roles: {
         type: Array,

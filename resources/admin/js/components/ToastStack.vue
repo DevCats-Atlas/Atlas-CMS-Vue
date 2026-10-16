@@ -32,7 +32,7 @@ const resolveIntent = (intent) => intentClasses[intent] ?? intentClasses.default
         >
             <div :class="['px-4 py-3 flex items-start gap-3', resolveIntent(toast.intent)]">
                 <div class="flex-1">
-                    <p class="text-sm font-semibold leading-5">{{ toast.title }}</p>
+                    <p v-if="toast.title" class="text-sm font-semibold leading-5">{{ toast.title }}</p>
                     <p v-if="toast.message" class="mt-1 text-sm leading-5 opacity-90">{{ toast.message }}</p>
                 </div>
                 <button

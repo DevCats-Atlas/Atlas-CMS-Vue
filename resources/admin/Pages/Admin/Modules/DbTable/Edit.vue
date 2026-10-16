@@ -83,7 +83,7 @@ const { showToast } = useToast();
 watch(() => page.props.flash, (flash) => {
     if (flash?.error) {
         showToast({
-            title: 'Error',
+            title: t('admin.common.error'),
             message: flash.error,
             intent: 'danger',
             duration: 6000,
@@ -91,7 +91,7 @@ watch(() => page.props.flash, (flash) => {
     }
     if (flash?.success) {
         showToast({
-            title: 'Success',
+            title: t('admin.common.success'),
             message: flash.success,
             intent: 'success',
             duration: 4000,
