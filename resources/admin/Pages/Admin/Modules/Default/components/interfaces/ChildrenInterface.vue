@@ -8,6 +8,7 @@ import { confirmDialog } from '@/utils/confirmDialog.js';
 import { moveInList } from '@admin/js/lists/tree.js';
 import { useTreeDragDrop } from '@admin/js/lists/useTreeDragDrop.js';
 import { useTranslation } from '@/utils/useTranslation.js';
+import { useToast } from '@/composables/useToast.js';
 
 const props = defineProps({
     field: {
@@ -25,6 +26,7 @@ const props = defineProps({
 });
 
 const { t } = useTranslation();
+const { showToast } = useToast();
 
 const page = usePage();
 const childrenItems = ref([]);
@@ -337,6 +339,7 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
             },
             {
                 preserveScroll: true,
+                onError: () => showToast({ title: t('admin.lists.reorder_failed'), intent: 'danger' }),
                 onFinish: () => fetchChildren(), // the saved order, or the previous one after an error
             },
         );

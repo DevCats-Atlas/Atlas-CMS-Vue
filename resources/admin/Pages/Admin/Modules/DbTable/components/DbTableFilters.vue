@@ -39,6 +39,7 @@ const apply = () => router.get(props.url, filterQuery(values.value, searchEnable
 });
 const clear = (id) => {
     delete values.value[id];
+    values.value = { ...filterValuesFromQuery('', filters.value), ...values.value };
     apply();
 };
 const clearSearch = () => {
@@ -46,7 +47,7 @@ const clearSearch = () => {
     apply();
 };
 const clearAll = () => {
-    values.value = {};
+    values.value = filterValuesFromQuery('', filters.value);
     search.value = '';
     router.get(props.url, {}, { preserveState: true, preserveScroll: true, only });
 };
@@ -71,17 +72,22 @@ const asList = (value) => (Array.isArray(value) ? value : (value ? [value] : [])
     <div class="mb-6 pb-4 border-divider">
         <form @submit.prevent="apply">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                <div v-if="searchEnabled" class="md:col-span-2 lg:col-span-3 xl:col-span-4">
+                <div v-if="searchEnabled || enabledFilters.length" class="md:col-span-2 lg:col-span-3 xl:col-span-4">
                     <div class="flex items-center gap-2">
-                        <input v-model="search" type="text" class="form-input flex-1" :placeholder="filterConfig.default_search.placeholder || t('admin.db_table.search_all_placeholder')" />
-                        <button type="submit" class="btn btn-primary whitespace-nowrap">{{ t('admin.common.search') }}</button>
+                        <input v-if="searchEnabled" v-model="search" type="text" class="form-input flex-1" :placeholder="filterConfig.default_search.placeholder || t('admin.db_table.search_all_placeholder')" />
+                        <button type="submit" class="btn btn-primary whitespace-nowrap">{{ t(searchEnabled ? 'admin.common.search' : 'admin.common.apply') }}</button>
                         <button v-if="activeCount > 0" type="button" class="btn btn-outline whitespace-nowrap" @click="clearAll">
                             {{ t('admin.common.clear_all') }}
                         </button>
                     </div>
                 </div>
 
-                <div v-for="filter in enabledFilters" :key="filter.id" class="min-w-0">
+                <div
+                    v-for="filter in enabledFilters"
+                    :key="filter.id"
+                    class="min-w-0"
+                    :class="{ 'md:col-span-2': filter.operator === 'range' && ['date', 'datetime'].includes(columnInterface(filter)) }"
+                >
                     <label class="form-label text-xs mb-1">{{ filter.label }}</label>
 
                     <input
@@ -110,8 +116,8 @@ const asList = (value) => (Array.isArray(value) ? value : (value ? [value] : [])
 
                     <div v-else-if="filter.type === 'field' && ['date', 'datetime'].includes(columnInterface(filter))" class="flex gap-1">
                         <template v-if="filter.operator === 'range'">
-                            <input v-model="values[filter.id].from" :type="dateType(filter)" class="form-input text-sm flex-1" :placeholder="t('admin.db_table.from')" />
-                            <input v-model="values[filter.id].to" :type="dateType(filter)" class="form-input text-sm flex-1" :placeholder="t('admin.db_table.to')" />
+                            <input v-model="values[filter.id].from" :type="dateType(filter)" class="form-input text-sm flex-1 min-w-0" :placeholder="t('admin.db_table.from')" />
+                            <input v-model="values[filter.id].to" :type="dateType(filter)" class="form-input text-sm flex-1 min-w-0" :placeholder="t('admin.db_table.to')" />
                         </template>
                         <input v-else v-model="values[filter.id]" :type="dateType(filter)" class="form-input text-sm" />
                     </div>
@@ -123,8 +129,8 @@ const asList = (value) => (Array.isArray(value) ? value : (value ? [value] : [])
                     </select>
 
                     <div v-else-if="filter.type === 'field' && filter.operator === 'range'" class="flex gap-1">
-                        <input v-model="values[filter.id].from" type="number" class="form-input text-sm flex-1" :placeholder="t('admin.db_table.min')" />
-                        <input v-model="values[filter.id].to" type="number" class="form-input text-sm flex-1" :placeholder="t('admin.db_table.max')" />
+                        <input v-model="values[filter.id].from" type="number" class="form-input text-sm flex-1 min-w-0" :placeholder="t('admin.db_table.min')" />
+                        <input v-model="values[filter.id].to" type="number" class="form-input text-sm flex-1 min-w-0" :placeholder="t('admin.db_table.max')" />
                     </div>
 
                     <input

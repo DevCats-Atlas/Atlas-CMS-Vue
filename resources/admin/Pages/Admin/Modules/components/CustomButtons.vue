@@ -64,61 +64,24 @@ const executeButtonAction = async (button) => {
             [props.dataSource === 'items' ? 'item' : 'id']: props.recordId,
         }, { headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } });
 
-        // Handle response - check if it's JSON or redirect
-        if (response && response.data) {
-            // JSON response - axios automatically parses JSON, so response.data is the parsed object
-            const data = response.data;
-            
-            // Check for success (explicitly check for true, or if success is not false)
-            const isSuccess = data.success === true || (data.success !== false && !data.error);
-            
-            if (isSuccess) {
-                // Success response - use the message from the controller
-                // The message should be directly in data.message from the JSON response
-                const message = data.message || t('admin.success.action_completed');
-                
-                showToast({
-                    title: t('admin.common.success'),
-                    message: message,
-                    intent: 'success',
-                    duration: 4000,
-                });
-            } else {
-                // Error in JSON response
-                const errorMessage = data.message || data.error || t('admin.errors.action_failed');
-                showToast({
-                    title: t('admin.common.error'),
-                    message: errorMessage,
-                    intent: 'danger',
-                    duration: 6000,
-                });
-            }
+        const data = response?.data;
+        if (!data || typeof data !== 'object' || Array.isArray(data)
+            || typeof data.success !== 'boolean'
+            || (data.message !== undefined && typeof data.message !== 'string')) {
+            throw new Error('Invalid module button response');
         }
+
+        showToast({
+            title: t(data.success ? 'admin.common.success' : 'admin.common.error'),
+            message: data.message || t(data.success ? 'admin.success.action_completed' : 'admin.errors.action_failed'),
+            intent: data.success ? 'success' : 'danger',
+            duration: data.success ? 4000 : 6000,
+        });
     } catch (error) {
-        console.error('Error executing button action:', error);
-        
-        // Extract error message
-        let errorMessage = t('admin.errors.action_error');
-        
-        if (error.response) {
-            // Server responded with error
-            const data = error.response.data;
-            if (data?.message) {
-                errorMessage = data.message;
-            } else if (data?.error) {
-                errorMessage = data.error;
-            } else if (typeof data === 'string') {
-                errorMessage = data;
-            } else {
-                errorMessage = error.response.statusText || t('admin.errors.server_error', { status: error.response.status });
-            }
-        } else if (error.message) {
-            errorMessage = error.message;
-        }
-        
+        const message = error.response?.data?.message;
         showToast({
             title: t('admin.common.error'),
-            message: errorMessage,
+            message: typeof message === 'string' && message ? message : t('admin.errors.action_error'),
             intent: 'danger',
             duration: 6000,
         });
