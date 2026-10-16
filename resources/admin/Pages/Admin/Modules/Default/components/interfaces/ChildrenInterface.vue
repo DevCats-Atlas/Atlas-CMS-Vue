@@ -5,6 +5,8 @@ import { usePage, useForm, router } from '@inertiajs/vue3';
 import ModalDialog from '@/components/ModalDialog.vue';
 import EditForm from '../EditForm.vue';
 import { confirmDialog } from '@/utils/confirmDialog.js';
+import { moveInList } from '@admin/js/lists/tree.js';
+import { useTreeDragDrop } from '@admin/js/lists/useTreeDragDrop.js';
 
 const props = defineProps({
     field: {
@@ -39,9 +41,6 @@ const uploadForm = useForm({
 const selectedFiles = ref([]);
 const uploading = ref(false);
 
-// Drag and drop state
-const draggedItem = ref(null);
-const draggedOverIndex = ref(null);
 
 const relatedItemTypeId = computed(() => props.field.config?.related_item_type_id);
 const viewType = computed(() => props.field.config?.view_type || 'list');
@@ -317,79 +316,29 @@ const submitUpload = () => {
     });
 };
 
-// Drag and drop handlers for gallery sorting
-const handleDragStart = (event, item) => {
-    draggedItem.value = item;
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.dropEffect = 'move';
-    event.target.style.opacity = '0.5';
-};
-
-const handleDragEnd = (event) => {
-    event.target.style.opacity = '';
-    draggedItem.value = null;
-    draggedOverIndex.value = null;
-};
-
-const handleDragOver = (event, index) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-    draggedOverIndex.value = index;
-};
-
-const handleDrop = (event, dropIndex) => {
-    event.preventDefault();
-    
-    if (!draggedItem.value || draggedItem.value.id === childrenItems.value[dropIndex]?.id) {
-        draggedItem.value = null;
-        draggedOverIndex.value = null;
-        return;
-    }
-
-    // Get current dragged item index
-    const dragIndex = childrenItems.value.findIndex(item => item.id === draggedItem.value.id);
-    
-    if (dragIndex === -1) {
-        draggedItem.value = null;
-        draggedOverIndex.value = null;
-        return;
-    }
-
-    // Reorder items locally
-    const items = [...childrenItems.value];
-    const [dragged] = items.splice(dragIndex, 1);
-    items.splice(dropIndex, 0, dragged);
-    childrenItems.value = items;
-
-    // Update order_index on backend
-    const order = items.map((item, index) => ({
-        id: item.id,
-        order_index: index + 1,
-    }));
-
-    router.post(
-        `${baseUrl.value}/children/reorder`,
-        {
-            field_id: props.field.id,
-            parent_id: currentItemId.value,
-            order: order,
-        },
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                // Refresh children list to ensure consistency
-                fetchChildren();
-            },
-            onError: () => {
-                // Revert on error
-                fetchChildren();
-            },
+// Drag and drop: reorder the children list, then save the new order
+const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDragOver, handleDrop } = useTreeDragDrop({
+    onDrop: (dragged, target, dropIndex) => {
+        const dragIndex = childrenItems.value.findIndex((item) => item.id === dragged.id);
+        if (dragIndex === -1 || dragged.id === target.id) {
+            return;
         }
-    );
+        childrenItems.value = moveInList(childrenItems.value, dragIndex, dropIndex);
 
-    draggedItem.value = null;
-    draggedOverIndex.value = null;
-};
+        router.post(
+            `${baseUrl.value}/children/reorder`,
+            {
+                field_id: props.field.id,
+                parent_id: currentItemId.value,
+                order: childrenItems.value.map((item, index) => ({ id: item.id, order_index: index + 1 })),
+            },
+            {
+                preserveScroll: true,
+                onFinish: () => fetchChildren(), // the saved order, or the previous one after an error
+            },
+        );
+    },
+});
 </script>
 
 <template>
@@ -490,7 +439,7 @@ const handleDrop = (event, dropIndex) => {
                             @dragstart="handleDragStart($event, child)"
                             @dragend="handleDragEnd"
                             @dragover.prevent="handleDragOver($event, index)"
-                            @drop="handleDrop($event, index)"
+                            @drop="handleDrop($event, child, index)"
                         >
                             <td class="px-4 py-2 font-mono text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">#{{ child.id }}</td>
                             <td class="px-4 py-2 whitespace-nowrap">
@@ -638,7 +587,7 @@ const handleDrop = (event, dropIndex) => {
                     @dragstart="handleDragStart($event, child)"
                     @dragend="handleDragEnd"
                     @dragover.prevent="handleDragOver($event, index)"
-                    @drop="handleDrop($event, index)"
+                    @drop="handleDrop($event, child, index)"
                 >
                     <!-- Image -->
                     <div class="aspect-square bg-gray-100 dark:bg-gray-900 overflow-hidden flex-shrink-0">

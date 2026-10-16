@@ -1,7 +1,7 @@
 <script setup>
 import { adminUrl } from '@/utils/adminUrl';
 import { computed, ref, watch } from 'vue';
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
 import { confirmDialog } from '@admin/js/utils/confirmDialog.js';
 import { useTranslation } from '@admin/js/utils/useTranslation';
@@ -9,8 +9,15 @@ import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/co
 import MultiSelect from './components/MultiSelect.vue';
 import RelationshipFilterSelect from './components/RelationshipFilterSelect.vue';
 import axios from 'axios';
+import { dropPlacement, flatten } from '@admin/js/lists/tree.js';
+import { useCreateChild } from '@admin/js/lists/useCreateChild.js';
+import { useExpandedState } from '@admin/js/lists/useExpandedState.js';
+import { useListSearch } from '@admin/js/lists/useListSearch.js';
+import { useTreeDragDrop } from '@admin/js/lists/useTreeDragDrop.js';
+import { useToast } from '@admin/js/composables/useToast.js';
 
 const { t } = useTranslation();
+const { showToast } = useToast();
 
 const props = defineProps({
     title: {
@@ -90,14 +97,6 @@ const props = defineProps({
 });
 
 const baseUrl = computed(() => adminUrl(`${props.moduleHandle}`));
-const createChildUrl = computed(() => `${baseUrl.value}/create-child`);
-
-// Debug: Log hasDeepStructure to ensure it's being passed correctly
-// console.log('hasDeepStructure:', props.hasDeepStructure, 'parentColumn:', props.parentColumn);
-
-// Create child form state
-const showCreateChildForm = ref({}); // { [parentId]: boolean }
-const childForms = ref({}); // { [parentId]: Form }
 
 // Filter state management
 const hasFilterConfig = computed(() => {
@@ -108,63 +107,36 @@ const hasFilterConfig = computed(() => {
 const filterValues = ref({});
 const defaultSearchValue = ref(props.search || '');
 
-// Initialize filter values from URL query params
+// Filter values from the URL (links, reloads): `filter[id]`, `filter[id][]` / `filter[id][0]` lists, `filter[id][from|to]` ranges
 const initializeFilters = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    // Initialize default search
-    defaultSearchValue.value = urlParams.get('search') || '';
-    
-    console.log('Index - Initializing filters from URL:', window.location.search);
-    
-    // Initialize custom filters
-    if (props.filterConfig && props.filterConfig.filters) {
-        props.filterConfig.filters.forEach(filter => {
-            if (!filter.enabled) return;
-            
-            const filterId = filter.id;
-            const filterKey = `filter[${filterId}]`;
-            const value = urlParams.get(filterKey);
-            
-            // Check for array values (multiple select) - Laravel uses indexed notation: filter[filterId][0], filter[filterId][1]
-            // Only check for arrays if the filter is configured as multiple
-            const arrayValues = [];
-            if (filter.multiple) {
-                let index = 0;
-                while (true) {
-                    const arrayValue = urlParams.get(`${filterKey}[${index}]`);
-                    if (arrayValue === null) break;
-                    arrayValues.push(arrayValue);
-                    index++;
-                }
-            }
-            
-            if (arrayValues.length > 0) {
-                filterValues.value[filterId] = arrayValues;
-                console.log(`Index - Initialized filter ${filterId} as array:`, arrayValues);
-            } else if (value !== null) {
-                // Handle range values (e.g., filter[field][from]=value1&filter[field][to]=value2)
-                const fromValue = urlParams.get(`${filterKey}[from]`);
-                const toValue = urlParams.get(`${filterKey}[to]`);
-                if (fromValue !== null || toValue !== null) {
-                    filterValues.value[filterId] = {
-                        from: fromValue || '',
-                        to: toValue || '',
-                    };
-                } else {
-                    filterValues.value[filterId] = value;
-                }
-                console.log(`Index - Initialized filter ${filterId} as single value:`, filterValues.value[filterId]);
-            } else {
-                // Initialize range values for range operators if not in URL
-                if (filter.operator === 'range' && !filterValues.value[filterId]) {
-                    filterValues.value[filterId] = { from: '', to: '' };
-                }
-            }
-        });
+    const params = new URLSearchParams(window.location.search);
+    defaultSearchValue.value = params.get('search') || '';
+    const values = {};
+
+    for (const filter of props.filterConfig?.filters ?? []) {
+        if (!filter.enabled) {
+            continue;
+        }
+        const key = `filter[${filter.id}]`;
+        const list = [...params.entries()]
+            .filter(([name]) => name.startsWith(key) && /^\[\d*\]$/.test(name.slice(key.length)))
+            .map(([, value]) => value);
+        const from = params.get(`${key}[from]`);
+        const to = params.get(`${key}[to]`);
+        const single = params.get(key);
+
+        if (list.length > 0) {
+            values[filter.id] = filter.multiple ? list : list[0];
+        } else if (from !== null || to !== null) {
+            values[filter.id] = { from: from ?? '', to: to ?? '' };
+        } else if (single !== null) {
+            values[filter.id] = filter.multiple ? [single] : single;
+        } else if (filter.operator === 'range') {
+            values[filter.id] = { from: '', to: '' };
+        }
     }
-    
-    console.log('Index - Initialized filterValues:', filterValues.value);
+
+    filterValues.value = values;
 };
 
 // Initialize on mount
@@ -226,28 +198,10 @@ const buildFilterParams = () => {
 
 // Apply filters
 const applyFilters = () => {
-    const params = buildFilterParams();
-    console.log('Index - Applying filters with params:', params);
-    console.log('Index - Current filterValues:', filterValues.value);
-    
-    // Build URL with query string for debugging
-    const queryString = Object.keys(params).map(key => {
-        const value = params[key];
-        if (Array.isArray(value)) {
-            return value.map((v, i) => `${encodeURIComponent(key)}[${i}]=${encodeURIComponent(v)}`).join('&');
-        }
-        return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
-    }).join('&');
-    console.log('Index - Query string:', queryString);
-    
-    // Use router.get with query parameters - Inertia will add them to URL
-    router.get(baseUrl.value, params, {
+    router.get(baseUrl.value, buildFilterParams(), {
         preserveState: false,
         preserveScroll: true,
         only: ['items', 'search', 'pagination', 'filterConfig'],
-        onSuccess: () => {
-            console.log('Index - Navigation successful, URL:', window.location.href);
-        },
     });
 };
 
@@ -268,30 +222,8 @@ const clearAllFilters = () => {
     });
 };
 
-// Legacy search form (for backward compatibility when no filter config)
-const searchForm = useForm({
-    search: props.search || '',
-});
-
-const performSearch = () => {
-    router.get(baseUrl.value, 
-        { search: searchForm.search },
-        {
-            preserveState: true,
-            preserveScroll: true,
-            only: ['items', 'search', 'pagination'],
-        }
-    );
-};
-
-const clearSearch = () => {
-    searchForm.search = '';
-    router.get(baseUrl.value, {}, {
-        preserveState: true,
-        preserveScroll: true,
-        only: ['items', 'search', 'pagination'],
-    });
-};
+// Plain search box (modules without filter config)
+const { form: searchForm, perform: performSearch, clear: clearSearch } = useListSearch(() => baseUrl.value, props.search);
 
 // Get active filters count
 const activeFiltersCount = computed(() => {
@@ -443,10 +375,18 @@ const getSelectDisplayText = (filterId, fieldName) => {
 
 // Format filter value for display
 const formatFilterValue = (value, filter) => {
-    if (value === null || value === undefined || value === '') {
+    if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
         return '';
     }
-    
+    if (typeof value === 'object' && !Array.isArray(value) && !value.from && !value.to) {
+        return ''; // empty range
+    }
+
+    // Select fields show option labels, not stored keys
+    if (filter?.type === 'field' && filter.field && getSelectOptions(filter.field).length > 0) {
+        return getSelectDisplayText(filter.id, filter.field);
+    }
+
     if (Array.isArray(value)) {
         return value.join(', ');
     }
@@ -492,195 +432,52 @@ const confirmDelete = async (item) => {
     });
 };
 
-// Tree structure support
-const expandedItems = ref(new Set());
+// Tree: expanded branches, drag-and-drop moves, quick child creation
+const { isExpanded, expand, toggle: toggleExpand } = useExpandedState();
+const idOf = (item) => item[props.primaryKeyColumn];
 
-const isExpanded = (itemId) => {
-    return expandedItems.value.has(String(itemId));
-};
+// Reordering needs manual sorting, a tree or an order_index column
+const canReorder = computed(() => props.hasSortingEnabled || props.hasDeepStructure || props.hasOrderIndex);
 
-// Drag and drop for tree reordering
-const draggedItem = ref(null);
-const draggedOverIndex = ref(null);
+// Positions are 0-based among the siblings; root rows on later pages start after the earlier pages
+const rootOffset = computed(() => Math.max((props.pagination?.from ?? 1) - 1, 0));
 
-// Check if reordering is enabled (sorting, tree structure, or legacy order_index)
-const canReorder = computed(() => {
-    return props.hasSortingEnabled || props.hasDeepStructure || props.hasOrderIndex;
-});
-
-const handleDragStart = (event, item) => {
-    if (!canReorder.value) {
-        event.preventDefault();
-        return;
-    }
-    draggedItem.value = item;
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.dropEffect = 'move';
-    event.target.style.opacity = '0.5';
-};
-
-const handleDragEnd = (event) => {
-    event.target.style.opacity = '';
-    draggedItem.value = null;
-    draggedOverIndex.value = null;
-};
-
-const handleDragOver = (event, item, index) => {
-    if (!canReorder.value || !draggedItem.value) {
-        return;
-    }
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-    draggedOverIndex.value = index;
-};
-
-const handleDrop = async (event, dropItem, dropIndex) => {
-    if (!canReorder.value || !draggedItem.value) {
-        return;
-    }
-    event.preventDefault();
-    
-    const draggedId = draggedItem.value[props.primaryKeyColumn];
-    const dropId = dropItem[props.primaryKeyColumn];
-    
-    if (draggedId === dropId) {
-        draggedItem.value = null;
-        draggedOverIndex.value = null;
-        return;
-    }
-    
-    // Determine new parent_id and order_index
-    let newParentId = null;
-    let newOrderIndex = dropIndex;
-    
-    if (props.hasDeepStructure) {
-        // If tree structure is enabled, handle parent relationships
-        const draggedParentId = draggedItem.value[props.parentColumn] ?? null;
-        const dropParentId = dropItem[props.parentColumn] ?? null;
-        
-        newParentId = dropParentId;
-        
-        // If dragging to a different parent level, make it a child of the drop target
-        if (draggedParentId !== dropParentId && dropItem._depth !== undefined) {
-            newParentId = dropId;
+const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDragOver, handleDrop } = useTreeDragDrop({
+    canDrag: () => canReorder.value,
+    onDrop: async (dragged, target) => {
+        const placement = props.hasDeepStructure
+            ? dropPlacement(props.items, idOf(dragged), idOf(target), { idOf, parentOf: (item) => item[props.parentColumn] ?? null })
+            : dropPlacement(props.items.map((item) => ({ ...item, children: [] })), idOf(dragged), idOf(target), { idOf, parentOf: () => null });
+        if (!placement) {
+            return;
         }
-    }
-    // If only order_index is enabled (no tree structure), just reorder within the same level
-    
-    try {
-        await axios.post(adminUrl(`${props.moduleHandle}/reorder`), {
-            record_id: draggedId,
-            new_parent_id: newParentId,
-            new_order_index: newOrderIndex,
-        });
-        
-        // Reload to get updated tree structure
-        router.reload({ preserveScroll: true });
-    } catch (error) {
-        console.error('Error reordering:', error);
-        alert(error.response?.data?.error || t('admin.errors.error_reordering'));
-    } finally {
-        draggedItem.value = null;
-        draggedOverIndex.value = null;
-    }
-};
+        const isRoot = placement.parentId === null || placement.parentId === undefined;
 
-// Relationship counts removed - too many queries on index page
-// Relationships are managed on the Edit page instead
-
-// Relationship filter removed - relationships are managed on Edit page
-// Filtering by relationships would require loading all counts, causing too many queries
-
-const toggleExpand = (itemId) => {
-    const id = String(itemId);
-    if (expandedItems.value.has(id)) {
-        expandedItems.value.delete(id);
-    } else {
-        expandedItems.value.add(id);
-    }
-};
-
-// Flatten tree structure for display
-const flattenItems = (items, depth = 0) => {
-    const result = [];
-    
-    items.forEach(item => {
-        const itemId = item[props.primaryKeyColumn];
-        const flattenedItem = {
-            ...item,
-            _depth: depth,
-            _isChild: depth > 0,
-        };
-        result.push(flattenedItem);
-        
-        if (props.hasDeepStructure && item.children && item.children.length > 0) {
-            if (isExpanded(itemId)) {
-                // Recursively add children if parent is expanded
-                const children = flattenItems(item.children, depth + 1);
-                result.push(...children);
-            }
-        }
-    });
-    
-    return result;
-};
-
-const displayItems = computed(() => {
-    if (props.hasDeepStructure) {
-        return flattenItems(props.items);
-    }
-    return props.items;
-});
-
-// Use displayItems directly (no filtering needed)
-const finalDisplayItems = computed(() => displayItems.value);
-
-// Create child functions
-const openCreateChildForm = (parentId) => {
-    const id = String(parentId);
-    if (!childForms.value[id]) {
-        childForms.value[id] = useForm({
-            parent_id: parentId,
-            title: '',
-        });
-    }
-    showCreateChildForm.value[id] = true;
-};
-
-const closeCreateChildForm = (parentId) => {
-    const id = String(parentId);
-    showCreateChildForm.value[id] = false;
-    if (childForms.value[id]) {
-        childForms.value[id].reset();
-    }
-};
-
-const submitCreateChild = (parentId) => {
-    const id = String(parentId);
-    const form = childForms.value[id];
-    if (!form || !form.title.trim()) {
-        return;
-    }
-
-    // Expand parent item before creating child so it will be visible after reload
-    expandedItems.value.add(id);
-
-    form.post(createChildUrl.value, {
-        preserveScroll: true,
-        onSuccess: () => {
-            closeCreateChildForm(parentId);
-            // Reload and re-expand the parent
-            router.reload({ 
-                preserveScroll: true,
-                onSuccess: () => {
-                    // Re-expand parent after reload
-                    expandedItems.value.add(id);
-                },
+        try {
+            await axios.post(adminUrl(`${props.moduleHandle}/reorder`), {
+                record_id: idOf(dragged),
+                new_parent_id: props.hasDeepStructure ? placement.parentId : null,
+                new_order_index: placement.index + (isRoot ? rootOffset.value : 0),
             });
-        },
-        forceFormData: true,
-    });
-};
+            if (placement.asChild) {
+                expand(placement.parentId);
+            }
+            router.reload({ preserveScroll: true });
+        } catch (error) {
+            showToast({ title: t('admin.errors.error_reordering'), message: error.response?.data?.error || '', intent: 'danger' });
+        }
+    },
+});
+
+const displayItems = computed(() => flatten(props.items, { idOf, isExpanded, tree: props.hasDeepStructure }));
+
+const {
+    open: openCreateChildForm,
+    close: closeCreateChildForm,
+    submit: submitCreateChild,
+    isOpen: isCreateChildOpen,
+    formFor: childFormFor,
+} = useCreateChild(() => `${baseUrl.value}/create-child`, { onCreated: (parentId) => expand(parentId) });
 </script>
 
 <template>
@@ -866,10 +663,9 @@ const submitCreateChild = (parentId) => {
                                     </button>
                                 </span>
                                 <template v-if="props.filterConfig && props.filterConfig.filters">
+                                    <template v-for="filter in props.filterConfig.filters" :key="filter.id">
                                     <span
-                                        v-for="filter in props.filterConfig.filters"
-                                        :key="filter.id"
-                                        v-if="filter && filter.enabled && filterValues[filter.id]"
+                                        v-if="filter && filter.enabled && formatFilterValue(filterValues[filter.id], filter) !== ''"
                                         class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 rounded text-sm"
                                     >
                                         {{ filter.label }}: {{ formatFilterValue(filterValues[filter.id], filter) }}
@@ -881,6 +677,7 @@ const submitCreateChild = (parentId) => {
                                             ×
                                         </button>
                                     </span>
+                                    </template>
                                 </template>
                             </div>
                         </form>
@@ -950,7 +747,7 @@ const submitCreateChild = (parentId) => {
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                <template v-for="(item, index) in finalDisplayItems" :key="item[props.primaryKeyColumn]">
+                                <template v-for="(item, index) in displayItems" :key="item[props.primaryKeyColumn]">
                                 <tr
                                     :draggable="canReorder"
                                     class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
@@ -961,7 +758,7 @@ const submitCreateChild = (parentId) => {
                                     }"
                                     @dragstart="canReorder && handleDragStart($event, item)"
                                     @dragend="canReorder && handleDragEnd($event)"
-                                    @dragover.prevent="canReorder && handleDragOver($event, item, index)"
+                                    @dragover.prevent="canReorder && handleDragOver($event, index)"
                                     @drop="canReorder && handleDrop($event, item, index)"
                                 >
                                         <td
@@ -1075,28 +872,28 @@ const submitCreateChild = (parentId) => {
                                     </tr>
                                     <!-- Create child form row -->
                                     <tr
-                                        v-if="hasDeepStructure && showCreateChildForm[String(item[props.primaryKeyColumn])]"
+                                        v-if="hasDeepStructure && isCreateChildOpen(item[props.primaryKeyColumn])"
                                         class="bg-blue-50 dark:bg-blue-900/20"
                                     >
                                         <td :colspan="columns.length + (hasDeepStructure ? 1 : 0) + 1" class="px-6 py-4">
                                             <form class="flex items-center gap-2" @submit.prevent="submitCreateChild(item[props.primaryKeyColumn])">
                                                 <input
-                                                    v-model="childForms[String(item[props.primaryKeyColumn])].title"
+                                                    v-model="childFormFor(item[props.primaryKeyColumn]).title"
                                                     type="text"
                                                     class="form-input flex-1"
                                                     placeholder="Child record title"
                                                     required
                                                     autofocus
                                                 />
-                                                <button type="submit" class="btn btn-primary btn-sm" :disabled="childForms[String(item[props.primaryKeyColumn])]?.processing">
-                                                    {{ childForms[String(item[props.primaryKeyColumn])]?.processing ? t('admin.common.loading') : t('admin.db_table.create_child') }}
+                                                <button type="submit" class="btn btn-primary btn-sm" :disabled="childFormFor(item[props.primaryKeyColumn])?.processing">
+                                                    {{ childFormFor(item[props.primaryKeyColumn])?.processing ? t('admin.common.loading') : t('admin.db_table.create_child') }}
                                                 </button>
                                                 <button type="button" class="btn btn-outline btn-sm" @click="closeCreateChildForm(item[props.primaryKeyColumn])">
                                                     {{ t('admin.common.cancel') }}
                                                 </button>
                                             </form>
-                                            <p v-if="childForms[String(item[props.primaryKeyColumn])]?.errors?.title" class="mt-1 text-sm text-red-600">
-                                                {{ childForms[String(item[props.primaryKeyColumn])].errors.title }}
+                                            <p v-if="childFormFor(item[props.primaryKeyColumn])?.errors?.title" class="mt-1 text-sm text-red-600">
+                                                {{ childFormFor(item[props.primaryKeyColumn]).errors.title }}
                                             </p>
                                         </td>
                                     </tr>
