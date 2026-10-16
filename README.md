@@ -10,7 +10,7 @@ To use another checkout, export `ATLAS_CMS_VUE_PATH` before starting Vite. It mu
 
 ## Vite integration
 
-The [host config](../../vite.config.js) loads `loadAllPackages()` and `atlasPages()` from `@devcats-atlas/atlas-cms-vue/vite-utils.mjs`:
+The [host config](https://github.com/DevCats-Atlas/Development-Atlas-CMS-Full/blob/main/vite.config.js) loads `loadAllPackages()` and `atlasPages()` from `@devcats-atlas/atlas-cms-vue/vite-utils.mjs`:
 
 ```js
 const { inputs, aliases, pageRoots } = await loadAllPackages(projectRoot);
@@ -43,7 +43,7 @@ Aliases: `@admin` / `@atlas-cms/admin` → this package's `resources/admin`; `@`
 - Build URLs with `adminUrl()` from `@/utils/adminUrl`; pass paths relative to the configured admin prefix.
 - Use `AdminLayout` or `SystemLayout`, shared dialogs and `.btn-*` / `.form-input` CSS classes with dark variants.
 - Call `useToast().showToast({ title, message, intent })`; `AdminLayout` renders the only `ToastStack`.
-- Texts use `t()` from `@/utils/useTranslation`; keys belong in AtlasCMS `admin.php` ([translations](../AtlasCMS/docs/i18n.md)).
+- Texts use `t()` from `@/utils/useTranslation`; keys belong in AtlasCMS `admin.php` ([translations](https://github.com/DevCats-Atlas/Atlas-CMS/blob/main/docs/i18n.md)).
 - Upload updates use `form.post(url, { forceFormData: true })` with `_method: 'put'` in the form.
 
 Shared props: `auth`, `cmsNavigation`, `flash`, `translations`, `adminLocale`, `availableLanguages`, `adminPrefix`, `atlasVersion`. Items forms additionally receive content `languages`.
@@ -71,7 +71,7 @@ Column settings use `Pages/Admin/System/Modules/components/UiConfigEditor.vue`:
 
 DbTable cast previews render plain text with preserved line breaks; HTML and links in templates are shown literally.
 
-`connection=""` means the default connection. Optional props: `moduleId`, `excludeColumns`, `withFieldGroups`, `withCasts`. The emitted JSON follows the [DbTable contract](../AtlasCMS/docs/db-table.md#dbtable-ui-json-contract).
+`connection=""` means the default connection. Optional props: `moduleId`, `excludeColumns`, `withFieldGroups`, `withCasts`. The emitted JSON follows the [DbTable contract](https://github.com/DevCats-Atlas/Atlas-CMS/blob/main/docs/db-table.md#dbtable-ui-json-contract).
 
 ### Field interfaces
 
