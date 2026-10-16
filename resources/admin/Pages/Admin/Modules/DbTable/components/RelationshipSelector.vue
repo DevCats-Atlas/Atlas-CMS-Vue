@@ -170,10 +170,10 @@ onMounted(() => {
                 :placeholder="requiresSearch ? t('admin.common.type_to_search') + '...' : t('admin.common.search') + '...'"
             />
             <p v-if="requiresSearch && totalCount !== null" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {{ totalCount }} {{ t('admin.common.records_found') }}. {{ t('admin.common.please_search') }}
+                {{ t('admin.common.records_found', { count: totalCount }) }} {{ t('admin.common.please_search') }}
             </p>
             <p v-else-if="!requiresSearch && totalCount !== null" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {{ t('admin.common.showing_all') }} {{ totalCount }} {{ t('admin.common.records') }}
+                {{ t('admin.common.showing_all', { count: totalCount }) }}
             </p>
             <p v-if="searchQuery && !loading" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Searching for "{{ searchQuery }}"...
@@ -192,7 +192,7 @@ onMounted(() => {
         
         <!-- Prompt for search if required -->
         <div v-else-if="requiresSearch && !searchQuery.trim() && availableRecords.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-4 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-            <p class="mb-2">{{ t('admin.common.this_table_has') }} {{ totalCount }} {{ t('admin.common.records') }}.</p>
+            <p class="mb-2">{{ t('admin.common.this_table_has', { count: totalCount }) }}</p>
             <p>{{ t('admin.common.please_enter_search') }}</p>
         </div>
 
