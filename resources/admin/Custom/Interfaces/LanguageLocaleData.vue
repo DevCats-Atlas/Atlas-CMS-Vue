@@ -1,7 +1,9 @@
 <script setup>
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
+import ModalDialog from '@/components/ModalDialog.vue';
 import { useTranslation } from '@/utils/useTranslation.js';
 import { confirmDialog } from '@/utils/confirmDialog.js';
+import { localeDataObject, parseLocaleData, serializeLocaleData } from '@/localeData.js';
 
 const { t } = useTranslation();
 
@@ -18,154 +20,88 @@ const props = defineProps({
 
 const hideTitle = computed(() => props.field.config?.hide_title === true);
 
-// Computed JSON preview (computed from properties array, not from model.default)
-const jsonPreview = computed(() => {
-    const obj = {};
-    properties.value.forEach((item) => {
-        if (item.key && item.key.trim() !== '') {
-            obj[item.key.trim()] = item.value || '';
-        }
-    });
-    
-    try {
-        return Object.keys(obj).length > 0 ? JSON.stringify(obj, null, 2) : '{}';
-    } catch (error) {
-        return '{}';
-    }
-});
-
-// Key-value pairs array
+// Key-value rows; written to model.default as flat JSON
 const properties = ref([]);
 let nextId = 1;
 const copySuccessMessage = ref('');
 const pasteErrorMessage = ref('');
+// Manual paste when the clipboard cannot be read
+const manualPasteOpen = ref(false);
+const manualPasteText = ref('');
+const manualPasteError = ref('');
 
-// Generate unique ID for properties
-const generateId = () => {
-    return `prop_${nextId++}_${Date.now()}`;
+const generateId = () => `prop_${nextId++}_${Date.now()}`;
+const rowsFrom = (entries) => entries.map(([key, value]) => ({ id: generateId(), key, value }));
+
+const flash = (target, message, duration) => {
+    target.value = message;
+    setTimeout(() => {
+        target.value = '';
+    }, duration);
 };
 
-// Initialize properties from JSON
 const loadFromJson = () => {
-    try {
-        const jsonValue = props.model.default;
-        if (jsonValue && typeof jsonValue === 'string' && jsonValue.trim() !== '') {
-            const parsed = JSON.parse(jsonValue);
-            if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-                properties.value = Object.entries(parsed).map(([key, value]) => ({
-                    id: generateId(),
-                    key: key,
-                    value: String(value),
-                }));
-            } else {
-                properties.value = [];
-            }
-        } else {
-            properties.value = [];
-        }
-    } catch (error) {
-        console.error('Failed to parse JSON:', error);
-        properties.value = [];
+    const value = props.model.default;
+    const result = typeof value === 'string' && value.trim() !== '' ? parseLocaleData(value) : { ok: true, entries: [] };
+    if (!result.ok) {
+        console.error('Stored locale data is not a JSON object:', value);
     }
+    properties.value = result.ok ? rowsFrom(result.entries) : [];
 };
 
-// Save properties to JSON (only when explicitly called)
 const saveToJson = () => {
-    const obj = {};
-    properties.value.forEach((item) => {
-        if (item.key && item.key.trim() !== '') {
-            obj[item.key.trim()] = item.value || '';
-        }
-    });
-    
-    try {
-        props.model.default = Object.keys(obj).length > 0 ? JSON.stringify(obj) : '';
-    } catch (error) {
-        console.error('Failed to stringify JSON:', error);
-    }
+    props.model.default = serializeLocaleData(properties.value);
 };
 
-// Handle input blur - save when user leaves the field
 const handleInputBlur = () => {
     saveToJson();
 };
 
-// Add new property
 const addProperty = () => {
-    properties.value.push({
-        id: generateId(),
-        key: '',
-        value: '',
-    });
+    properties.value.push({ id: generateId(), key: '', value: '' });
     // Save after adding (in case user adds and immediately submits)
     saveToJson();
 };
 
-// Remove property
 const removeProperty = async (propertyId) => {
-    const index = properties.value.findIndex(p => p.id === propertyId);
-    if (index !== -1) {
-        const property = properties.value[index];
-        const key = property.key || 'this property';
-        
-        // Confirm before removing
-        const confirmed = await confirmDialog({
-            message: t('admin.locale_data.remove_confirm', { key }),
-            confirmLabel: t('admin.common.delete'),
-            intent: 'danger',
-        });
-        if (!confirmed) {
-            return;
-        }
-        
-        // The list may have changed while the dialog was open
-        const current = properties.value.findIndex(p => p.id === propertyId);
-        if (current === -1) {
-            return;
-        }
-        properties.value.splice(current, 1);
-        // Save immediately when removing (no debounce needed)
-        const obj = {};
-        properties.value.forEach((item) => {
-            if (item.key && item.key.trim() !== '') {
-                obj[item.key.trim()] = item.value || '';
-            }
-        });
-        
-        try {
-            props.model.default = Object.keys(obj).length > 0 ? JSON.stringify(obj) : '';
-        } catch (error) {
-            console.error('Failed to stringify JSON:', error);
-        }
+    const property = properties.value.find((p) => p.id === propertyId);
+    if (!property) {
+        return;
     }
+
+    const confirmed = await confirmDialog({
+        message: t('admin.locale_data.remove_confirm', { key: property.key || '' }),
+        confirmLabel: t('admin.common.delete'),
+        intent: 'danger',
+    });
+    if (!confirmed) {
+        return;
+    }
+
+    // The list may have changed while the dialog was open
+    const current = properties.value.findIndex((p) => p.id === propertyId);
+    if (current === -1) {
+        return;
+    }
+    properties.value.splice(current, 1);
+    saveToJson();
 };
 
-// Copy properties to clipboard
 const copyProperties = async () => {
+    const data = localeDataObject(properties.value);
+    const jsonString = Object.keys(data).length > 0 ? JSON.stringify(data, null, 2) : '{}';
+
     try {
-        const obj = {};
-        properties.value.forEach((item) => {
-            if (item.key && item.key.trim() !== '') {
-                obj[item.key.trim()] = item.value || '';
-            }
-        });
-        
-        const jsonString = Object.keys(obj).length > 0 ? JSON.stringify(obj, null, 2) : '{}';
-        
-        // Try modern clipboard API first
         if (navigator.clipboard && navigator.clipboard.writeText) {
             try {
                 await navigator.clipboard.writeText(jsonString);
-                copySuccessMessage.value = t('admin.locale_data.copy_success');
-                setTimeout(() => {
-                    copySuccessMessage.value = '';
-                }, 3000);
+                flash(copySuccessMessage, t('admin.locale_data.copy_success'), 3000);
                 return;
             } catch (clipboardError) {
                 console.warn('Clipboard API failed, trying fallback method:', clipboardError);
             }
         }
-        
+
         // Fallback method: create temporary textarea
         const textarea = document.createElement('textarea');
         textarea.value = jsonString;
@@ -175,132 +111,83 @@ const copyProperties = async () => {
         document.body.appendChild(textarea);
         textarea.focus();
         textarea.select();
-        
         try {
             const successful = document.execCommand('copy');
-            document.body.removeChild(textarea);
-            
-            if (successful) {
-                copySuccessMessage.value = t('admin.locale_data.copy_success');
-                setTimeout(() => {
-                    copySuccessMessage.value = '';
-                }, 3000);
-            } else {
+            if (!successful) {
                 throw new Error('execCommand copy failed');
             }
-        } catch (fallbackError) {
+            flash(copySuccessMessage, t('admin.locale_data.copy_success'), 3000);
+        } finally {
             document.body.removeChild(textarea);
-            throw fallbackError;
         }
     } catch (error) {
         console.error('Failed to copy to clipboard:', error);
-        pasteErrorMessage.value = t('admin.locale_data.copy_error');
-        setTimeout(() => {
-            pasteErrorMessage.value = '';
-        }, 5000);
+        flash(pasteErrorMessage, t('admin.locale_data.copy_error'), 5000);
     }
 };
 
-// Paste properties from clipboard
+const PASTE_ERRORS = { empty: 'paste_error_empty', syntax: 'paste_error_syntax', format: 'paste_error_invalid_format' };
+const pasteErrorText = (error) => t(`admin.locale_data.${PASTE_ERRORS[error]}`);
+
+// Replace the rows with pasted JSON (after confirmation when there are rows)
+const applyPastedText = async (text) => {
+    const result = parseLocaleData(text);
+    if (!result.ok) {
+        flash(pasteErrorMessage, pasteErrorText(result.error), result.error === 'empty' ? 3000 : 5000);
+        return false;
+    }
+    if (properties.value.length > 0 && !(await confirmDialog({ message: t('admin.locale_data.paste_confirm') }))) {
+        return false;
+    }
+
+    properties.value = rowsFrom(result.entries);
+    saveToJson();
+    flash(copySuccessMessage, t('admin.locale_data.paste_success'), 3000);
+
+    return true;
+};
+
+const openManualPaste = () => {
+    manualPasteText.value = '';
+    manualPasteError.value = '';
+    manualPasteOpen.value = true;
+};
+
 const pasteProperties = async () => {
-    try {
-        pasteErrorMessage.value = '';
-        
-        let text = '';
-        
-        // Try modern clipboard API first
-        if (navigator.clipboard && navigator.clipboard.readText) {
-            try {
-                text = await navigator.clipboard.readText();
-            } catch (clipboardError) {
-                console.warn('Clipboard API read failed:', clipboardError);
-                // Show prompt for manual paste
-                const manualText = prompt(t('admin.locale_data.paste_prompt'));
-                if (manualText === null) {
-                    return; // User cancelled
-                }
-                text = manualText;
-            }
-        } else {
-            // Fallback: prompt user to paste manually
-            const manualText = prompt(t('admin.locale_data.paste_prompt'));
-            if (manualText === null) {
-                return; // User cancelled
-            }
-            text = manualText;
-        }
-        
-        if (!text || text.trim() === '') {
-            pasteErrorMessage.value = t('admin.locale_data.paste_error_empty');
-            setTimeout(() => {
-                pasteErrorMessage.value = '';
-            }, 3000);
-            return;
-        }
-        
-        const parsed = JSON.parse(text);
-        
-        if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-            pasteErrorMessage.value = t('admin.locale_data.paste_error_invalid_format');
-            setTimeout(() => {
-                pasteErrorMessage.value = '';
-            }, 3000);
-            return;
-        }
-        
-        // Confirm before pasting (will replace current properties)
-        if (properties.value.length > 0) {
-            if (!(await confirmDialog({ message: t('admin.locale_data.paste_confirm') }))) {
-                return;
-            }
-        }
-        
-        // Load the pasted data
-        properties.value = Object.entries(parsed).map(([key, value]) => ({
-            id: generateId(),
-            key: key,
-            value: String(value),
-        }));
-        
-        // Save immediately
-        const obj = {};
-        properties.value.forEach((item) => {
-            if (item.key && item.key.trim() !== '') {
-                obj[item.key.trim()] = item.value || '';
-            }
-        });
-        
-        try {
-            props.model.default = Object.keys(obj).length > 0 ? JSON.stringify(obj) : '';
-        } catch (error) {
-            console.error('Failed to stringify JSON:', error);
-        }
-        
-        // Show success message
-        copySuccessMessage.value = t('admin.locale_data.paste_success');
-        setTimeout(() => {
-            copySuccessMessage.value = '';
-        }, 3000);
-    } catch (error) {
-        console.error('Failed to paste from clipboard:', error);
-        if (error instanceof SyntaxError) {
-            pasteErrorMessage.value = t('admin.locale_data.paste_error_syntax');
-        } else {
-            pasteErrorMessage.value = t('admin.locale_data.paste_error_failed');
-        }
-        setTimeout(() => {
-            pasteErrorMessage.value = '';
-        }, 5000);
+    pasteErrorMessage.value = '';
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+        openManualPaste();
+        return;
     }
+
+    let text;
+    try {
+        text = await navigator.clipboard.readText();
+    } catch (clipboardError) {
+        console.warn('Clipboard API read failed:', clipboardError);
+        openManualPaste();
+        return;
+    }
+    await applyPastedText(text);
 };
 
-// Initialize on mount
+const applyManualPaste = async () => {
+    const text = manualPasteText.value;
+    // Invalid text stays in the dialog to be fixed
+    const result = parseLocaleData(text);
+    if (!result.ok) {
+        manualPasteError.value = pasteErrorText(result.error);
+        return;
+    }
+    // Close first: the replace confirmation is a dialog of its own
+    manualPasteOpen.value = false;
+    await applyPastedText(text);
+};
+
 onMounted(() => {
-    // Ensure model.default exists
     if (!props.model.default) {
         props.model.default = '';
     }
-    
     loadFromJson();
 });
 
@@ -405,6 +292,25 @@ onBeforeUnmount(() => {
                 
             </div>
         </div>
+
+        <!-- No <form> inside: this interface is part of the record form; Enter in the textarea adds a line -->
+        <ModalDialog :open="manualPasteOpen" :title="t('admin.locale_data.paste_manual_title')" @close="manualPasteOpen = false">
+            <div class="space-y-4">
+                <label class="form-label" for="locale-data-manual-paste">{{ t('admin.locale_data.paste_prompt') }}</label>
+                <textarea
+                    id="locale-data-manual-paste"
+                    v-model="manualPasteText"
+                    rows="10"
+                    class="form-input font-mono text-sm"
+                    translate="no"
+                    placeholder='{ "site_title": "My site" }'
+                ></textarea>
+                <p v-if="manualPasteError" class="text-sm text-red-600 dark:text-red-400">{{ manualPasteError }}</p>
+                <div class="flex justify-end gap-2">
+                    <button type="button" class="btn btn-outline" @click="manualPasteOpen = false">{{ t('admin.common.cancel') }}</button>
+                    <button type="button" class="btn btn-primary" @click="applyManualPaste">{{ t('admin.locale_data.paste_apply') }}</button>
+                </div>
+            </div>
+        </ModalDialog>
     </div>
 </template>
-
