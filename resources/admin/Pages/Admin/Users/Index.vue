@@ -1,85 +1,56 @@
 <script setup>
 import { adminUrl } from '@/utils/adminUrl';
-import { computed, ref, watch, onMounted, nextTick } from 'vue';
+import { computed, ref } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
 import ModalDialog from '@/components/ModalDialog.vue';
 import { confirmDialog } from '@/utils/confirmDialog.js';
 import { useTranslation } from '@/utils/useTranslation.js';
+import { useListSearch } from '@/lists/useListSearch.js';
+import { useSelection } from '@/lists/useSelection.js';
+import ListPagination from '@/lists/ListPagination.vue';
+import ListSearch from '@/lists/ListSearch.vue';
+import ListToolbar from '@/lists/ListToolbar.vue';
 
 const { t } = useTranslation();
 
 const props = defineProps({
-    title: {
-        type: String,
-        default: 'Users',
-    },
-    moduleHandle: {
-        type: String,
-        default: 'users',
-    },
-    module: {
-        type: Object,
-        required: true,
-    },
-    action: {
-        type: Object,
-        required: true,
-    },
-    menuItem: {
-        type: Object,
-        default: null,
-    },
-    crud: {
-        type: Object,
-        required: true,
-    },
-    availableActions: {
-        type: Array,
-        default: () => [],
-    },
-    itemType: {
-        type: Object,
-        required: true,
-    },
-    fields: {
-        type: Array,
-        default: () => [],
-    },
-    items: {
-        type: Array,
-        default: () => [],
-    },
-    hasSortingEnabled: {
-        type: Boolean,
-        default: false,
-    },
-    hasDeepStructureEnabled: {
-        type: Boolean,
-        default: false,
-    },
-    search: {
-        type: String,
-        default: '',
-    },
-    pagination: {
-        type: Object,
-        default: null,
-    },
+    title: { type: String, default: 'Users' },
+    moduleHandle: { type: String, default: 'users' },
+    module: { type: Object, required: true },
+    action: { type: Object, required: true },
+    menuItem: { type: Object, default: null },
+    crud: { type: Object, required: true },
+    availableActions: { type: Array, default: () => [] },
+    itemType: { type: Object, required: true },
+    fields: { type: Array, default: () => [] },
+    items: { type: Array, default: () => [] },
+    hasSortingEnabled: { type: Boolean, default: false },
+    hasDeepStructureEnabled: { type: Boolean, default: false },
+    search: { type: String, default: '' },
+    pagination: { type: Object, default: null },
 });
 
 const baseUrl = computed(() => adminUrl(`${props.moduleHandle}`));
-const createUrl = computed(() => `${baseUrl.value}/create`);
 const deleteUrl = computed(() => `${baseUrl.value}/delete`);
 
-const createModalOpen = ref(false);
-const selectedItems = ref(new Set());
-const isDeleting = ref(false);
-const selectAllCheckbox = ref(null);
+const listSearch = useListSearch(() => baseUrl.value, props.search);
 
-// Create form
+// Users the current admin may not delete (themselves, superadmins) cannot be selected
+const selection = useSelection(() => props.items, {
+    deletable: (item) => item.can_delete !== false,
+    deleteUrl: () => deleteUrl.value,
+    confirm: (count) => ({
+        title: t('admin.users.delete_selected_users'),
+        message: t('admin.users.delete_selected_confirm', { count }),
+        confirmLabel: t('admin.common.delete'),
+    }),
+});
+
+// Users are created in a modal; the backend redirects to the new user's edit page
+const createModalOpen = ref(false);
 const createForm = useForm({
-    title: '', // For users, this will be the name
+    title: '', // the user's name
     email: '',
     password: '',
     password_confirmation: '',
@@ -88,93 +59,19 @@ const createForm = useForm({
 });
 
 const openCreateModal = () => {
-    createModalOpen.value = true;
-    resetCreateForm();
-};
-
-const closeCreateModal = () => {
-    createModalOpen.value = false;
-};
-
-const resetCreateForm = () => {
     createForm.reset();
-    createForm.title = '';
-    createForm.email = '';
-    createForm.password = '';
-    createForm.password_confirmation = '';
-    createForm.active = true;
-    createForm.admin_access = false;
+    createForm.clearErrors();
+    createModalOpen.value = true;
 };
 
 const submitCreate = () => {
-    createForm.post(createUrl.value, {
+    createForm.post(`${baseUrl.value}/create`, {
         preserveScroll: true,
-        onSuccess: (responsePage) => {
-            // The backend redirects to edit page, so we just close the modal
-            closeCreateModal();
+        onSuccess: () => {
+            createModalOpen.value = false;
         },
     });
 };
-
-// Search form
-const searchForm = useForm({
-    search: props.search || '',
-});
-
-const performSearch = () => {
-    router.get(baseUrl.value, 
-        { search: searchForm.search },
-        {
-            preserveState: true,
-            preserveScroll: true,
-            only: ['items', 'search'],
-        }
-    );
-};
-
-const clearSearch = () => {
-    searchForm.search = '';
-    router.get(baseUrl.value, {}, {
-        preserveState: true,
-        preserveScroll: true,
-        only: ['items', 'search'],
-    });
-};
-
-// Multi-select functionality
-const toggleSelectAll = (event) => {
-    if (event.target.checked) {
-        // Only select items that can be deleted
-        const deletableItems = props.items
-            .filter(item => item.can_delete !== false)
-            .map(item => item.id);
-        selectedItems.value = new Set(deletableItems);
-    } else {
-        selectedItems.value.clear();
-    }
-};
-
-const toggleSelectItem = (itemId) => {
-    if (selectedItems.value.has(itemId)) {
-        selectedItems.value.delete(itemId);
-    } else {
-        selectedItems.value.add(itemId);
-    }
-};
-
-const deletableItems = computed(() => {
-    return props.items.filter(item => item.can_delete !== false);
-});
-
-const isAllSelected = computed(() => {
-    const deletable = deletableItems.value;
-    return deletable.length > 0 && selectedItems.value.size === deletable.length;
-});
-
-const isIndeterminate = computed(() => {
-    const deletable = deletableItems.value;
-    return selectedItems.value.size > 0 && selectedItems.value.size < deletable.length;
-});
 
 const deleteItem = async (item) => {
     const confirmed = await confirmDialog({
@@ -183,100 +80,10 @@ const deleteItem = async (item) => {
         confirmLabel: t('admin.common.delete'),
         intent: 'danger',
     });
-
-    if (!confirmed) {
-        return;
+    if (confirmed) {
+        router.delete(deleteUrl.value, { data: { item_id: item.id }, preserveScroll: true });
     }
-
-    router.delete(deleteUrl.value, {
-        data: { item_id: item.id },
-        preserveScroll: true,
-    });
 };
-
-const deleteSelectedItems = async () => {
-    if (selectedItems.value.size === 0) {
-        return;
-    }
-
-    const selectedCount = selectedItems.value.size;
-    const confirmed = await confirmDialog({
-        title: t('admin.users.delete_selected_users'),
-        message: t('admin.users.delete_selected_confirm', { count: selectedCount }),
-        confirmLabel: t('admin.common.delete'),
-        intent: 'danger',
-    });
-
-    if (!confirmed) {
-        return;
-    }
-
-    isDeleting.value = true;
-    
-    // Delete items one by one using fetch API for better control
-    // Filter out items that can't be deleted
-    const itemIds = Array.from(selectedItems.value).filter(itemId => {
-        const item = props.items.find(i => i.id === itemId);
-        return item && item.can_delete !== false;
-    });
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-    
-    for (const itemId of itemIds) {
-        try {
-            const response = await fetch(deleteUrl.value, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': csrfToken,
-                    Accept: 'application/json',
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({ item_id: itemId }),
-            });
-
-            if (response.ok) {
-                selectedItems.value.delete(itemId);
-            }
-        } catch (error) {
-            console.error(`Failed to delete user ${itemId}:`, error);
-        }
-    }
-
-    isDeleting.value = false;
-    
-    // Refresh the page to update the users list
-    router.reload({ preserveScroll: true });
-};
-
-// Handle indeterminate state for select all checkbox
-watch([isIndeterminate, isAllSelected], () => {
-    nextTick(() => {
-        if (selectAllCheckbox.value) {
-            selectAllCheckbox.value.indeterminate = isIndeterminate.value;
-        }
-    });
-});
-
-// Clear selections for items that no longer exist
-watch(() => props.items, (newItems) => {
-    const itemIds = new Set(newItems.map(item => item.id));
-    const toRemove = [];
-    selectedItems.value.forEach((id) => {
-        if (!itemIds.has(id)) {
-            toRemove.push(id);
-        }
-    });
-    toRemove.forEach((id) => selectedItems.value.delete(id));
-}, { deep: true });
-
-onMounted(() => {
-    nextTick(() => {
-        if (selectAllCheckbox.value) {
-            selectAllCheckbox.value.indeterminate = isIndeterminate.value;
-        }
-    });
-});
 </script>
 
 <template>
@@ -285,87 +92,53 @@ onMounted(() => {
 
         <div class="py-6">
             <div class="mx-auto max-w-6xl sm:px-6 lg:px-8 space-y-6">
-                <section class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
+                <section class="section">
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <p class="text-sm uppercase tracking-wide text-gray-500 dark:text-gray-400">Module</p>
+                            <p class="text-sm uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ t('admin.items.module') }}</p>
                             <h1 class="heading-1">
                                 {{ module.title }}
                                 <span class="text-gray-400 text-base font-normal">/ {{ action.title }}</span>
                             </h1>
                         </div>
                         <div class="text-right space-y-1">
-                            <p class="text-xs font-semibold text-gray-500 uppercase">Item type</p>
+                            <p class="text-xs font-semibold text-gray-500 uppercase">{{ t('admin.items.item_type') }}</p>
                             <p class="text-sm text-gray-900 dark:text-white">{{ itemType.label }}</p>
                         </div>
                     </div>
                 </section>
 
-                <!-- Search Form -->
-                <section class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('admin.users.search_users') }}</h2>
-                    <form @submit.prevent="performSearch" class="space-y-4">
-                        <div>
-                            <label class="form-label">{{ t('admin.users.search') }}</label>
-                            <div class="flex items-center gap-2">
-                                <div class="flex-1">
-                                    <input
-                                        v-model="searchForm.search"
-                                        type="text"
-                                        class="form-input"
-                                        :placeholder="t('admin.users.search_placeholder')"
-                                    />
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <button type="submit" class="btn btn-primary" :disabled="searchForm.processing">
-                                        {{ searchForm.processing ? t('admin.users.searching') : t('admin.users.search') }}
-                                    </button>
-                                    <button
-                                        v-if="search"
-                                        type="button"
-                                        class="btn btn-outline"
-                                        @click="clearSearch"
-                                    >
-                                        {{ t('admin.common.clear') }}
-                                    </button>
-                                </div>
-                            </div>
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                {{ t('admin.users.search_hint') }}
-                            </p>
-                        </div>
-                    </form>
-                </section>
+                <ListSearch
+                    :search="listSearch"
+                    :active="Boolean(search)"
+                    :heading="t('admin.users.search_users')"
+                    :placeholder="t('admin.users.search_placeholder')"
+                    :hint="t('admin.users.search_hint')"
+                />
 
-                <section class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('admin.users.title') }}</h2>
-                        <div class="flex items-center gap-3">
-                            <button
-                                v-if="selectedItems.size > 0"
-                                type="button"
-                                class="btn btn-outline-danger"
-                                :disabled="isDeleting"
-                                @click="deleteSelectedItems"
-                            >
-                                {{ isDeleting ? t('admin.users.deleting') : t('admin.users.delete_selected', { count: selectedItems.size }) }}
-                            </button>
-                            <button type="button" class="btn btn-outline" @click="openCreateModal">
-                                {{ t('admin.users.new_user') }}
-                            </button>
-                        </div>
-                    </div>
+                <section class="section">
+                    <ListToolbar
+                        :heading="t('admin.users.title')"
+                        :selected-count="selection.count.value"
+                        :deleting="selection.isDeleting.value"
+                        @delete-selected="selection.deleteSelected"
+                    >
+                        <button type="button" class="btn btn-outline" @click="openCreateModal">
+                            {{ t('admin.users.new_user') }}
+                        </button>
+                    </ListToolbar>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                             <thead class="bg-gray-50 dark:bg-gray-900/40">
                                 <tr>
                                     <th class="table-cell text-center w-12">
                                         <input
-                                            ref="selectAllCheckbox"
                                             type="checkbox"
                                             class="form-checkbox"
-                                            :checked="isAllSelected"
-                                            @change="toggleSelectAll"
+                                            :aria-label="t('admin.lists.select_all')"
+                                            :checked="selection.isAllSelected.value"
+                                            :indeterminate="selection.isIndeterminate.value"
+                                            @change="selection.toggleAll($event.target.checked)"
                                         />
                                     </th>
                                     <th class="table-header w-0">ID</th>
@@ -385,9 +158,10 @@ onMounted(() => {
                                         <input
                                             type="checkbox"
                                             class="form-checkbox"
-                                            :checked="selectedItems.has(item.id)"
+                                            :aria-label="t('admin.lists.select_row')"
+                                            :checked="selection.isSelected(item.id)"
                                             :disabled="item.can_delete === false"
-                                            @change="toggleSelectItem(item.id)"
+                                            @change="selection.toggle(item.id)"
                                         />
                                     </td>
                                     <td class="table-cell table-id">
@@ -477,62 +251,12 @@ onMounted(() => {
                         </table>
                     </div>
                     
-                    <!-- Pagination -->
-                    <div v-if="pagination" class="mt-6 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 px-4 py-3">
-                        <div class="flex flex-1 justify-between sm:hidden">
-                            <Link
-                                v-if="pagination.current_page > 1"
-                                :href="`${baseUrl}?page=${pagination.current_page - 1}${search ? `&search=${encodeURIComponent(search)}` : ''}`"
-                                class="btn-text"
-                            >
-                                {{ t('admin.common.previous') }}
-                            </Link>
-                            <span v-else class="text-gray-400">{{ t('admin.common.previous') }}</span>
-                            
-                            <Link
-                                v-if="pagination.current_page < pagination.last_page"
-                                :href="`${baseUrl}?page=${pagination.current_page + 1}${search ? `&search=${encodeURIComponent(search)}` : ''}`"
-                                class="btn-text"
-                            >
-                                {{ t('admin.common.next') }}
-                            </Link>
-                            <span v-else class="text-gray-400">{{ t('admin.common.next') }}</span>
-                        </div>
-                        <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                            <div>
-                                <p class="text-sm text-gray-700 dark:text-gray-300">
-                                    {{ t('admin.common.showing') }}
-                                    <span class="font-medium">{{ pagination.from }}</span>
-                                    {{ t('admin.common.to') }}
-                                    <span class="font-medium">{{ pagination.to }}</span>
-                                    {{ t('admin.common.of') }}
-                                    <span class="font-medium">{{ pagination.total }}</span>
-                                    {{ t('admin.users.results') }}
-                                </p>
-                            </div>
-                            <div>
-                                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                                    <Link
-                                        v-for="link in pagination.links"
-                                        :key="link.label"
-                                        :href="link.url || '#'"
-                                        class="pagination-link"
-                                        :class="{
-                                            'pagination-link-inactive': link.url && !link.active,
-                                            'pagination-link-active': link.active,
-                                            'pagination-link-disabled': !link.url
-                                        }"
-                                        v-html="link.label"
-                                    />
-                                </nav>
-                            </div>
-                        </div>
-                    </div>
+                    <ListPagination :pagination="pagination" />
                 </section>
             </div>
         </div>
 
-        <ModalDialog :open="createModalOpen" :title="t('admin.users.create_user')" @close="closeCreateModal">
+        <ModalDialog :open="createModalOpen" :title="t('admin.users.create_user')" @close="createModalOpen = false">
             <form class="space-y-4" @submit.prevent="submitCreate">
                 <!-- Name field (required) -->
                 <div class="space-y-1">
@@ -627,7 +351,7 @@ onMounted(() => {
                 </div>
 
                 <div class="actions-footer">
-                    <button type="button" class="btn-text" @click="closeCreateModal">{{ t('admin.common.cancel') }}</button>
+                    <button type="button" class="btn-text" @click="createModalOpen = false">{{ t('admin.common.cancel') }}</button>
                     <button type="submit" class="btn btn-primary" :disabled="createForm.processing">
                         {{ createForm.processing ? t('admin.users.creating') : t('admin.common.create') }}
                     </button>

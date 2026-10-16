@@ -14,6 +14,7 @@ import { useCreateChild } from '@admin/js/lists/useCreateChild.js';
 import { useExpandedState } from '@admin/js/lists/useExpandedState.js';
 import { useListSearch } from '@admin/js/lists/useListSearch.js';
 import { useTreeDragDrop } from '@admin/js/lists/useTreeDragDrop.js';
+import ListPagination from '@admin/js/lists/ListPagination.vue';
 import { useToast } from '@admin/js/composables/useToast.js';
 
 const { t } = useTranslation();
@@ -901,26 +902,7 @@ const {
                             </tbody>
                         </table>
 
-                        <!-- Pagination -->
-                        <div v-if="pagination && pagination.last_page > 1" class="mt-4 flex items-center justify-between">
-                            <div class="text-sm text-gray-700 dark:text-gray-300">
-                                Showing {{ pagination.from }} to {{ pagination.to }} of {{ pagination.total }} results
-                            </div>
-                            <div class="flex gap-2">
-                                <Link
-                                    v-for="link in pagination.links"
-                                    :key="link.label"
-                                    :href="link.url || '#'"
-                                    class="pagination-link"
-                                    :class="{
-                                        'pagination-link-inactive': link.url && !link.active,
-                                        'pagination-link-active': link.active,
-                                        'pagination-link-disabled': !link.url
-                                    }"
-                                    v-html="link.label"
-                                />
-                            </div>
-                        </div>
+                        <ListPagination :pagination="pagination" />
                     </div>
                 </div>
             </div>
