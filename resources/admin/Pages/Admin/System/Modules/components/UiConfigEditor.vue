@@ -38,10 +38,14 @@ const shownColumns = computed(() => columns.value.filter((column) => !props.excl
 
 const emitUiConfig = () => emit('update:uiConfig', serializeUiConfig(uiConfig.value, fieldGroups.value));
 
-const loadColumns = async () => {
+const loadColumns = async ([tableName, connection], previous, onCleanup) => {
+    // A connection change or unmount makes every result of this request obsolete, including errors.
+    let active = true;
+    onCleanup(() => { active = false; });
     columns.value = [];
     errorMessage.value = null;
-    if (table.value === '') {
+    loading.value = false;
+    if (tableName === '') {
         return;
     }
 
@@ -57,10 +61,13 @@ const loadColumns = async () => {
                 'X-Requested-With': 'XMLHttpRequest',
             },
             credentials: 'same-origin',
-            body: JSON.stringify({ table_name: table.value, connection: props.connection || '' }),
+            body: JSON.stringify({ table_name: tableName, connection: connection || '' }),
         });
         const data = await response.json().catch(() => ({}));
 
+        if (!active) {
+            return;
+        }
         if (!response.ok || !data.exists) {
             errorMessage.value = data.error || data.message || t('admin.ui_config.table_not_found');
             return;
@@ -69,9 +76,13 @@ const loadColumns = async () => {
         uiConfig.value = configForColumns(uiConfig.value, columns.value.map((column) => column.name));
         emitUiConfig();
     } catch (error) {
-        errorMessage.value = t('admin.ui_config.check_failed', { message: error.message || '' });
+        if (active) {
+            errorMessage.value = t('admin.ui_config.check_failed', { message: error.message || '' });
+        }
     } finally {
-        loading.value = false;
+        if (active) {
+            loading.value = false;
+        }
     }
 };
 

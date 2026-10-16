@@ -25,35 +25,4 @@ Inspect this repository's Git status separately. Commit/push only on explicit re
 
 ## Reference
 
-Installation, Vite integration, page resolution and aliases: [README.md](README.md). Stack: Vue 3 `<script setup>`, Inertia, Tailwind CSS 4, CKEditor 5 (loaded on demand), Vite through the host.
-
-### Layout of `resources/admin/`
-
-| Path | Contents |
-| --- | --- |
-| `js/app.js`, `js/page-resolver.js` | Inertia entry; pages come from the `virtual:atlas-admin-pages` registry |
-| `js/components/`, `js/composables/`, `js/utils/` | ConfirmDialog, ToastStack, WysiwigEditor; `useToast`, `useDbTableRecordForm`; `adminUrl`, `adminPath`, `confirmDialog`, `useTranslation` |
-| `js/dbTable/` | Pure DbTable helpers, Node-tested in the host: `formModel.js` (record forms), `listFilters.js` (list filters), `uiConfig.js` (`ui_config` JSON) |
-| `js/lists/` | Shared list pieces: `tree.js`, `selection.js` (pure), `useListSearch`, `useSelection`, `useExpandedState`, `useTreeDragDrop`, `useCreateChild`, `ListToolbar` / `ListSearch` / `ListPagination` |
-| `js/modules/` | Module settings form: `moduleForm.js` (pure), `useModuleDataSourceForm.js` |
-| `js/localeData.js` | Locale data JSON of language items (pure, used by `Custom/Interfaces/LanguageLocaleData.vue`) |
-| `Layouts/` | `AdminLayout` (sidebar from `cmsNavigation`, dark mode toggle, the only `ToastStack`), `SystemLayout` |
-| `Pages/Admin/Modules/Default/` | Items modules: tree list, drag & drop, bulk delete, tabbed edit form, field interfaces |
-| `Pages/Admin/Modules/DbTable/` | Table modules: filters, tree, sorting, relationship manager, `DbTableRecordForm` |
-| `Pages/Admin/AccessDenied.vue`, `ModuleNotConfigured.vue` | Error pages rendered by AtlasCMS `AdminAccess` and `ModuleNotConfigured` |
-| `Pages/Admin/System/`, `Pages/Admin/Users/`, `Pages/Auth/` | System screens (module settings: `System/Modules/Show.vue` + `sections/`, column settings: `components/UiConfigEditor.vue`), users, login |
-| `Custom/Interfaces/` | Package custom field interfaces (`{ "type": "custom", "interface_path": "Posts/Analytics" }`); the `virtual:atlas-admin-interfaces` registry (`page-registry.mjs`) puts host interfaces first |
-| `css/app.css` | Component classes (`.btn-*`, `.form-input`, tables, modals) with `dark:` variants |
-
-### Field interfaces
-
-`Pages/Admin/Modules/Default/components/interfaces/index.js` maps types: `text`, `textarea`, `wysiwyg`, `file`, `date`/`datetime`/`datetime-local`, `select`, `checkbox`, `children`, `categories`, `product_attributes`, `custom`. An interface receives `field` and `model` props and writes `model.default` (or `model.translations[lang]`); file interfaces set `model.delete_default` when a stored file is cleared.
-
-### Inertia patterns
-
-- Forms: `useForm()`; uploads on update post with `forceFormData: true` and `_method: 'put'`.
-- Lists: `router.get(url, query, { preserveState: true, preserveScroll: true, only: [...] })`.
-- Shared props: `auth`, `cmsNavigation`, `flash`, `translations`, `adminLocale`, `availableLanguages`, `adminPrefix`, `atlasVersion`; Items forms also get content `languages`.
-- Texts: `t()` keys from AtlasCMS `admin.php`; `tests/Frontend/adminTranslations.test.mjs` fails on untranslated template text (skip with `translate="no"` only for code-like values) and on UI texts in scripts (`title: '…'`, prop `default: '…'`, `|| '…'` fallbacks); console messages and `new Error()` texts are not checked.
-- Lists: reuse `js/lists/`; toasts via `useToast().showToast()` — never render a second `ToastStack` inside `AdminLayout`.
-- Validation is server-driven through `form.errors`.
+[README](README.md): Vite integration, page resolution, shared UI and field contracts. Use `js/lists/` for list behavior, `js/dbTable/` for table form/filter/config models, `js/modules/` for module settings, and `js/localeData.js` for language JSON. `AdminLayout` owns the only `ToastStack`; pages call `useToast().showToast()`. Texts use `t()` keys from AtlasCMS `admin.php`; verify with host `tests/Frontend/adminTranslations.test.mjs`.

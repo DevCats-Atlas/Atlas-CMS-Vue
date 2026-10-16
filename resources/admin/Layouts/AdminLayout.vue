@@ -27,13 +27,13 @@ const changeLanguage = (event) => {
 };
 
 // Without a CMS menu (no menu items yet) the sidebar links to the dashboard only
-const fallbackNavigation = [
+const fallbackNavigation = computed(() => [
     {
         id: 'default',
         title: t('admin.layout.navigation'),
         items: [{ id: 'dashboard', title: t('admin.layout.dashboard'), href: adminUrl(''), exact: true }],
     },
-];
+]);
 
 const props = defineProps({
     navigation: {
@@ -56,7 +56,7 @@ const navigationGroups = computed(() => {
         return sharedNavigation.value;
     }
 
-    return fallbackNavigation;
+    return fallbackNavigation.value;
 });
 
 // Open sidebar by default on desktop, closed on mobile

@@ -23,6 +23,7 @@ const values = ref({});
 const search = ref('');
 const searchEnabled = computed(() => Boolean(props.filterConfig.default_search?.enabled));
 const filters = computed(() => props.filterConfig.filters ?? []);
+const enabledFilters = computed(() => filters.value.filter((filter) => filter.enabled));
 
 const readQuery = () => {
     search.value = new URLSearchParams(window.location.search).get('search') || '';
@@ -57,8 +58,7 @@ const chipLabels = computed(() => ({
     from: (value) => t('admin.db_table.range_from', { value }),
     to: (value) => t('admin.db_table.range_to', { value }),
 }));
-const chips = computed(() => filters.value
-    .filter((filter) => filter.enabled)
+const chips = computed(() => enabledFilters.value
     .map((filter) => ({ filter, text: filterChipText(values.value[filter.id], filter, props.uiConfig, chipLabels.value) }))
     .filter((chip) => chip.text !== ''));
 
@@ -81,7 +81,7 @@ const asList = (value) => (Array.isArray(value) ? value : (value ? [value] : [])
                     </div>
                 </div>
 
-                <div v-for="filter in filters" v-show="filter.enabled" :key="filter.id" class="min-w-0">
+                <div v-for="filter in enabledFilters" :key="filter.id" class="min-w-0">
                     <label class="form-label text-xs mb-1">{{ filter.label }}</label>
 
                     <input

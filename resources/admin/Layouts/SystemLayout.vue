@@ -1,11 +1,12 @@
 <script setup>
 import { adminUrl } from '@/utils/adminUrl';
+import { computed } from 'vue';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
 import { useTranslation } from '@/utils/useTranslation.js';
 
 const { t } = useTranslation();
 
-const systemNavigation = [
+const systemNavigation = computed(() => [
     {
         id: 'system',
         title: t('admin.layout.system'),
@@ -17,7 +18,7 @@ const systemNavigation = [
             { id: 'item-types', title: t('admin.layout.nav_item_types'), href: adminUrl('system/item-types') },
         ],
     },
-];
+]);
 </script>
 
 <template>
