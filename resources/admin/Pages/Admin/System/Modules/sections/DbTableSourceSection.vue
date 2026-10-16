@@ -36,7 +36,7 @@ const HANDLER_METHODS = ['creating', 'created', 'updating', 'updated', 'deleting
             <div>
                 <label class="form-label">{{ t('admin.module_settings.table') }}</label>
                 <div class="flex gap-2">
-                    <input v-model="moduleForm.tableInput.value" type="text" class="form-input flex-1" placeholder="users, products" />
+                    <input v-model="moduleForm.tableInput.value" type="text" class="form-input flex-1" translate="no" placeholder="users, products" />
                     <button
                         type="button"
                         class="btn btn-primary whitespace-nowrap flex items-center justify-center"
@@ -54,7 +54,7 @@ const HANDLER_METHODS = ['creating', 'created', 'updating', 'updated', 'deleting
             </div>
             <div>
                 <label class="form-label">{{ t('admin.module_settings.handler_class') }}</label>
-                <input v-model="source.handlerClass" type="text" class="form-input" placeholder="App\Handlers\CustomHandler" />
+                <input v-model="source.handlerClass" type="text" class="form-input" translate="no" placeholder="App\Handlers\CustomHandler" />
                 <div class="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md text-xs text-blue-800 dark:text-blue-300">
                     <p class="font-semibold text-blue-900 dark:text-blue-200 mb-2">
                         {{ t('admin.module_settings.handler_interface') }} <code class="text-xs">AtlasCMS\Contracts\Modules\DbTable\RecordHandler</code>
@@ -81,7 +81,7 @@ const HANDLER_METHODS = ['creating', 'created', 'updating', 'updated', 'deleting
                 </div>
                 <div v-if="source.sorting">
                     <label class="form-label">{{ t('admin.module_settings.sorting_column') }}</label>
-                    <input v-model="source.sortingColumn" type="text" class="form-input" placeholder="order_index" />
+                    <input v-model="source.sortingColumn" type="text" class="form-input" translate="no" placeholder="order_index" />
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('admin.module_settings.sorting_column_hint') }}</p>
                 </div>
             </div>
@@ -92,7 +92,7 @@ const HANDLER_METHODS = ['creating', 'created', 'updating', 'updated', 'deleting
             <div class="grid gap-4 md:grid-cols-2">
                 <div>
                     <label class="form-label">{{ t('admin.module_settings.order_by_column') }}</label>
-                    <input v-model="source.orderByColumn" type="text" class="form-input" placeholder="id, created_at, name" />
+                    <input v-model="source.orderByColumn" type="text" class="form-input" translate="no" placeholder="id, created_at, name" />
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('admin.module_settings.order_by_column_hint') }}</p>
                 </div>
                 <div>
@@ -131,7 +131,7 @@ const HANDLER_METHODS = ['creating', 'created', 'updating', 'updated', 'deleting
                 </div>
                 <div v-if="source.deepStructure">
                     <label class="form-label">{{ t('admin.module_settings.parent_column') }}</label>
-                    <input v-model="source.parentColumn" type="text" class="form-input" placeholder="parent_id" />
+                    <input v-model="source.parentColumn" type="text" class="form-input" translate="no" placeholder="parent_id" />
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('admin.module_settings.parent_column_hint') }}</p>
                 </div>
             </div>

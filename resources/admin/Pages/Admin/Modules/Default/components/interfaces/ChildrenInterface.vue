@@ -7,6 +7,7 @@ import EditForm from '../EditForm.vue';
 import { confirmDialog } from '@/utils/confirmDialog.js';
 import { moveInList } from '@admin/js/lists/tree.js';
 import { useTreeDragDrop } from '@admin/js/lists/useTreeDragDrop.js';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const props = defineProps({
     field: {
@@ -22,6 +23,8 @@ const props = defineProps({
         default: null,
     },
 });
+
+const { t } = useTranslation();
 
 const page = usePage();
 const childrenItems = ref([]);
@@ -247,9 +250,9 @@ const editChild = async (child) => {
 
 const deleteChild = async (child) => {
     const confirmed = await confirmDialog({
-        title: 'Delete child item',
-        message: `Delete "${child.title || 'Untitled'}"?`,
-        confirmLabel: 'Delete',
+        title: t('admin.interfaces.delete_child'),
+        message: t('admin.items.delete_item_confirm', { title: child.title || t('admin.items.untitled') }),
+        confirmLabel: t('admin.common.delete'),
         intent: 'danger',
     });
 
@@ -348,47 +351,47 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
                 {{ field.title }}
             </label>
             <p v-if="relatedItemTypeId" class="text-xs text-gray-500 dark:text-gray-400">
-                Related item type ID: <span class="font-mono">{{ relatedItemTypeId }}</span>
+                {{ t('admin.interfaces.related_type_id') }} <span class="font-mono">{{ relatedItemTypeId }}</span>
             </p>
             <p v-else class="text-xs text-red-500 dark:text-red-400">
-                No related item type configured
+                {{ t('admin.interfaces.no_related_type') }}
             </p>
         </div>
 
         <div v-if="loading" class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-            Loading...
+            {{ t('admin.common.loading') }}
         </div>
 
         <div v-else-if="!relatedItemTypeId" class="text-sm text-red-500 dark:text-red-400 py-4">
-            Please configure the related item type ID in the field settings.
+            {{ t('admin.interfaces.configure_related_type') }}
         </div>
 
         <div v-else-if="!currentItemId" class="text-sm text-gray-500 dark:text-gray-400 py-4">
-            Item must be saved before managing children.
+            {{ t('admin.interfaces.save_before_children') }}
         </div>
 
         <div v-else-if="viewType === 'list'" class="space-y-4">
             <div class="flex items-center justify-between">
-                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Children</h3>
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ t('admin.interfaces.children') }}</h3>
                 <button
                     v-if="currentItemId && relatedItemTypeId"
                     type="button"
                     class="btn btn-sm btn-primary"
                     @click="openCreateForm"
                 >
-                    Create child
+                    {{ t('admin.interfaces.create_child') }}
                 </button>
             </div>
 
             <!-- Create form -->
             <div v-if="showCreateForm" class="bg-gray-50 dark:bg-gray-900/40 rounded-lg p-4 space-y-3 border border-gray-200 dark:border-gray-700">
                 <div>
-                    <label class="form-label block mb-1">Title</label>
+                    <label class="form-label block mb-1">{{ t('admin.common.title_label') }}</label>
                     <input
                         v-model="createChildForm.title"
                         type="text"
                         class="form-input"
-                        placeholder="Enter child item title"
+                        :placeholder="t('admin.interfaces.child_title_placeholder')"
                         @keyup.enter="submitCreateChild"
                     />
                     <p v-if="createChildForm.errors.title" class="mt-1 text-xs text-red-500 dark:text-red-400">
@@ -402,7 +405,7 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
                         :disabled="createChildForm.processing || !createChildForm.title.trim()"
                         @click="submitCreateChild"
                     >
-                        {{ createChildForm.processing ? 'Creating...' : 'Create' }}
+                        {{ createChildForm.processing ? t('admin.items.creating') : t('admin.common.create') }}
                     </button>
                     <button
                         type="button"
@@ -410,7 +413,7 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
                         :disabled="createChildForm.processing"
                         @click="closeCreateForm"
                     >
-                        Cancel
+                        {{ t('admin.common.cancel') }}
                     </button>
                 </div>
             </div>
@@ -421,9 +424,9 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
                     <thead class="bg-gray-50 dark:bg-gray-900/40">
                         <tr>
                             <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 w-0">ID</th>
-                            <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 w-0">Visible</th>
-                            <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">Title</th>
-                            <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 w-32">Actions</th>
+                            <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 w-0">{{ t('admin.items.visible') }}</th>
+                            <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">{{ t('admin.common.title_label') }}</th>
+                            <th class="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 w-32">{{ t('admin.common.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -449,7 +452,7 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
                                         ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
                                         : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'"
                                 >
-                                    {{ child.visible ? 'Visible' : 'Hidden' }}
+                                    {{ child.visible ? t('admin.items.visible') : t('admin.items.hidden') }}
                                 </span>
                             </td>
                             <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">
@@ -461,7 +464,7 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
                                         type="button"
                                         class="btn-group-item-edit"
                                         @click.stop="editChild(child)"
-                                        title="Edit"
+                                        :title="t('admin.common.edit')"
                                     >
                                         <svg
                                             class="w-4 h-4"
@@ -481,7 +484,7 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
                                         type="button"
                                         class="btn-group-item-delete"
                                         @click.stop="deleteChild(child)"
-                                        title="Delete"
+                                        :title="t('admin.common.delete')"
                                     >
                                         <svg
                                             class="w-4 h-4"
@@ -502,7 +505,7 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
                         </tr>
                         <tr v-if="childrenItems.length === 0 && !showCreateForm">
                             <td colspan="4" class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
-                                No children items yet.
+                                {{ t('admin.interfaces.no_children') }}
                             </td>
                         </tr>
                     </tbody>
@@ -512,7 +515,7 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
 
         <div v-else-if="viewType === 'gallery'" class="space-y-4">
             <div class="flex items-center justify-between">
-                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Gallery</h3>
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ t('admin.interfaces.gallery') }}</h3>
                 <div class="flex items-center gap-2">
                     <input
                         :id="`gallery-upload-${field.id}`"
@@ -529,7 +532,7 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
                         :disabled="uploading"
                         @click="openFileDialog"
                     >
-                        {{ uploading ? 'Uploading...' : 'Choose images' }}
+                        {{ uploading ? t('admin.interfaces.uploading') : t('admin.interfaces.choose_images') }}
                     </button>
                 </div>
             </div>
@@ -538,7 +541,7 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
             <div v-if="selectedFiles.length > 0" class="bg-gray-50 dark:bg-gray-900/40 rounded-lg p-4 space-y-3 border border-gray-200 dark:border-gray-700">
                 <div>
                     <p class="heading-label mb-2">
-                        Selected files ({{ selectedFiles.length }})
+                        {{ t('admin.interfaces.selected_files', { count: selectedFiles.length }) }}
                     </p>
                     <div class="flex flex-wrap gap-2 mb-3">
                         <span
@@ -557,7 +560,7 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
                         :disabled="uploading || selectedFiles.length === 0"
                         @click="submitUpload"
                     >
-                        {{ uploading ? 'Uploading...' : `Upload ${selectedFiles.length} image(s)` }}
+                        {{ uploading ? t('admin.interfaces.uploading') : t('admin.interfaces.upload_images', { count: selectedFiles.length }) }}
                     </button>
                     <button
                         type="button"
@@ -565,7 +568,7 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
                         :disabled="uploading"
                         @click="cancelUpload"
                     >
-                        Cancel
+                        {{ t('admin.common.cancel') }}
                     </button>
                 </div>
                 <p v-if="uploadForm.errors.files" class="text-xs text-red-500 dark:text-red-400">
@@ -629,7 +632,7 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
                                     ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
                                     : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'"
                             >
-                                {{ child.visible ? 'Visible' : 'Hidden' }}
+                                {{ child.visible ? t('admin.items.visible') : t('admin.items.hidden') }}
                             </span>
                             <span class="text-xs text-gray-500 dark:text-gray-400 font-mono">
                                 #{{ child.id }}
@@ -642,7 +645,7 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
                                     type="button"
                                     class="btn-group-item-edit btn-group-item-xs flex-1"
                                     @click.stop="editChild(child)"
-                                    title="Edit"
+                                    :title="t('admin.common.edit')"
                                 >
                                     <svg
                                         class="w-4 h-4"
@@ -662,7 +665,7 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
                                     type="button"
                                     class="btn-group-item-delete btn-group-item-xs flex-1"
                                     @click.stop="deleteChild(child)"
-                                    title="Delete"
+                                    :title="t('admin.common.delete')"
                                 >
                                     <svg
                                         class="w-4 h-4"
@@ -702,20 +705,20 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
                         d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                     />
                 </svg>
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No images yet.</p>
-                <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Click "Choose images" to upload.</p>
+                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ t('admin.interfaces.no_images') }}</p>
+                <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ t('admin.interfaces.no_images_hint') }}</p>
             </div>
         </div>
 
         <!-- Edit Modal -->
         <ModalDialog
             :open="editModalOpen"
-            :title="editModalData ? `Edit ${editModalData.itemType?.label || 'Item'}` : 'Edit Item'"
+            :title="t('admin.interfaces.edit_item', { type: editModalData?.itemType?.label || t('admin.interfaces.item') })"
             size="xl"
             @close="closeEditModal"
         >
             <div v-if="loadingEditData" class="py-8 text-center text-gray-500 dark:text-gray-400">
-                Loading...
+                {{ t('admin.common.loading') }}
             </div>
             <EditForm
                 v-else-if="editModalData"

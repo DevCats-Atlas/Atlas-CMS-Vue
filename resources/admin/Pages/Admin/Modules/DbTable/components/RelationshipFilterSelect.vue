@@ -3,6 +3,7 @@ import { adminUrl } from '@/utils/adminUrl';
 import { ref, computed, watch, onMounted } from 'vue';
 import axios from 'axios';
 import MultiSelect from './MultiSelect.vue';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const props = defineProps({
     filter: {
@@ -22,6 +23,8 @@ const props = defineProps({
         default: null,
     },
 });
+
+const { t } = useTranslation();
 
 const emit = defineEmits(['update:modelValue']);
 
@@ -264,7 +267,7 @@ defineExpose({
         <!-- Single Select -->
         <div v-if="!isMultiple" class="relative">
             <div v-if="loading" class="text-sm text-gray-500 dark:text-gray-400 py-2">
-                Loading...
+                {{ t('admin.common.loading') }}
             </div>
             <select
                 v-else
@@ -273,7 +276,7 @@ defineExpose({
                 @change="updateValue($event.target.value)"
                 class="form-select text-sm"
             >
-                <option value="">{{ filter.placeholder || 'Select...' }}</option>
+                <option value="">{{ filter.placeholder || t('admin.common.select_placeholder') }}</option>
                 <option
                     v-for="record in availableRecords"
                     :key="`option-${getRecordId(record)}`"
@@ -283,11 +286,7 @@ defineExpose({
                 </option>
             </select>
             <div v-if="!loading && availableRecords.length === 0" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                No records found
-            </div>
-            <!-- Debug info -->
-            <div v-if="!loading && availableRecords.length > 0" class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                {{ availableRecords.length }} option(s) loaded
+                {{ t('admin.common.no_results') }}
             </div>
         </div>
         
@@ -296,17 +295,13 @@ defineExpose({
             <MultiSelect
                 :options="recordOptions"
                 :model-value="multiSelectValue"
-                :placeholder="filter.placeholder || 'Select...'"
+                :placeholder="filter.placeholder || t('admin.common.select_placeholder')"
                 :searchable="true"
                 :on-search="loadRecordsForMultiSelect"
                 @update:model-value="handleMultiSelectChange"
             />
-            <!-- Debug info -->
             <div v-if="loading" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Loading records...
-            </div>
-            <div v-else class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                {{ recordOptions.length }} option(s) available, {{ availableRecords.length }} record(s) loaded
+                {{ t('admin.common.loading_records') }}
             </div>
         </div>
     </div>

@@ -4,10 +4,10 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
 import EditForm from './components/EditForm.vue';
 import CustomButtons from '../components/CustomButtons.vue';
-import ToastStack from '@/components/ToastStack.vue';
 import { useToast } from '@/composables/useToast.js';
+import { useTranslation } from '@/utils/useTranslation.js';
 
-const { toasts, showToast, dismissToast } = useToast();
+const { showToast } = useToast();
 const page = usePage();
 
 const props = defineProps({
@@ -65,11 +65,13 @@ const props = defineProps({
     },
 });
 
+const { t } = useTranslation();
+
 // Watch for flash messages and show them as toasts
 watch(() => page.props.flash, (flash) => {
     if (flash?.error) {
         showToast({
-            title: 'Error',
+            title: t('admin.common.error'),
             message: flash.error,
             intent: 'danger',
             duration: 6000,
@@ -77,7 +79,7 @@ watch(() => page.props.flash, (flash) => {
     }
     if (flash?.success) {
         showToast({
-            title: 'Success',
+            title: t('admin.common.success'),
             message: flash.success,
             intent: 'success',
             duration: 4000,
@@ -89,23 +91,22 @@ watch(() => page.props.flash, (flash) => {
 <template>
     <AdminLayout>
         <Head :title="title" />
-        <ToastStack :toasts="toasts" @dismiss="dismissToast" />
         <div class="py-6">
             <div class="mx-auto max-w-8xl sm:px-6 lg:px-8 space-y-6">
                 <section class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4 relative overflow-visible">
                     <div class="flex items-center justify-between mb-4">
                         <div>
-                            <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Module</p>
+                            <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ t('admin.items.module') }}</p>
                             <h1 class="heading-1">
-                                {{ module.title }} · Edit entry
+                                {{ t('admin.items.edit_entry', { module: module.title }) }}
                             </h1>
                             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                Editing {{ itemType.label }} (ID #{{ item.id }})
+                                {{ t('admin.items.editing', { type: itemType.label, id: item.id }) }}
                             </p>
                             <!-- Breadcrumbs for nested items -->
                             <nav v-if="breadcrumbs.length > 0" class="mt-2 flex items-center gap-2 text-sm">
                                 <Link :href="indexUrl" class="text-indigo-600 dark:text-indigo-300 hover:underline" preserve-scroll>
-                                    List
+                                    {{ t('admin.items.list') }}
                                 </Link>
                                 <span class="text-gray-400">/</span>
                                 <template v-for="(crumb, index) in breadcrumbs" :key="crumb.id">
@@ -119,7 +120,7 @@ watch(() => page.props.flash, (flash) => {
                                     <span v-if="index < breadcrumbs.length - 1" class="text-gray-400">/</span>
                                 </template>
                                 <span class="text-gray-400">/</span>
-                                <span class="text-gray-600 dark:text-gray-300 font-medium">{{ item.title || 'Untitled' }}</span>
+                                <span class="text-gray-600 dark:text-gray-300 font-medium">{{ item.title || t('admin.items.untitled') }}</span>
                             </nav>
                         </div>
                         <div class="flex items-center gap-3">
@@ -131,7 +132,7 @@ watch(() => page.props.flash, (flash) => {
                                 :data-source="dataSource"
                             />
                             <Link :href="indexUrl" class="btn btn-outline" preserve-scroll>
-                                Back to list
+                                {{ t('admin.users.back_to_list') }}
                             </Link>
                         </div>
                     </div>

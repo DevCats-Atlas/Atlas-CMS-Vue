@@ -1,6 +1,7 @@
 <script setup>
 import { computed, defineAsyncComponent } from 'vue';
 import { usePage } from '@inertiajs/vue3';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 // CKEditor (~1 MB) loads only when an editor field is rendered
 const WysiwigEditor = defineAsyncComponent(() => import('@/components/WysiwigEditor.vue'));
@@ -27,6 +28,8 @@ const props = defineProps({
         default: () => [],
     },
 });
+
+const { t } = useTranslation();
 
 const languages = computed(() => usePage().props.languages || []);
 
@@ -322,7 +325,7 @@ const hasMultilingualCustomField = (fieldKey) => {
                                 <label class="form-label text-sm text-gray-600 dark:text-gray-300">
                                     {{ slugLanguageLabel(language) }}
                                     <span v-if="isDefaultLanguage(language)" class="text-xs text-gray-500">
-                                        (Default)
+                                        {{ t('admin.interfaces.default_language') }}
                                     </span>
                                 </label>
                                 <input
@@ -338,7 +341,7 @@ const hasMultilingualCustomField = (fieldKey) => {
                             </div>
                         </template>
                         <p v-else class="text-sm text-gray-500">
-                            No languages are configured for multilingual slugs.
+                            {{ t('admin.interfaces.no_slug_languages') }}
                         </p>
                         <p v-if="form.errors.slug" class="text-sm text-red-600">
                             {{ form.errors.slug }}
@@ -372,7 +375,7 @@ const hasMultilingualCustomField = (fieldKey) => {
                 />
                 <div v-if="hasSelectedFile('item_file')" class="flex items-center justify-between gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
                     <div class="flex-1 min-w-0">
-                        <span class="text-gray-500 dark:text-gray-400">Selected file: </span>
+                        <span class="text-gray-500 dark:text-gray-400">{{ t('admin.interfaces.selected_file') }} </span>
                         <span class="text-blue-700 dark:text-blue-300 font-medium truncate">{{ selectedFileName('item_file') }}</span>
                     </div>
                     <button
@@ -380,12 +383,12 @@ const hasMultilingualCustomField = (fieldKey) => {
                         @click="clearFile('item_file')"
                         class="px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                     >
-                        Clear
+                        {{ t('admin.common.clear') }}
                     </button>
                 </div>
                 <div v-if="hasCurrentFile(getField('item_file'))" class="flex items-center justify-between gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded text-xs">
                     <div class="flex-1 min-w-0">
-                        <span class="text-gray-500 dark:text-gray-400">Current file: </span>
+                        <span class="text-gray-500 dark:text-gray-400">{{ t('admin.interfaces.current_file') }} </span>
                         <a
                             v-if="currentFileUrl(getField('item_file'))"
                             :href="currentFileUrl(getField('item_file'))"
@@ -402,11 +405,11 @@ const hasMultilingualCustomField = (fieldKey) => {
                         @click="clearFile('item_file')"
                         class="px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                     >
-                        Clear
+                        {{ t('admin.common.clear') }}
                     </button>
                 </div>
                 <p v-if="form.delete_item_file" class="text-xs text-orange-600 dark:text-orange-400">
-                    File will be removed when you save changes.
+                    {{ t('admin.interfaces.file_removed_on_save') }}
                 </p>
                 <p v-if="form.errors.item_file" class="text-sm text-red-600">
                     {{ form.errors.item_file }}

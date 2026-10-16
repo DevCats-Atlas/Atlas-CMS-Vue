@@ -3,6 +3,7 @@ import { adminUrl, adminModuleHandle } from '@/utils/adminUrl';
 import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { useToast } from '@/composables/useToast.js';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const props = defineProps({
     field: {
@@ -14,6 +15,8 @@ const props = defineProps({
         default: () => ({}),
     },
 });
+
+const { t } = useTranslation();
 
 const page = usePage();
 const { showToast } = useToast();
@@ -211,12 +214,12 @@ const toggleCategory = async (category) => {
         });
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: 'Failed to toggle category' }));
-            const errorMessage = errorData.error || 'Failed to toggle category';
+            const errorData = await response.json().catch(() => ({}));
+            const errorMessage = errorData.error || t('admin.interfaces.toggle_category_failed');
             
             // Show error toast
             showToast({
-                title: 'Error',
+                title: t('admin.common.error'),
                 message: errorMessage,
                 intent: 'danger',
             });
@@ -227,12 +230,10 @@ const toggleCategory = async (category) => {
         // Success - UI already updated optimistically, no need to refetch
         // Show success toast
         const category = categories.value.find(c => c.id === categoryId);
-        const categoryName = category?.title || `Category #${categoryId}`;
+        const categoryName = category?.title || t('admin.interfaces.category_fallback', { id: categoryId });
         showToast({
-            title: 'Success',
-            message: newSelected 
-                ? `${categoryName} has been assigned successfully.`
-                : `${categoryName} has been unassigned successfully.`,
+            title: t('admin.common.success'),
+            message: t(newSelected ? 'admin.interfaces.category_assigned' : 'admin.interfaces.category_unassigned', { title: categoryName }),
             intent: 'success',
         });
     } catch (error) {
@@ -343,12 +344,12 @@ const handleDrop = (event, dropCategory) => {
     })
         .then(async (response) => {
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ error: 'Failed to reorder categories' }));
-                const errorMessage = errorData.error || 'Failed to reorder categories';
+                const errorData = await response.json().catch(() => ({}));
+                const errorMessage = errorData.error || t('admin.interfaces.reorder_categories_failed');
                 
                 // Show error toast
                 showToast({
-                    title: 'Error',
+                    title: t('admin.common.error'),
                     message: errorMessage,
                     intent: 'danger',
                 });
@@ -362,8 +363,8 @@ const handleDrop = (event, dropCategory) => {
             
             // Show error toast
             showToast({
-                title: 'Error',
-                message: 'Failed to reorder categories',
+                title: t('admin.common.error'),
+                message: t('admin.interfaces.reorder_categories_failed'),
                 intent: 'danger',
             });
             
@@ -383,32 +384,32 @@ const handleDrop = (event, dropCategory) => {
                 {{ field.title }}
             </label>
             <p v-if="rootId" class="text-xs text-gray-500 dark:text-gray-400">
-                Root ID: <span class="font-mono">{{ rootId }}</span>
-                <span v-if="relationship"> · Relationship: <span class="font-mono">{{ relationship }}</span></span>
-                <span v-if="filterItemTypeId"> · Filter: Item Type ID <span class="font-mono">{{ filterItemTypeId }}</span></span>
+                {{ t('admin.interfaces.root_id') }} <span class="font-mono">{{ rootId }}</span>
+                <span v-if="relationship"> · {{ t('admin.interfaces.relationship') }} <span class="font-mono">{{ relationship }}</span></span>
+                <span v-if="filterItemTypeId"> · {{ t('admin.interfaces.filter_type_id') }} <span class="font-mono">{{ filterItemTypeId }}</span></span>
             </p>
             <p v-else class="text-xs text-red-500 dark:text-red-400">
-                No root_id configured
+                {{ t('admin.interfaces.no_root_id') }}
             </p>
             <p v-if="includeDescendants && rootId" class="text-xs text-gray-500 dark:text-gray-400">
-                Showing all descendants of the selected root item.
+                {{ t('admin.interfaces.all_descendants') }}
             </p>
         </div>
 
         <div v-if="loading" class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-            Loading categories...
+            {{ t('admin.interfaces.loading_categories') }}
         </div>
 
         <div v-else-if="!rootId || !relationship" class="text-sm text-red-500 dark:text-red-400 py-4">
-            Please configure root_id and relationship in the field settings.
+            {{ t('admin.interfaces.configure_categories') }}
         </div>
 
         <div v-else-if="!currentItemId" class="text-sm text-gray-500 dark:text-gray-400 py-4">
-            Item must be saved before managing categories.
+            {{ t('admin.interfaces.save_before_categories') }}
         </div>
 
         <div v-else-if="categories.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-4">
-            No categories available.
+            {{ t('admin.interfaces.no_categories') }}
         </div>
 
         <div v-else class="space-y-2">
@@ -418,7 +419,7 @@ const handleDrop = (event, dropCategory) => {
                     ref="searchInputRef"
                     v-model="searchQuery"
                     type="text"
-                    placeholder="Search categories..."
+                    :placeholder="t('admin.interfaces.search_categories')"
                     class="form-input w-full"
                     @keydown.esc="searchQuery = ''; $nextTick(() => searchInputRef?.focus())"
                 />
@@ -473,7 +474,7 @@ const handleDrop = (event, dropCategory) => {
                             v-if="!category.visible"
                             class="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 flex-shrink-0"
                         >
-                            Hidden
+                            {{ t('admin.items.hidden') }}
                         </span>
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">

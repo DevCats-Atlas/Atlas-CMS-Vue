@@ -1,9 +1,8 @@
 <script setup>
 import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
-import ToastStack from '@/components/ToastStack.vue';
-import { useToast } from '@/composables/useToast.js';
 import CustomFieldsTabs from './CustomFieldsTabs.vue';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const props = defineProps({
     title: {
@@ -56,9 +55,10 @@ const props = defineProps({
     },
 });
 
+const { t } = useTranslation();
+
 const emit = defineEmits(['saved', 'cancel']);
 
-const { toasts, dismissToast } = useToast();
 const languages = computed(() => usePage().props.languages || []);
 
 const normalizeCheckboxValue = (value) => {
@@ -292,22 +292,20 @@ watch(
             <div v-if="!inline" class="sticky bottom-0 z-20 bg-white dark:bg-gray-800 pt-4 pb-4 mt-6 border-t border-gray-200 dark:border-gray-700">
                 <div class="flex items-center gap-3">
                     <button type="submit" class="btn btn-primary" :disabled="submitting || editForm.processing">
-                        {{ editForm.processing ? 'Saving…' : 'Save changes' }}
+                        {{ editForm.processing ? t('admin.users.saving') : t('admin.users.save_changes') }}
                     </button>
-                    <button type="button" class="btn-text" @click="cancel">Cancel</button>
+                    <button type="button" class="btn-text" @click="cancel">{{ t('admin.common.cancel') }}</button>
                 </div>
             </div>
             
             <!-- Inline mode: keep buttons in their original position -->
             <div v-else class="flex items-center gap-3">
                 <button type="submit" class="btn btn-primary" :disabled="submitting || editForm.processing">
-                    {{ editForm.processing ? 'Saving…' : 'Save changes' }}
+                    {{ editForm.processing ? t('admin.users.saving') : t('admin.users.save_changes') }}
                 </button>
-                <button type="button" class="btn-text" @click="cancel">Close</button>
+                <button type="button" class="btn-text" @click="cancel">{{ t('admin.common.close') }}</button>
             </div>
         </form>
-        
-        <ToastStack :toasts="toasts" @dismiss="dismissToast" />
     </div>
 </template>
 

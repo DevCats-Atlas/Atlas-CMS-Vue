@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
 import { useTranslation } from '@/utils/useTranslation.js';
+import { confirmDialog } from '@/utils/confirmDialog.js';
 
 const { t } = useTranslation();
 
@@ -101,18 +102,28 @@ const addProperty = () => {
 };
 
 // Remove property
-const removeProperty = (propertyId) => {
+const removeProperty = async (propertyId) => {
     const index = properties.value.findIndex(p => p.id === propertyId);
     if (index !== -1) {
         const property = properties.value[index];
         const key = property.key || 'this property';
         
         // Confirm before removing
-        if (!confirm(t('admin.locale_data.remove_confirm', { key: key }))) {
+        const confirmed = await confirmDialog({
+            message: t('admin.locale_data.remove_confirm', { key }),
+            confirmLabel: t('admin.common.delete'),
+            intent: 'danger',
+        });
+        if (!confirmed) {
             return;
         }
         
-        properties.value.splice(index, 1);
+        // The list may have changed while the dialog was open
+        const current = properties.value.findIndex(p => p.id === propertyId);
+        if (current === -1) {
+            return;
+        }
+        properties.value.splice(current, 1);
         // Save immediately when removing (no debounce needed)
         const obj = {};
         properties.value.forEach((item) => {
@@ -239,7 +250,7 @@ const pasteProperties = async () => {
         
         // Confirm before pasting (will replace current properties)
         if (properties.value.length > 0) {
-            if (!confirm(t('admin.locale_data.paste_confirm'))) {
+            if (!(await confirmDialog({ message: t('admin.locale_data.paste_confirm') }))) {
                 return;
             }
         }

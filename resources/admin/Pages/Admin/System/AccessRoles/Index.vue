@@ -4,7 +4,6 @@ import { Head, useForm, router } from '@inertiajs/vue3';
 import SystemLayout from '@admin/Layouts/SystemLayout.vue';
 import { ref, computed, watch } from 'vue';
 import { confirmDialog } from '@/utils/confirmDialog.js';
-import ToastStack from '@/components/ToastStack.vue';
 import { useToast } from '@/composables/useToast.js';
 import { useTranslation } from '@/utils/useTranslation.js';
 
@@ -37,7 +36,7 @@ const editForm = useForm({
 });
 
 const editingRoleId = ref(null);
-const { toasts, showToast, dismissToast } = useToast();
+const { showToast } = useToast();
 
 const submitNewRole = () => {
     createForm.post(adminUrl('system/access-roles'), {
@@ -284,7 +283,5 @@ const toggleAllModules = () => {
                 </section>
             </div>
         </div>
-        
-        <ToastStack :toasts="toasts" @dismiss="dismissToast" />
     </SystemLayout>
 </template>

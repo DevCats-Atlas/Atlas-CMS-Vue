@@ -187,7 +187,7 @@ const selectedFileName = (languageCode = null) => {
                 </div>
                 <div v-if="hasCurrentFile(languageKey(language, index))" class="flex items-center justify-between gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded text-xs">
                     <div class="flex-1 min-w-0">
-                        <span class="text-gray-500 dark:text-gray-400">Current file: </span>
+                        <span class="text-gray-500 dark:text-gray-400">{{ t('admin.interfaces.current_file') }} </span>
                         <a
                             v-if="currentFileUrl(languageKey(language, index))"
                             :href="currentFileUrl(languageKey(language, index))"
@@ -222,7 +222,7 @@ const selectedFileName = (languageCode = null) => {
             />
             <div v-if="hasSelectedFile()" class="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
                 <div class="flex-1 min-w-0 overflow-hidden">
-                    <span class="text-gray-500 dark:text-gray-400">Selected file: </span>
+                    <span class="text-gray-500 dark:text-gray-400">{{ t('admin.interfaces.selected_file') }} </span>
                     <span class="text-blue-700 dark:text-blue-300 font-medium break-all">{{ selectedFileName() }}</span>
                 </div>
                 <button
@@ -230,12 +230,12 @@ const selectedFileName = (languageCode = null) => {
                     @click="clearFile()"
                     class="flex-shrink-0 px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                 >
-                    Clear
+                    {{ t('admin.common.clear') }}
                 </button>
             </div>
             <div v-if="hasCurrentFile()" class="flex items-center justify-between gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded text-xs">
                 <div class="flex-1 min-w-0">
-                    <span class="text-gray-500 dark:text-gray-400">Current file: </span>
+                    <span class="text-gray-500 dark:text-gray-400">{{ t('admin.interfaces.current_file') }} </span>
                     <a
                         v-if="currentFileUrl()"
                         :href="currentFileUrl()"
@@ -252,7 +252,7 @@ const selectedFileName = (languageCode = null) => {
                     @click="clearFile()"
                     class="px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                 >
-                    Clear
+                    {{ t('admin.common.clear') }}
                 </button>
             </div>
             <p v-if="isDeleteFlagged()" class="text-xs text-orange-600 dark:text-orange-400">

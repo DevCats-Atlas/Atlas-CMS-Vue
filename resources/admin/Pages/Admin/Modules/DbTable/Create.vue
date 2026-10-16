@@ -70,11 +70,11 @@ const submitCreate = () => submit(`${baseUrl.value}/create`);
                         <div>
                             <h1 class="heading-1">{{ title }}</h1>
                             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                Table: <code class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">{{ tableName }}</code>
+                                {{ t('admin.db_table.table') }} <code class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">{{ tableName }}</code>
                             </p>
                         </div>
                         <Link :href="baseUrl" class="btn btn-outline">
-                            Back to list
+                            {{ t('admin.users.back_to_list') }}
                         </Link>
                     </div>
 
@@ -99,7 +99,7 @@ const submitCreate = () => submit(`${baseUrl.value}/create`);
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
                 <div class="flex items-center justify-between gap-4">
                     <Link :href="baseUrl" class="btn-text">
-                        Cancel
+                        {{ t('admin.common.cancel') }}
                     </Link>
                     <button
                         type="button"

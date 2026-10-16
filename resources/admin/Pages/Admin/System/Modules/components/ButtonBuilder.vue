@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import ButtonModal from './ButtonModal.vue';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const props = defineProps({
     buttons: {
@@ -8,6 +9,8 @@ const props = defineProps({
         default: () => [],
     },
 });
+
+const { t } = useTranslation();
 
 const emit = defineEmits(['update:buttons']);
 
@@ -133,9 +136,9 @@ const editingButton = computed(() => {
         <!-- Buttons List -->
         <div class="flex items-center justify-between mb-4">
             <div>
-                <h5 class="text-sm font-semibold text-gray-900 dark:text-white">Custom Buttons</h5>
+                <h5 class="text-sm font-semibold text-gray-900 dark:text-white">{{ t('admin.button_config.custom_buttons') }}</h5>
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Configure custom buttons that appear on the edit record page
+                    {{ t('admin.button_config.custom_buttons_hint') }}
                 </p>
             </div>
             <button
@@ -143,12 +146,12 @@ const editingButton = computed(() => {
                 @click="openButtonModal()"
                 class="btn btn-sm btn-primary"
             >
-                Add Button
+                {{ t('admin.button_config.add') }}
             </button>
         </div>
         
         <div v-if="localButtons.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-4 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-            No buttons defined. Click "Add Button" to get started.
+            {{ t('admin.button_config.empty') }}
         </div>
         
         <div v-else class="space-y-2">
@@ -178,7 +181,7 @@ const editingButton = computed(() => {
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">
                         <span class="text-sm font-medium text-gray-900 dark:text-white">
-                            {{ button.title || 'Untitled Button' }}
+                            {{ button.title || t('admin.button_config.untitled') }}
                         </span>
                         <span class="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
                             {{ button.method?.toUpperCase() || 'POST' }}
@@ -187,14 +190,14 @@ const editingButton = computed(() => {
                             {{ button.route }}
                         </span>
                         <span v-if="!button.enabled" class="text-xs px-2 py-0.5 bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 rounded">
-                            Disabled
+                            {{ t('admin.filters.disabled') }}
                         </span>
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        <span v-if="button.variant">Variant: {{ button.variant }}</span>
-                        <span v-if="button.icon" class="ml-2">Icon: {{ button.icon }}</span>
-                        <span v-if="button.confirm_message" class="ml-2">Requires confirmation</span>
-                        <span v-if="button.requires_permission" class="ml-2">Requires permission: {{ button.permission }}</span>
+                        <span v-if="button.variant">{{ t('admin.button_config.meta_variant', { value: button.variant }) }}</span>
+                        <span v-if="button.icon" class="ml-2">{{ t('admin.button_config.meta_icon', { value: button.icon }) }}</span>
+                        <span v-if="button.confirm_message" class="ml-2">{{ t('admin.button_config.meta_confirmation') }}</span>
+                        <span v-if="button.requires_permission" class="ml-2">{{ t('admin.button_config.meta_permission', { value: button.permission }) }}</span>
                     </p>
                 </div>
                 
@@ -207,23 +210,23 @@ const editingButton = computed(() => {
                             class="form-checkbox"
                             @change="toggleButtonEnabled(index)"
                         />
-                        <span class="ml-2 text-xs text-gray-600 dark:text-gray-400">Enabled</span>
+                        <span class="ml-2 text-xs text-gray-600 dark:text-gray-400">{{ t('admin.filters.enabled') }}</span>
                     </label>
                     <button
                         type="button"
                         @click="openButtonModal(index)"
                         class="btn btn-sm btn-outline"
-                        title="Edit button"
+                        :title="t('admin.button_config.edit_button')"
                     >
-                        Edit
+                        {{ t('admin.common.edit') }}
                     </button>
                     <button
                         type="button"
                         @click="removeButton(index)"
                         class="btn btn-sm btn-danger"
-                        title="Remove button"
+                        :title="t('admin.button_config.remove_button')"
                     >
-                        Remove
+                        {{ t('admin.relationships.remove') }}
                     </button>
                 </div>
             </div>

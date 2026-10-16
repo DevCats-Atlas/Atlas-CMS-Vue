@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const props = defineProps({
     field: {
@@ -11,6 +12,8 @@ const props = defineProps({
         required: true,
     },
 });
+
+const { t } = useTranslation();
 
 const listType = computed(() => props.field.config?.list_type || 'static');
 const options = computed(() => props.field.options ?? props.field.config?.options ?? []);
@@ -43,7 +46,7 @@ const selectedOption = computed(() => {
 });
 
 const displayValue = computed(() => {
-    return selectedOption.value?.label || 'Select…';
+    return selectedOption.value?.label || t('admin.interfaces.select_placeholder');
 });
 
 const scrollToSelected = async () => {
@@ -177,7 +180,7 @@ onUnmounted(() => {
                             v-model="searchTerm"
                             type="text"
                             class="form-input text-sm w-full"
-                            placeholder="Search options..."
+                            :placeholder="t('admin.interfaces.search_options')"
                             autocomplete="off"
                             @keydown.escape="closeDropdown"
                         />
@@ -211,21 +214,21 @@ onUnmounted(() => {
                     
                     <!-- Results count -->
                     <div v-if="searchTerm && filteredOptions.length > 0" class="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                        Showing {{ filteredOptions.length }} of {{ options.length }} options
+                        {{ t('admin.interfaces.options_shown', { shown: filteredOptions.length, total: options.length }) }}
                     </div>
                 </div>
             </div>
             
             <!-- Regular select for small lists -->
             <select v-else v-model="model.default" class="form-select">
-                <option value="" disabled>Select…</option>
+                <option value="" disabled>{{ t('admin.interfaces.select_placeholder') }}</option>
                 <option v-for="option in options" :key="option.key" :value="option.key">
                     {{ formatOptionLabel(option) }}
                 </option>
             </select>
             
             <p class="text-xs text-gray-500 dark:text-gray-400" v-if="listType === 'dynamic' && options.length === 0">
-                No items found for the configured root.
+                {{ t('admin.interfaces.no_root_items') }}
             </p>
         </div>
     </div>

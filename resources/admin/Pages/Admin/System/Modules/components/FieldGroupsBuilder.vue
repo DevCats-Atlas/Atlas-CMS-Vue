@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const props = defineProps({
     columns: {
@@ -15,6 +16,8 @@ const props = defineProps({
         default: () => ({}),
     },
 });
+
+const { t } = useTranslation();
 
 const emit = defineEmits(['update:groups']);
 
@@ -66,7 +69,7 @@ const getColumnDisplay = (columnName) => {
 const addGroup = () => {
     const newGroup = {
         id: `group_${Date.now()}`,
-        title: `Group ${groups.value.length + 1}`,
+        title: t('admin.field_groups.new_group', { number: groups.value.length + 1 }),
         fields: [],
     };
     groups.value.push(newGroup);
@@ -284,7 +287,7 @@ watch(() => props.initialGroups, () => {
         <!-- Left Column: Ungrouped Fields -->
         <div class="space-y-3">
             <div class="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                Available Fields
+                {{ t('admin.field_groups.available') }}
             </div>
             
             <div
@@ -299,7 +302,7 @@ watch(() => props.initialGroups, () => {
                 @drop="onDropToUngrouped"
             >
                 <div v-if="ungroupedFields.length === 0" class="text-xs text-gray-400 dark:text-gray-500 text-center py-4">
-                    All fields are assigned to groups
+                    {{ t('admin.field_groups.all_assigned') }}
                 </div>
                 
                 <div v-else class="space-y-1.5">
@@ -325,7 +328,7 @@ watch(() => props.initialGroups, () => {
             </div>
             
             <p class="text-xs text-gray-500 dark:text-gray-400">
-                Drag fields to groups on the right, or leave them here to display without grouping.
+                {{ t('admin.field_groups.available_hint') }}
             </p>
         </div>
         
@@ -333,7 +336,7 @@ watch(() => props.initialGroups, () => {
         <div class="space-y-3">
             <div class="flex items-center justify-between">
                 <div class="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                    Field Groups
+                    {{ t('admin.field_groups.groups') }}
                 </div>
                 <button
                     type="button"
@@ -343,12 +346,12 @@ watch(() => props.initialGroups, () => {
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    Add Group
+                    {{ t('admin.field_groups.add') }}
                 </button>
             </div>
             
             <div v-if="groups.length === 0" class="text-xs text-gray-400 dark:text-gray-500 text-center py-8 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded">
-                No groups yet. Click "Add Group" to create one.
+                {{ t('admin.field_groups.empty') }}
             </div>
             
             <div v-else class="space-y-3">
@@ -428,7 +431,7 @@ watch(() => props.initialGroups, () => {
                                 <span
                                     @dblclick="startEditingTitle(group)"
                                     class="text-sm font-medium text-gray-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
-                                    title="Double-click to edit"
+                                    :title="t('admin.field_groups.rename_hint')"
                                 >
                                     {{ group.title }}
                                 </span>
@@ -437,7 +440,7 @@ watch(() => props.initialGroups, () => {
                         
                         <!-- Field count -->
                         <span class="text-xs text-gray-400 dark:text-gray-500">
-                            {{ group.fields.length }} field{{ group.fields.length !== 1 ? 's' : '' }}
+                            {{ t('admin.field_groups.field_count', { count: group.fields.length }) }}
                         </span>
                         
                         <!-- Delete button -->
@@ -445,7 +448,7 @@ watch(() => props.initialGroups, () => {
                             type="button"
                             @click="removeGroup(group.id)"
                             class="p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
-                            title="Delete group"
+                            :title="t('admin.field_groups.delete')"
                         >
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -466,7 +469,7 @@ watch(() => props.initialGroups, () => {
                             @drop="(e) => { if (draggedField && draggedGroup === null) { e.stopPropagation(); onDropToGroup(e, group.id); } }"
                         >
                         <div v-if="group.fields.length === 0" class="text-xs text-gray-400 dark:text-gray-500 text-center py-3">
-                            Drop fields here
+                            {{ t('admin.field_groups.drop_here') }}
                         </div>
                         
                         <div v-else class="space-y-1">
@@ -515,7 +518,7 @@ watch(() => props.initialGroups, () => {
                                     type="button"
                                     @click.stop="removeFieldFromGroup(group, fieldName)"
                                     class="p-0.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
-                                    title="Remove from group"
+                                    :title="t('admin.field_groups.remove_field')"
                                 >
                                     <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -541,7 +544,7 @@ watch(() => props.initialGroups, () => {
             </div>
             
             <p class="text-xs text-gray-500 dark:text-gray-400">
-                Groups will be displayed as collapsible sections on the edit form. Double-click group title to rename.
+                {{ t('admin.field_groups.footer_hint') }}
             </p>
         </div>
     </div>

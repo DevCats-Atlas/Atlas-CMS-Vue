@@ -4,6 +4,7 @@ import { ref, computed, watch } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
 import ModalDialog from '@/components/ModalDialog.vue';
 import { confirmDialog } from '@/utils/confirmDialog.js';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const props = defineProps({
     itemTypeId: {
@@ -27,6 +28,8 @@ const props = defineProps({
         default: () => [],
     },
 });
+
+const { t } = useTranslation();
 
 const modalOpen = ref(false);
 const editingField = ref(null);
@@ -224,9 +227,9 @@ const reorderInterface = (field, direction) => {
 
 const deleteInterface = async (field) => {
     const confirmed = await confirmDialog({
-        title: 'Delete field',
-        message: `Delete interface "${field.title}"?`,
-        confirmLabel: 'Delete',
+        title: t('admin.item_types.delete_interface'),
+        message: t('admin.item_types.delete_interface_confirm', { title: field.title }),
+        confirmLabel: t('admin.common.delete'),
         intent: 'danger',
     });
 
@@ -244,9 +247,9 @@ const deleteInterface = async (field) => {
 <template>
     <div class="space-y-3 border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
         <div class="flex items-center justify-between">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Interfaces</h3>
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ t('admin.item_types.interfaces') }}</h3>
             <button type="button" class="btn btn-primary" @click="openCreateModal">
-                Add interface
+                {{ t('admin.item_types.add_interface') }}
             </button>
        </div>
 
@@ -259,20 +262,20 @@ const deleteInterface = async (field) => {
                 <div>
                     <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ field.title }}</p>
                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                        {{ optionMap[field.type] || 'Custom' }} · Order {{ field.order }}
-                        <span v-if="field.node">· Node {{ field.node }}</span>
-                        <span v-if="field.related_item_type_label">· Linked type {{ field.related_item_type_label }}</span>
-                        <span v-if="field.view_type">· View {{ field.view_type }}</span>
-                        <span v-if="field.root_id">· Root {{ field.root_id }}</span>
-                        <span v-if="field.relationship">· Relationship {{ field.relationship }}</span>
-                        <span v-if="field.type === 'categories' && field.filter_item_type_id">· Filter type {{ field.filter_item_type_label || field.filter_item_type_id }}</span>
-                        <span v-if="field.type === 'categories' && field.with_children">· With children</span>
+                        {{ optionMap[field.type] || t('admin.item_types.custom_interface') }} · {{ t('admin.item_types.meta_order', { value: field.order }) }}
+                        <span v-if="field.node">· {{ t('admin.item_types.meta_node', { value: field.node }) }}</span>
+                        <span v-if="field.related_item_type_label">· {{ t('admin.item_types.meta_linked_type', { value: field.related_item_type_label }) }}</span>
+                        <span v-if="field.view_type">· {{ t('admin.item_types.meta_view', { value: field.view_type }) }}</span>
+                        <span v-if="field.root_id">· {{ t('admin.item_types.meta_root', { value: field.root_id }) }}</span>
+                        <span v-if="field.relationship">· {{ t('admin.item_types.meta_relationship', { value: field.relationship }) }}</span>
+                        <span v-if="field.type === 'categories' && field.filter_item_type_id">· {{ t('admin.item_types.meta_filter_type', { value: field.filter_item_type_label || field.filter_item_type_id }) }}</span>
+                        <span v-if="field.type === 'categories' && field.with_children">· {{ t('admin.item_types.meta_with_children') }}</span>
                         <span v-if="field.type === 'select' && field.list_type === 'static'">
-                            · Static select ({{ field.options?.length || 0 }} options)
+                            · {{ t('admin.item_types.meta_static_select', { count: field.options?.length || 0 }) }}
                         </span>
                         <span v-if="field.type === 'select' && field.list_type === 'dynamic' && field.select_root_id">
-                            · Dynamic select root {{ field.select_root_id }}
-                            <span v-if="field.select_item_type_id">· Filter type {{ field.select_item_type_label || field.select_item_type_id }}</span>
+                            · {{ t('admin.item_types.meta_dynamic_select', { value: field.select_root_id }) }}
+                            <span v-if="field.select_item_type_id">· {{ t('admin.item_types.meta_filter_type', { value: field.select_item_type_label || field.select_item_type_id }) }}</span>
                         </span>
                     </p>
                 </div>
@@ -282,42 +285,42 @@ const deleteInterface = async (field) => {
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
                         : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'"
                 >
-                    {{ field.visible ? 'Visible' : 'Hidden' }}
+                    {{ field.visible ? t('admin.items.visible') : t('admin.items.hidden') }}
                 </span>
             </div>
             <div class="flex flex-wrap items-center gap-2 text-sm">
-                <button class="btn btn-outline" @click="reorderInterface(field, 'up')">↑</button>
-                <button class="btn btn-outline" @click="reorderInterface(field, 'down')">↓</button>
+                <button type="button" class="btn btn-outline" :title="t('admin.module_settings.move_up')" @click="reorderInterface(field, 'up')">↑</button>
+                <button type="button" class="btn btn-outline" :title="t('admin.module_settings.move_down')" @click="reorderInterface(field, 'down')">↓</button>
                 <button class="btn btn-outline" @click="toggleInterface(field)">
-                    {{ field.visible ? 'Hide' : 'Show' }}
+                    {{ field.visible ? t('admin.module_settings.hide') : t('admin.module_settings.show') }}
                 </button>
-                <button class="btn btn-outline" @click="openEditModal(field)">Edit</button>
-                <button class="btn btn-outline-danger" @click="deleteInterface(field)">Delete</button>
+                <button type="button" class="btn btn-outline" @click="openEditModal(field)">{{ t('admin.common.edit') }}</button>
+                <button type="button" class="btn btn-outline-danger" @click="deleteInterface(field)">{{ t('admin.common.delete') }}</button>
             </div>
         </div>
-        <p v-if="interfaces.length === 0" class="text-sm text-gray-500 dark:text-gray-400">No interfaces yet.</p>
+        <p v-if="interfaces.length === 0" class="text-sm text-gray-500 dark:text-gray-400">{{ t('admin.item_types.no_interfaces') }}</p>
     </div>
 
-    <ModalDialog :open="modalOpen" :title="editingField ? 'Edit interface' : 'Create interface'" @close="closeModal">
+    <ModalDialog :open="modalOpen" :title="editingField ? t('admin.item_types.edit_interface') : t('admin.item_types.create_interface')" @close="closeModal">
         <form class="space-y-4" @submit.prevent="submit">
             <div>
-                <label class="form-label">Title</label>
+                <label class="form-label">{{ t('admin.common.title_label') }}</label>
                 <input v-model="form.title" type="text" class="form-input" required />
                 <p v-if="form.errors.title" class="mt-1 text-sm text-red-600">{{ form.errors.title }}</p>
             </div>
             <div>
                 <label class="inline-flex items-center text-sm text-gray-700 dark:text-gray-300">
                     <input v-model="form.hide_title" type="checkbox" class="form-checkbox" />
-                    <span class="ml-2">Hide title</span>
+                    <span class="ml-2">{{ t('admin.item_types.hide_title') }}</span>
                 </label>
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    When enabled, the field title will not be displayed when rendering this interface.
+                    {{ t('admin.item_types.hide_title_hint') }}
                 </p>
             </div>
             <div>
-                <label class="form-label">Interface type</label>
+                <label class="form-label">{{ t('admin.item_types.interface_type') }}</label>
                 <select v-model="form.type" class="form-select" required>
-                    <option value="" disabled>Select type</option>
+                    <option value="" disabled>{{ t('admin.module_settings.select_type') }}</option>
                     <option v-for="option in interfaceOptions" :key="option.value" :value="option.value">
                         {{ option.label }}
                     </option>
@@ -325,45 +328,46 @@ const deleteInterface = async (field) => {
                 <p v-if="form.errors.type" class="mt-1 text-sm text-red-600">{{ form.errors.type }}</p>
             </div>
             <div v-if="['text', 'file', 'date', 'select', 'textarea', 'wysiwyg'].includes(form.type)">
-                <label class="form-label">Node</label>
+                <label class="form-label">{{ t('admin.item_types.node') }}</label>
                 <input v-model="form.node" type="text" class="form-input" required />
                 <p v-if="form.errors.node" class="mt-1 text-sm text-red-600">{{ form.errors.node }}</p>
             </div>
             <div class="flex gap-3">
                 <label class="inline-flex items-center text-sm text-gray-700 dark:text-gray-300">
                     <input v-model="form.visible" type="checkbox" class="form-checkbox" />
-                    <span class="ml-2">Visible</span>
+                    <span class="ml-2">{{ t('admin.items.visible') }}</span>
                 </label>
                 <label
                     v-if="['text', 'file', 'date', 'select', 'textarea', 'wysiwyg'].includes(form.type)"
                     class="inline-flex items-center text-sm text-gray-700 dark:text-gray-300"
                 >
                     <input v-model="form.multilanguage" type="checkbox" class="form-checkbox" />
-                    <span class="ml-2">Multilanguage</span>
+                    <span class="ml-2">{{ t('admin.item_types.multilanguage') }}</span>
                 </label>
             </div>
             <div v-if="form.type === 'select'" class="space-y-4">
                 <div>
-                    <label class="form-label">List type</label>
+                    <label class="form-label">{{ t('admin.item_types.list_type') }}</label>
                     <select v-model="form.list_type" class="form-select" required>
-                        <option value="static">Static list</option>
-                        <option value="dynamic">Dynamic (linked)</option>
+                        <option value="static">{{ t('admin.item_types.static_list') }}</option>
+                        <option value="dynamic">{{ t('admin.item_types.dynamic_list') }}</option>
                     </select>
                     <p v-if="form.errors.list_type" class="mt-1 text-sm text-red-600">
                         {{ form.errors.list_type }}
                     </p>
                 </div>
                 <div v-if="form.list_type === 'static'">
-                    <label class="form-label">Options</label>
+                    <label class="form-label">{{ t('admin.item_types.options') }}</label>
                     <textarea
                         v-model="form.options_raw"
                         rows="4"
                         class="form-input"
+                        translate="no"
                         placeholder="key=Label"
                         required
                     ></textarea>
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Enter one option per line using the format <code>key=Label</code>.
+                        {{ t('admin.item_types.options_hint') }} <code>key=Label</code>.
                     </p>
                     <p v-if="form.errors.options_raw" class="mt-1 text-sm text-red-600">
                         {{ form.errors.options_raw }}
@@ -371,22 +375,22 @@ const deleteInterface = async (field) => {
                 </div>
                 <div v-else-if="form.list_type === 'dynamic'" class="space-y-4">
                     <div>
-                        <label class="form-label">Root ID</label>
+                        <label class="form-label">{{ t('admin.item_types.root_id') }}</label>
                         <input v-model="form.select_root_id" type="text" class="form-input" required />
                         <p v-if="form.errors.select_root_id" class="mt-1 text-sm text-red-600">
                             {{ form.errors.select_root_id }}
                         </p>
                     </div>
                     <div>
-                        <label class="form-label">Item type</label>
+                        <label class="form-label">{{ t('admin.items.item_type') }}</label>
                         <select v-model="form.select_item_type_id" class="form-select">
-                            <option value="">All item types</option>
+                            <option value="">{{ t('admin.item_types.all_item_types') }}</option>
                             <option v-for="type in itemTypeChoices" :key="type.id" :value="String(type.id)">
                                 {{ type.label }}
                             </option>
                         </select>
                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Filter items by item type. Leave empty to show all items.
+                            {{ t('admin.item_types.select_filter_hint') }}
                         </p>
                         <p v-if="form.errors.select_item_type_id" class="mt-1 text-sm text-red-600">
                             {{ form.errors.select_item_type_id }}
@@ -396,9 +400,9 @@ const deleteInterface = async (field) => {
             </div>
             <div v-if="form.type === 'children'" class="grid gap-4 md:grid-cols-2">
                 <div>
-                    <label class="form-label">Item type</label>
+                    <label class="form-label">{{ t('admin.items.item_type') }}</label>
                     <select v-model="form.related_item_type_id" class="form-select" required>
-                        <option value="" disabled>Select item type</option>
+                        <option value="" disabled>{{ t('admin.item_types.select_item_type') }}</option>
                         <option v-for="type in itemTypeChoices" :key="type.id" :value="String(type.id)">
                             {{ type.label }}
                         </option>
@@ -408,38 +412,38 @@ const deleteInterface = async (field) => {
                     </p>
                 </div>
                 <div>
-                    <label class="form-label">View type</label>
+                    <label class="form-label">{{ t('admin.item_types.view_type') }}</label>
                     <select v-model="form.view_type" class="form-select" required>
-                        <option value="list">List</option>
-                        <option value="gallery">Gallery</option>
+                        <option value="list">{{ t('admin.item_types.view_list') }}</option>
+                        <option value="gallery">{{ t('admin.item_types.view_gallery') }}</option>
                     </select>
                 </div>
             </div>
             <div v-if="form.type === 'categories'" class="grid gap-4 md:grid-cols-2">
                 <div>
-                    <label class="form-label">Root ID</label>
+                    <label class="form-label">{{ t('admin.item_types.root_id') }}</label>
                     <input v-model="form.root_id" type="text" class="form-input" required />
                     <p v-if="form.errors.root_id" class="mt-1 text-sm text-red-600">
                         {{ form.errors.root_id }}
                     </p>
                 </div>
                 <div>
-                    <label class="form-label">Item Type</label>
+                    <label class="form-label">{{ t('admin.items.item_type') }}</label>
                     <select v-model="form.filter_item_type_id" class="form-select">
-                        <option value="">All item types</option>
+                        <option value="">{{ t('admin.item_types.all_item_types') }}</option>
                         <option v-for="type in itemTypeChoices" :key="type.id" :value="String(type.id)">
                             {{ type.label }}
                         </option>
                     </select>
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Filter categories to only show items of the selected type. Leave empty to show all types.
+                        {{ t('admin.item_types.categories_filter_hint') }}
                     </p>
                     <p v-if="form.errors.filter_item_type_id" class="mt-1 text-sm text-red-600">
                         {{ form.errors.filter_item_type_id }}
                     </p>
                 </div>
                 <div>
-                    <label class="form-label">Relationship</label>
+                    <label class="form-label">{{ t('admin.item_types.relationship') }}</label>
                     <input v-model="form.relationship" type="text" class="form-input" required />
                     <p v-if="form.errors.relationship" class="mt-1 text-sm text-red-600">
                         {{ form.errors.relationship }}
@@ -448,29 +452,29 @@ const deleteInterface = async (field) => {
                 <div class="md:col-span-2">
                     <label class="inline-flex items-center text-sm text-gray-700 dark:text-gray-300">
                         <input v-model="form.with_children" type="checkbox" class="form-checkbox" />
-                        <span class="ml-2">With children</span>
+                        <span class="ml-2">{{ t('admin.item_types.with_children') }}</span>
                     </label>
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        When enabled, this interface will list all descendants of the configured root item (not just direct children).
+                        {{ t('admin.item_types.with_children_hint') }}
                     </p>
                 </div>
             </div>
             <div v-if="form.type === 'custom'">
-                <label class="form-label">Interface Path</label>
+                <label class="form-label">{{ t('admin.item_types.interface_path') }}</label>
                 <input v-model="form.interface_path" type="text" class="form-input" required />
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    The path to the custom interface component relative to <code class="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">resources/admin/Custom/Interfaces/</code>.
+                    {{ t('admin.item_types.interface_path_hint') }} <code class="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">resources/admin/Custom/Interfaces/</code>.
                     <br />
-                    Example: If you enter <code class="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">Posts/Analytics</code>, the system will load the component from <code class="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">resources/admin/Custom/Interfaces/Posts/Analytics.vue</code>.
+                    {{ t('admin.item_types.interface_path_example') }} <code class="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">Posts/Analytics</code> {{ t('admin.item_types.interface_path_example_loads') }} <code class="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">resources/admin/Custom/Interfaces/Posts/Analytics.vue</code>.
                 </p>
                 <p v-if="form.errors.interface_path" class="mt-1 text-sm text-red-600">
                     {{ form.errors.interface_path }}
                 </p>
             </div>
             <div class="actions-footer">
-                <button type="button" class="btn-text" @click="closeModal">Cancel</button>
+                <button type="button" class="btn-text" @click="closeModal">{{ t('admin.common.cancel') }}</button>
                 <button type="submit" class="btn btn-primary" :disabled="form.processing">
-                    {{ form.processing ? (editingField ? 'Saving…' : 'Creating…') : (editingField ? 'Save interface' : 'Create interface') }}
+                    {{ form.processing ? (editingField ? t('admin.users.saving') : t('admin.items.creating')) : (editingField ? t('admin.item_types.save_interface') : t('admin.item_types.create_interface')) }}
                 </button>
             </div>
         </form>

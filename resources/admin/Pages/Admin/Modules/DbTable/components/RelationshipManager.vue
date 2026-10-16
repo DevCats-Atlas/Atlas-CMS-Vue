@@ -6,7 +6,6 @@ import axios from 'axios';
 import RelationshipList from './RelationshipList.vue';
 import RelationshipSelector from './RelationshipSelector.vue';
 import RelationshipCreateForm from './RelationshipCreateForm.vue';
-import ToastStack from '@/components/ToastStack.vue';
 import { useToast } from '@/composables/useToast.js';
 import { useTranslation } from '@admin/js/utils/useTranslation';
 
@@ -31,7 +30,7 @@ const props = defineProps({
     },
 });
 
-const { toasts, showToast, dismissToast } = useToast();
+const { showToast } = useToast();
 
 const activeTab = ref(0);
 const relationshipData = ref({});
@@ -274,7 +273,7 @@ const handleRecordCreated = async (newRecordId, relationship) => {
             <div v-show="activeTab === index" class="space-y-4">
                 <!-- Loading state -->
                 <div v-if="loading[getRelationshipName(relationship)]" class="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
-                    Loading...
+                    {{ t('admin.common.loading') }}
                 </div>
 
                 <!-- Error state -->
@@ -287,7 +286,7 @@ const handleRecordCreated = async (newRecordId, relationship) => {
                         </div>
                         <div class="ml-3 flex-1">
                             <h3 class="text-sm font-medium text-red-800 dark:text-red-200">
-                                Error Loading Relationship
+                                {{ t('admin.relationships.load_error') }}
                             </h3>
                             <p class="mt-2 text-sm text-red-700 dark:text-red-300">
                                 {{ relationshipErrors[getRelationshipName(relationship)] }}
@@ -298,7 +297,7 @@ const handleRecordCreated = async (newRecordId, relationship) => {
                                     @click.prevent="loadRelationship(relationship, index)"
                                     class="text-sm font-medium text-red-800 dark:text-red-200 hover:text-red-600 dark:hover:text-red-400"
                                 >
-                                    Try Again
+                                    {{ t('admin.relationships.try_again') }}
                                 </button>
                             </div>
                         </div>
@@ -313,7 +312,7 @@ const handleRecordCreated = async (newRecordId, relationship) => {
                                 {{ getRelationshipName(relationship) }}
                             </h5>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                {{ getTypeLabel(relationship.type) }} relationship with {{ relationship.related_table }}
+                                {{ t('admin.relationships.description', { type: getTypeLabel(relationship.type), table: relationship.related_table }) }}
                             </p>
                         </div>
                         <button
@@ -422,6 +421,5 @@ const handleRecordCreated = async (newRecordId, relationship) => {
     </div>
     
     <!-- Toast notifications -->
-    <ToastStack :toasts="toasts" @dismiss="dismissToast" />
 </template>
 

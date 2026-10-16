@@ -4,10 +4,12 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import axios from 'axios';
 import { confirmDialog } from '@/utils/confirmDialog.js';
+import { useToast } from '@/composables/useToast.js';
 import RelationshipEditForm from './RelationshipEditForm.vue';
 import { useTranslation } from '@admin/js/utils/useTranslation';
 
 const { t } = useTranslation();
+const { showToast } = useToast();
 
 const props = defineProps({
     relationship: {
@@ -255,11 +257,11 @@ const handleBelongsToUpdate = async () => {
         if (response.data.success) {
             handleUpdated();
         } else {
-            alert(response.data.error || t('admin.errors.relationship_attach_failed'));
+            showToast({ title: response.data.error || t('admin.errors.relationship_attach_failed'), intent: 'danger' });
         }
     } catch (error) {
         console.error('Error updating belongsTo relationship:', error);
-        alert(error.response?.data?.error || error.message || t('admin.errors.relationship_attach_failed'));
+        showToast({ title: error.response?.data?.error || error.message || t('admin.errors.relationship_attach_failed'), intent: 'danger' });
     }
 };
 
@@ -377,11 +379,11 @@ const removeRelationship = async (relatedRecordId, event) => {
                 props.onRemove(relatedRecordId);
             }
         } else {
-            alert(response.data.error || t('admin.errors.relationship_detach_failed'));
+            showToast({ title: response.data.error || t('admin.errors.relationship_detach_failed'), intent: 'danger' });
         }
     } catch (error) {
         console.error('Error removing relationship:', error);
-        alert(error.response?.data?.error || error.message || t('admin.errors.relationship_detach_failed'));
+        showToast({ title: error.response?.data?.error || error.message || t('admin.errors.relationship_detach_failed'), intent: 'danger' });
     }
 };
 
@@ -534,7 +536,7 @@ const formatValue = (value, column) => {
                                         class="btn btn-sm btn-outline"
                                         target="_blank"
                                     >
-                                        View
+                                        {{ t('admin.relationships.view') }}
                                     </Link>
                                     <button
                                         v-if="showEditButton"
@@ -576,7 +578,7 @@ const formatValue = (value, column) => {
                     <div v-if="isBelongsTo" class="space-y-4">
                         <div class="flex items-center justify-between mb-4">
                             <h6 class="text-sm font-medium text-gray-900 dark:text-white">
-                                Select Related Record
+                                {{ t('admin.relationships.select_related_record') }}
                             </h6>
                             <div class="flex items-center gap-2">
                                 <button
@@ -585,21 +587,21 @@ const formatValue = (value, column) => {
                                     class="btn btn-sm btn-primary"
                                     :disabled="belongsToLoading"
                                 >
-                                    Save
+                                    {{ t('admin.common.save') }}
                                 </button>
                                 <button
                                     type="button"
                                     @click.prevent="cancelEdit"
                                     class="btn btn-sm btn-outline"
                                 >
-                                    Cancel
+                                    {{ t('admin.common.cancel') }}
                                 </button>
                             </div>
                         </div>
                         
                         <!-- Search input if more than 100 records -->
                         <div v-if="belongsToRequiresSearch" class="mb-4">
-                            <label class="form-label">Search</label>
+                            <label class="form-label">{{ t('admin.common.search') }}</label>
                             <input
                                 v-model="belongsToSearchQuery"
                                 type="text"
@@ -614,13 +616,13 @@ const formatValue = (value, column) => {
                         
                         <!-- Select dropdown -->
                         <div>
-                            <label class="form-label">Related Record</label>
+                            <label class="form-label">{{ t('admin.relationships.related_record') }}</label>
                             <select
                                 v-model="selectedRelatedId"
                                 class="form-select"
                                 :disabled="belongsToLoading || (belongsToRequiresSearch && !belongsToSearchQuery.trim())"
                             >
-                                <option :value="null">-- None --</option>
+                                <option :value="null">{{ t('admin.relationships.none_option') }}</option>
                                 <option
                                     v-for="option in belongsToOptions"
                                     :key="option[primaryKeyColumn]"
@@ -630,7 +632,7 @@ const formatValue = (value, column) => {
                                 </option>
                             </select>
                             <p v-if="belongsToLoading" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Loading...
+                                {{ t('admin.common.loading') }}
                             </p>
                             <p v-else-if="belongsToRequiresSearch && !belongsToSearchQuery.trim()" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                 {{ t('admin.common.please_search') }}
@@ -662,7 +664,7 @@ const formatValue = (value, column) => {
                             class="btn btn-sm btn-outline"
                             target="_blank"
                         >
-                            View
+                            {{ t('admin.relationships.view') }}
                         </Link>
                         <button
                             v-if="showEditButton"
@@ -671,16 +673,16 @@ const formatValue = (value, column) => {
                             class="btn btn-sm btn-outline"
                             :title="t('admin.common.edit')"
                         >
-                            Edit
+                            {{ t('admin.common.edit') }}
                         </button>
                         <button
                             v-if="canRemove"
                             type="button"
                             @click.prevent="removeRelationship(getRecordId(record), $event)"
                             class="btn btn-sm btn-danger"
-                            title="Remove relationship"
+                            :title="t('admin.relationships.remove_relationship')"
                         >
-                            Remove
+                            {{ t('admin.relationships.remove') }}
                         </button>
                     </div>
                 </div>

@@ -3,7 +3,6 @@ import { adminUrl } from '@/utils/adminUrl';
 import { computed, watch } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
-import ToastStack from '@/components/ToastStack.vue';
 import { useToast } from '@/composables/useToast.js';
 import RelationshipManager from './components/RelationshipManager.vue';
 import CustomButtons from '../components/CustomButtons.vue';
@@ -78,7 +77,7 @@ const props = defineProps({
 });
 
 const baseUrl = computed(() => adminUrl(`${props.moduleHandle}`));
-const { toasts, showToast, dismissToast } = useToast();
+const { showToast } = useToast();
 
 // Watch for flash messages and show them as toasts
 watch(() => page.props.flash, (flash) => {
@@ -166,8 +165,8 @@ const formatCastDisplay = (html) => {
                         <div>
                             <h1 class="heading-1">{{ title }}</h1>
                             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                Table: <code class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">{{ tableName }}</code>
-                                · ID: <code class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">{{ recordId }}</code>
+                                {{ t('admin.db_table.table') }} <code class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">{{ tableName }}</code>
+                                · {{ t('admin.db_table.record_id') }} <code class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">{{ recordId }}</code>
                             </p>
                         </div>
                         <div class="flex items-center gap-3">
@@ -179,7 +178,7 @@ const formatCastDisplay = (html) => {
                                 :data-source="dataSource"
                             />
                             <Link :href="baseUrl" class="btn btn-outline">
-                                Back to list
+                                {{ t('admin.users.back_to_list') }}
                             </Link>
                         </div>
                     </div>
@@ -228,7 +227,7 @@ const formatCastDisplay = (html) => {
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 bg-white lg:mx-8 shadow-lg border-t border-gray-200 dark:border-gray-700 rounded-xl">
                 <div class="flex items-center justify-between gap-4">
                     <Link :href="baseUrl" class="btn-text">
-                        Cancel
+                        {{ t('admin.common.cancel') }}
                     </Link>
                     <button
                         type="button"
@@ -241,8 +240,6 @@ const formatCastDisplay = (html) => {
                 </div>
             </div>
         </div>
-        
-        <ToastStack :toasts="toasts" @dismiss="dismissToast" />
     </AdminLayout>
 </template>
 

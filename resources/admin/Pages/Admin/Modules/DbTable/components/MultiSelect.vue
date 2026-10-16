@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const props = defineProps({
     options: {
@@ -27,6 +28,8 @@ const props = defineProps({
         default: null, // Callback for async loading
     },
 });
+
+const { t } = useTranslation();
 
 const emit = defineEmits(['update:modelValue']);
 
@@ -227,7 +230,7 @@ onUnmounted(() => {
                         </button>
                     </span>
                     <span v-if="selectedValues.length > 2" class="text-sm text-gray-600 dark:text-gray-400">
-                        +{{ selectedValues.length - 2 }} more
+                        {{ t('admin.interfaces.more', { count: selectedValues.length - 2 }) }}
                     </span>
                 </template>
             </div>
@@ -248,7 +251,7 @@ onUnmounted(() => {
                     v-model="searchTerm"
                     type="text"
                     class="form-input text-sm w-full"
-                    placeholder="Search options..."
+                    :placeholder="t('admin.interfaces.search_options')"
                     autocomplete="off"
                     @keydown.escape="closeDropdown"
                 />
@@ -283,7 +286,7 @@ onUnmounted(() => {
             
             <!-- Results count -->
             <div v-if="searchTerm && filteredOptions.length > 0" class="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                Showing {{ filteredOptions.length }} of {{ options.length }} options
+                {{ t('admin.interfaces.options_shown', { shown: filteredOptions.length, total: options.length }) }}
             </div>
         </div>
     </div>

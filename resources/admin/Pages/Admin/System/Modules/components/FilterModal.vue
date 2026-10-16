@@ -1,5 +1,7 @@
 <script setup>
 import { ref, watch, computed, onMounted, nextTick } from 'vue';
+import { useToast } from '@/composables/useToast.js';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const props = defineProps({
     open: {
@@ -27,6 +29,9 @@ const props = defineProps({
         default: () => [],
     },
 });
+
+const { t } = useTranslation();
+const { showToast } = useToast();
 
 const emit = defineEmits(['close', 'save']);
 
@@ -158,8 +163,8 @@ const availableRelationships = computed(() => {
 
 // Cache relationship operator options to prevent unnecessary re-renders
 const relationshipOperatorOptions = [
-    { value: 'equals', label: 'Equals' },
-    { value: 'in', label: 'In (Multiple)' },
+    { value: 'equals', label: t('admin.filters.operators.equals') },
+    { value: 'in', label: t('admin.filters.operators.in') },
 ];
 
 const operatorOptions = computed(() => {
@@ -176,38 +181,38 @@ const operatorOptions = computed(() => {
         const fieldConfig = props.uiConfig[formData.value.field];
         if (!fieldConfig) {
             return [
-                { value: 'equals', label: 'Equals' },
-                { value: 'contains', label: 'Contains' },
-                { value: 'not_equals', label: 'Not Equals' },
+                { value: 'equals', label: t('admin.filters.operators.equals') },
+                { value: 'contains', label: t('admin.filters.operators.contains') },
+                { value: 'not_equals', label: t('admin.filters.operators.not_equals') },
             ];
         }
         
         const interfaceType = fieldConfig.interface;
         if (interfaceType === 'datetime' || interfaceType === 'date') {
             return [
-                { value: 'equals', label: 'Equals' },
-                { value: 'range', label: 'Range (From/To)' },
-                { value: 'after', label: 'After' },
-                { value: 'before', label: 'Before' },
+                { value: 'equals', label: t('admin.filters.operators.equals') },
+                { value: 'range', label: t('admin.filters.operators.range_dates') },
+                { value: 'after', label: t('admin.filters.operators.after') },
+                { value: 'before', label: t('admin.filters.operators.before') },
             ];
         }
         if (interfaceType === 'checkbox') {
             return [
-                { value: 'equals', label: 'Equals' },
+                { value: 'equals', label: t('admin.filters.operators.equals') },
             ];
         }
         if (interfaceType === 'select') {
             return [
-                { value: 'equals', label: 'Equals' },
-                { value: 'in', label: 'In (Multiple)' },
+                { value: 'equals', label: t('admin.filters.operators.equals') },
+                { value: 'in', label: t('admin.filters.operators.in') },
             ];
         }
         // For number/text fields
         return [
-            { value: 'equals', label: 'Equals' },
-            { value: 'contains', label: 'Contains' },
-            { value: 'not_equals', label: 'Not Equals' },
-            { value: 'range', label: 'Range (Min/Max)' },
+            { value: 'equals', label: t('admin.filters.operators.equals') },
+            { value: 'contains', label: t('admin.filters.operators.contains') },
+            { value: 'not_equals', label: t('admin.filters.operators.not_equals') },
+            { value: 'range', label: t('admin.filters.operators.range_numbers') },
         ];
     }
     
@@ -242,12 +247,12 @@ const submit = () => {
     // Validate required fields based on type
     if (currentType === 'search') {
         if (!currentLabel) {
-            alert('Label is required for search filters');
+            showToast({ title: t('admin.filters.label_required'), intent: 'danger' });
             return;
         }
     } else if (currentType === 'field') {
         if (!currentField) {
-            alert('Field is required for field filters');
+            showToast({ title: t('admin.filters.field_required'), intent: 'danger' });
             return;
         }
         if (!currentLabel) {
@@ -255,7 +260,7 @@ const submit = () => {
         }
     } else if (currentType === 'relationship') {
         if (!currentRelationship || currentRelationship.trim() === '') {
-            alert('Relationship is required for relationship filters');
+            showToast({ title: t('admin.filters.relationship_required'), intent: 'danger' });
             return;
         }
         const relationship = availableRelationships.value.find(r => r.related_table === currentRelationship);
@@ -302,7 +307,7 @@ const toggleColumn = (column) => {
         <div class="w-full max-w-4xl rounded-2xl bg-white dark:bg-gray-800 shadow-xl flex flex-col max-h-[90vh]">
             <div class="modal-header">
                 <h3 class="section-heading">
-                    {{ isEditMode ? 'Edit Filter' : 'Create Filter' }}
+                    {{ isEditMode ? t('admin.filters.edit') : t('admin.filters.create') }}
                 </h3>
                 <button
                     type="button"
@@ -316,18 +321,18 @@ const toggleColumn = (column) => {
                 <form @submit.prevent="submit" class="space-y-4">
                     <!-- Filter Type -->
                     <div>
-                        <label class="form-label">Filter Type <span class="text-red-500">*</span></label>
+                        <label class="form-label">{{ t('admin.filters.type') }} <span class="text-red-500">*</span></label>
                         <select
                             v-model="formData.type"
                             class="form-select"
                             required
                         >
-                            <option value="search">Search Filter</option>
-                            <option value="field">Field Filter</option>
-                            <option value="relationship">Relationship Filter</option>
+                            <option value="search">{{ t('admin.filters.type_search') }}</option>
+                            <option value="field">{{ t('admin.filters.type_field') }}</option>
+                            <option value="relationship">{{ t('admin.filters.type_relationship') }}</option>
                         </select>
                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Choose the type of filter you want to create
+                            {{ t('admin.filters.type_hint') }}
                         </p>
                     </div>
 
@@ -339,44 +344,44 @@ const toggleColumn = (column) => {
                                 type="checkbox"
                                 class="form-checkbox"
                             />
-                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Enabled</span>
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ t('admin.filters.enabled') }}</span>
                         </label>
                     </div>
 
                     <!-- Common Fields: Label and Placeholder -->
                     <div class="grid gap-4 md:grid-cols-2">
                         <div>
-                            <label class="form-label">Label <span class="text-red-500">*</span></label>
+                            <label class="form-label">{{ t('admin.filters.label') }} <span class="text-red-500">*</span></label>
                             <input
                                 v-model="formData.label"
                                 type="text"
                                 class="form-input"
-                                placeholder="Filter label"
+                                :placeholder="t('admin.filters.label_placeholder')"
                                 required
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Display label for this filter
+                                {{ t('admin.filters.label_hint') }}
                             </p>
                         </div>
                         <div>
-                            <label class="form-label">Placeholder</label>
+                            <label class="form-label">{{ t('admin.filters.placeholder') }}</label>
                             <input
                                 v-model="formData.placeholder"
                                 type="text"
                                 class="form-input"
-                                placeholder="Filter placeholder"
+                                :placeholder="t('admin.filters.placeholder_placeholder')"
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Placeholder text for the input field
+                                {{ t('admin.filters.placeholder_hint') }}
                             </p>
                         </div>
                     </div>
 
                     <!-- Search Filter Configuration -->
                     <div v-if="formData.type === 'search'">
-                        <label class="form-label">Columns to Search</label>
+                        <label class="form-label">{{ t('admin.filters.columns') }}</label>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                            Select columns to include in search. Leave empty to search all columns.
+                            {{ t('admin.filters.columns_hint') }}
                         </p>
                         <div class="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2">
                             <label
@@ -399,13 +404,13 @@ const toggleColumn = (column) => {
                     <div v-if="formData.type === 'field'">
                         <div class="grid gap-4 md:grid-cols-2">
                             <div>
-                                <label class="form-label">Field <span class="text-red-500">*</span></label>
+                                <label class="form-label">{{ t('admin.filters.field') }} <span class="text-red-500">*</span></label>
                                 <select
                                     v-model="formData.field"
                                     class="form-select"
                                     required
                                 >
-                                    <option value="">Select a field</option>
+                                    <option value="">{{ t('admin.filters.select_field') }}</option>
                                     <option
                                         v-for="field in availableFields"
                                         :key="field"
@@ -415,11 +420,11 @@ const toggleColumn = (column) => {
                                     </option>
                                 </select>
                                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    Select the field to filter by
+                                    {{ t('admin.filters.field_hint') }}
                                 </p>
                             </div>
                             <div>
-                                <label class="form-label">Operator <span class="text-red-500">*</span></label>
+                                <label class="form-label">{{ t('admin.filters.operator') }} <span class="text-red-500">*</span></label>
                                 <select
                                     v-model="formData.operator"
                                     class="form-select"
@@ -434,7 +439,7 @@ const toggleColumn = (column) => {
                                     </option>
                                 </select>
                                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    How to compare the field value
+                                    {{ t('admin.filters.field_operator_hint') }}
                                 </p>
                             </div>
                         </div>
@@ -445,7 +450,7 @@ const toggleColumn = (column) => {
                                     type="checkbox"
                                     class="form-checkbox"
                                 />
-                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Allow multiple selection</span>
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ t('admin.filters.multiple') }}</span>
                             </label>
                         </div>
                     </div>
@@ -454,14 +459,14 @@ const toggleColumn = (column) => {
                     <div v-if="formData.type === 'relationship'" key="relationship-filter-config">
                         <div class="grid gap-4 md:grid-cols-2">
                             <div>
-                                <label class="form-label">Relationship <span class="text-red-500">*</span></label>
+                                <label class="form-label">{{ t('admin.filters.relationship') }} <span class="text-red-500">*</span></label>
                                 <select
                                     :key="`relationship-select-${formData.id || 'new'}-${formData.type}`"
                                     v-model="relationshipValue"
                                     class="form-select"
                                     required
                                 >
-                                    <option value="">Select a relationship</option>
+                                    <option value="">{{ t('admin.filters.select_relationship') }}</option>
                                     <option
                                         v-for="rel in availableRelationships"
                                         :key="rel.related_table || rel.name"
@@ -471,11 +476,11 @@ const toggleColumn = (column) => {
                                     </option>
                                 </select>
                                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    Select the relationship to filter by
+                                    {{ t('admin.filters.relationship_hint') }}
                                 </p>
                             </div>
                             <div>
-                                <label class="form-label">Operator <span class="text-red-500">*</span></label>
+                                <label class="form-label">{{ t('admin.filters.operator') }} <span class="text-red-500">*</span></label>
                                 <select
                                     :key="`operator-select-${formData.id || 'new'}`"
                                     v-model="formData.operator"
@@ -491,7 +496,7 @@ const toggleColumn = (column) => {
                                     </option>
                                 </select>
                                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    How to compare the relationship value
+                                    {{ t('admin.filters.relationship_operator_hint') }}
                                 </p>
                             </div>
                         </div>
@@ -502,14 +507,14 @@ const toggleColumn = (column) => {
                                     type="checkbox"
                                     class="form-checkbox"
                                 />
-                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Allow multiple selection</span>
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ t('admin.filters.multiple') }}</span>
                             </label>
                         </div>
                     </div>
                     
                     <div class="actions-footer pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <button type="button" class="btn-text" @click="close">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn-text" @click="close">{{ t('admin.common.cancel') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ t('admin.common.save') }}</button>
                     </div>
                 </form>
             </div>

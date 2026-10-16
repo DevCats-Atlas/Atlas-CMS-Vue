@@ -1,11 +1,13 @@
 import { reactive } from 'vue';
 
+// Texts left null are filled with translated defaults by ConfirmDialog.vue
+
 const state = reactive({
     isOpen: false,
-    title: 'Confirm action',
-    message: 'Are you sure you want to continue?',
-    confirmLabel: 'Confirm',
-    cancelLabel: 'Cancel',
+    title: null,
+    message: null,
+    confirmLabel: null,
+    cancelLabel: null,
     intent: 'primary',
 });
 
@@ -13,10 +15,10 @@ let resolver = null;
 
 const reset = () => {
     state.isOpen = false;
-    state.title = 'Confirm action';
-    state.message = 'Are you sure you want to continue?';
-    state.confirmLabel = 'Confirm';
-    state.cancelLabel = 'Cancel';
+    state.title = null;
+    state.message = null;
+    state.confirmLabel = null;
+    state.cancelLabel = null;
     state.intent = 'primary';
     resolver = null;
 };
@@ -28,10 +30,10 @@ export function confirmDialog(options = {}) {
     }
 
     return new Promise((resolve) => {
-        state.title = options.title ?? 'Confirm action';
-        state.message = options.message ?? 'Are you sure you want to continue?';
-        state.confirmLabel = options.confirmLabel ?? 'Confirm';
-        state.cancelLabel = options.cancelLabel ?? 'Cancel';
+        state.title = options.title ?? null;
+        state.message = options.message ?? null;
+        state.confirmLabel = options.confirmLabel ?? null;
+        state.cancelLabel = options.cancelLabel ?? null;
         state.intent = options.intent ?? 'primary';
         state.isOpen = true;
         resolver = resolve;

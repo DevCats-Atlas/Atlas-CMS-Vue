@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue';
 import UiConfigEditor from './UiConfigEditor.vue';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const props = defineProps({
     open: {
@@ -21,6 +22,8 @@ const props = defineProps({
         default: '',
     },
 });
+
+const { t } = useTranslation();
 
 const emit = defineEmits(['close', 'save']);
 
@@ -132,7 +135,7 @@ const close = () => {
         <div class="w-full max-w-4xl rounded-2xl bg-white dark:bg-gray-800 shadow-xl flex flex-col max-h-[90vh]">
             <div class="modal-header">
                 <h3 class="section-heading">
-                    {{ isEditMode ? 'Edit Relationship' : 'Create Relationship' }}
+                    {{ isEditMode ? t('admin.relationships.edit_relationship') : t('admin.relationship_form.create') }}
                 </h3>
                 <button
                     type="button"
@@ -147,23 +150,23 @@ const close = () => {
                     <div class="grid gap-4 md:grid-cols-2">
                         <!-- 1. Name (First) -->
                         <div>
-                            <label class="form-label">Name <span class="text-gray-400 text-xs">(optional)</span></label>
+                            <label class="form-label">{{ t('admin.relationship_form.name') }} <span class="text-gray-400 text-xs">{{ t('admin.relationship_form.optional') }}</span></label>
                             <input
                                 v-model="formData.name"
                                 type="text"
                                 class="form-input"
-                                placeholder="Auto-generated if empty"
+                                :placeholder="t('admin.relationship_form.name_placeholder')"
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Relationship name (used in code). If empty, will be auto-generated from related table name.
+                                {{ t('admin.relationship_form.name_hint') }}
                             </p>
                         </div>
                         
                         <!-- 2. Related Table (Second) -->
                         <div>
                             <label class="form-label">
-                                <span v-if="formData.type === 'belongsToMany'">Final Related Table</span>
-                                <span v-else>Related Table</span>
+                                <span v-if="formData.type === 'belongsToMany'">{{ t('admin.relationship_form.final_related_table') }}</span>
+                                <span v-else>{{ t('admin.relationship_form.related_table') }}</span>
                                 <span class="text-red-500">*</span>
                             </label>
                             <div class="flex gap-2">
@@ -171,7 +174,8 @@ const close = () => {
                                     v-model="relatedTableInput"
                                     type="text"
                                     class="form-input flex-1"
-                                    placeholder="e.g., orders, users, venues_categories"
+                                    translate="no"
+                                    placeholder="orders, users, venues_categories"
                                     required
                                 />
                                 <button
@@ -180,7 +184,7 @@ const close = () => {
                                     :disabled="relatedTableInput === formData.related_table"
                                     class="btn btn-primary whitespace-nowrap flex items-center justify-center"
                                     :class="{ 'opacity-50 cursor-not-allowed': relatedTableInput === formData.related_table }"
-                                    title="Apply table name"
+                                    :title="t('admin.relationship_form.apply_table')"
                                 >
                                     <svg
                                         class="w-5 h-5"
@@ -198,132 +202,135 @@ const close = () => {
                                 </button>
                             </div>
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                <span v-if="formData.type === 'belongsToMany'">The final table you want to access (through the pivot table)</span>
-                                <span v-else>The table this relationship connects to</span>
+                                <span v-if="formData.type === 'belongsToMany'">{{ t('admin.relationship_form.final_related_table_hint') }}</span>
+                                <span v-else>{{ t('admin.relationship_form.related_table_hint') }}</span>
                             </p>
                         </div>
                         
                         <!-- 3. Type (Third) -->
                         <div>
-                            <label class="form-label">Type <span class="text-red-500">*</span></label>
+                            <label class="form-label">{{ t('admin.relationship_form.type') }} <span class="text-red-500">*</span></label>
                             <select
                                 v-model="formData.type"
                                 class="form-select"
                                 required
                             >
-                                <option value="hasOne">hasOne</option>
-                                <option value="hasMany">hasMany</option>
-                                <option value="belongsTo">belongsTo</option>
-                                <option value="belongsToMany">belongsToMany</option>
+                                <option v-for="type in ['hasOne', 'hasMany', 'belongsTo', 'belongsToMany']" :key="type" :value="type">
+                                    {{ t(`admin.relationships.type.${type}`) }} ({{ type }})
+                                </option>
                             </select>
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Relationship type
+                                {{ t('admin.relationship_form.type_hint') }}
                             </p>
                         </div>
                         
                         <!-- 4. Local Key (Fourth) -->
                         <div v-if="formData.type === 'hasOne' || formData.type === 'hasMany'">
-                            <label class="form-label">Local Key</label>
+                            <label class="form-label">{{ t('admin.relationship_form.local_key') }}</label>
                             <input
                                 v-model="formData.local_key"
                                 type="text"
                                 class="form-input"
-                                placeholder="id"
+                                translate="no" placeholder="id"
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Column in this table (default: id)
+                                {{ t('admin.relationship_form.local_key_hint') }}
                             </p>
                         </div>
                         
                         <!-- 5. Foreign Key (Fifth) -->
                         <div>
-                            <label class="form-label">Foreign Key <span class="text-red-500">*</span></label>
+                            <label class="form-label">{{ t('admin.relationship_form.foreign_key') }} <span class="text-red-500">*</span></label>
                             <input
                                 v-model="formData.foreign_key"
                                 type="text"
                                 class="form-input"
-                                placeholder="e.g., user_id"
+                                translate="no"
+                                placeholder="user_id"
                                 required
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                <span v-if="formData.type === 'belongsToMany'">Column in pivot table pointing to this table (e.g., venue_id in venues_categories_records)</span>
-                                <span v-else-if="formData.type === 'belongsTo'">Column in this table pointing to related table</span>
-                                <span v-else>Column in related table pointing to this table</span>
+                                <span v-if="formData.type === 'belongsToMany'">{{ t('admin.relationship_form.foreign_key_pivot_hint') }}</span>
+                                <span v-else-if="formData.type === 'belongsTo'">{{ t('admin.relationship_form.foreign_key_belongs_to_hint') }}</span>
+                                <span v-else>{{ t('admin.relationship_form.foreign_key_hint') }}</span>
                             </p>
                         </div>
                         
                         <!-- Additional fields based on type -->
                         <div v-if="formData.type === 'belongsTo'">
-                            <label class="form-label">Owner Key</label>
+                            <label class="form-label">{{ t('admin.relationship_form.owner_key') }}</label>
                             <input
                                 v-model="formData.owner_key"
                                 type="text"
                                 class="form-input"
-                                placeholder="id"
+                                translate="no" placeholder="id"
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Column in related table (default: id)
+                                {{ t('admin.relationship_form.owner_key_hint') }}
                             </p>
                         </div>
                         
                         <div v-if="formData.type === 'belongsToMany'">
-                            <label class="form-label">Pivot Table (Intermediate) <span class="text-red-500">*</span></label>
+                            <label class="form-label">{{ t('admin.relationship_form.pivot_table') }} <span class="text-red-500">*</span></label>
                             <input
                                 v-model="formData.pivot_table"
                                 type="text"
                                 class="form-input"
-                                placeholder="e.g., venues_categories_records, user_roles"
+                                translate="no"
+                                placeholder="venues_categories_records, user_roles"
                                 required
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                The intermediate/pivot table that connects this table to the final related table
+                                {{ t('admin.relationship_form.pivot_table_hint') }}
                             </p>
                         </div>
                         
                         <div v-if="formData.type === 'belongsToMany'">
-                            <label class="form-label">Related Key <span class="text-red-500">*</span></label>
+                            <label class="form-label">{{ t('admin.relationship_form.related_key') }} <span class="text-red-500">*</span></label>
                             <input
                                 v-model="formData.related_key"
                                 type="text"
                                 class="form-input"
-                                placeholder="e.g., category_id, role_id"
+                                translate="no"
+                                placeholder="category_id, role_id"
                                 required
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Column in pivot table pointing to the final related table (e.g., category_id in venues_categories_records pointing to venues_categories)
+                                {{ t('admin.relationship_form.related_key_hint') }}
                             </p>
                         </div>
                         
                         <!-- PHP Handler class -->
                         <div class="md:col-span-2">
-                            <label class="form-label">PHP Handler class <span class="text-gray-400 text-xs">(optional)</span></label>
+                            <label class="form-label">{{ t('admin.relationship_form.handler_class') }} <span class="text-gray-400 text-xs">{{ t('admin.relationship_form.optional') }}</span></label>
                             <input
                                 v-model="formData.handler_class"
                                 type="text"
                                 class="form-input"
-                                placeholder="e.g., App\Handlers\CustomRelationshipHandler"
+                                translate="no"
+                                placeholder="App\Handlers\CustomRelationshipHandler"
                             />
                             <div class="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
                                 <p class="text-xs font-semibold text-blue-900 dark:text-blue-200 mb-2">
-                                    Interface: <code class="text-xs">AtlasCMS\Contracts\Modules\DbTable\RecordHandler</code>
+                                    {{ t('admin.module_settings.handler_interface') }} <code class="text-xs">AtlasCMS\Contracts\Modules\DbTable\RecordHandler</code>
                                 </p>
                                 <p class="text-xs text-blue-800 dark:text-blue-300 mb-2">
-                                    The class must implement this interface. You can extend <code class="text-xs">AbstractRecordHandler</code> to make all methods optional. Available methods:
+                                    {{ t('admin.relationship_form.handler_hint') }}
                                 </p>
                                 <ul class="text-xs text-blue-800 dark:text-blue-300 space-y-1 list-disc list-inside">
-                                    <li><code>creating($context, $tableName, &$data, $request)</code> - Called before creating a related record</li>
-                                    <li><code>created($context, $tableName, $recordId, $data, $request)</code> - Called after a related record is created</li>
-                                    <li><code>updating($context, $tableName, $recordId, &$data, $originalData, $request)</code> - Called before updating a related record</li>
-                                    <li><code>updated($context, $tableName, $recordId, $data, $originalData, $request)</code> - Called after a related record is updated</li>
-                                    <li><code>deleting($context, $tableName, $recordId, $data, $request)</code> - Called before deleting a related record</li>
-                                    <li><code>deleted($context, $tableName, $recordId, $data, $request)</code> - Called after a related record is deleted</li>
+                                    <li><code>creating($context, $tableName, &$data, $request)</code> — {{ t('admin.relationship_form.handler_creating') }}</li>
+                                    <li><code>created($context, $tableName, $recordId, $data, $request)</code> — {{ t('admin.relationship_form.handler_created') }}</li>
+                                    <li><code>updating($context, $tableName, $recordId, &$data, $originalData, $request)</code> — {{ t('admin.relationship_form.handler_updating') }}</li>
+                                    <li><code>updated($context, $tableName, $recordId, $data, $originalData, $request)</code> — {{ t('admin.relationship_form.handler_updated') }}</li>
+                                    <li><code>deleting($context, $tableName, $recordId, $data, $request)</code> — {{ t('admin.relationship_form.handler_deleting') }}</li>
+                                    <li><code>deleted($context, $tableName, $recordId, $data, $request)</code> — {{ t('admin.relationship_form.handler_deleted') }}</li>
                                 </ul>
                             </div>
                         </div>
                         
                         <!-- Field Configuration for Related Table -->
                         <div v-if="formData.related_table && formData.related_table.trim() !== ''" class="md:col-span-2">
-                            <label class="form-label">Field Configuration <span class="text-gray-400 text-xs">(optional)</span></label>
+                            <label class="form-label">{{ t('admin.relationship_form.field_configuration') }} <span class="text-gray-400 text-xs">{{ t('admin.relationship_form.optional') }}</span></label>
                             <UiConfigEditor
                                 :table-name="formData.related_table"
                                 :connection="connection"
@@ -334,14 +341,14 @@ const close = () => {
                                 @update:ui-config="(config) => { relatedTableUiConfig = config; formData.ui_config = config; }"
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Configure which columns to display, how they appear, and which fields are editable when editing related records.
+                                {{ t('admin.relationship_form.field_configuration_hint') }}
                             </p>
                         </div>
                     </div>
                     
                     <div class="actions-footer pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <button type="button" class="btn-text" @click="close">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn-text" @click="close">{{ t('admin.common.cancel') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ t('admin.common.save') }}</button>
                     </div>
                 </form>
             </div>

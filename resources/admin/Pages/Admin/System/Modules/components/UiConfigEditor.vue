@@ -246,7 +246,7 @@ const selectType = (name) => config(name).select_type || 'static';
                             <textarea
                                 class="form-textarea text-sm py-1.5 font-mono"
                                 rows="3"
-                                placeholder="SELECT code, title FROM articles_languages"
+                                translate="no" placeholder="SELECT code, title FROM articles_languages"
                                 :value="config(column.name).options"
                                 @input="update(column.name, 'options', $event.target.value)"
                             />
@@ -283,7 +283,7 @@ const selectType = (name) => config(name).select_type || 'static';
                                 <input
                                     type="text"
                                     class="form-input text-sm py-1.5"
-                                    placeholder="users"
+                                    translate="no" placeholder="users"
                                     :value="config(column.name).cast_table"
                                     @input="update(column.name, 'cast_table', $event.target.value)"
                                 />
@@ -293,7 +293,7 @@ const selectType = (name) => config(name).select_type || 'static';
                                 <input
                                     type="text"
                                     class="form-input text-sm py-1.5"
-                                    placeholder="id"
+                                    translate="no" placeholder="id"
                                     :value="config(column.name).cast_foreign_key"
                                     @input="update(column.name, 'cast_foreign_key', $event.target.value)"
                                 />
@@ -303,7 +303,7 @@ const selectType = (name) => config(name).select_type || 'static';
                                 <textarea
                                     class="form-textarea text-sm py-1.5"
                                     rows="2"
-                                    placeholder="{first_name} {last_name}"
+                                    translate="no" placeholder="{first_name} {last_name}"
                                     :value="config(column.name).cast_template"
                                     @input="update(column.name, 'cast_template', $event.target.value)"
                                 />

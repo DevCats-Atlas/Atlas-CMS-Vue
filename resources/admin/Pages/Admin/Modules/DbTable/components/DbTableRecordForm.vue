@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/components/interfaces';
 import { fieldConfig, firstError, formatReadOnlyValue, groupFields, parentLabel } from '@/dbTable/formModel.js';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 // Renders DbTable record fields: optional parent selector, configured field groups and remaining fields.
 const props = defineProps({
@@ -14,6 +15,8 @@ const props = defineProps({
     showParent: { type: Boolean, default: false },
     compact: { type: Boolean, default: false },
 });
+
+const { t } = useTranslation();
 
 const parent = defineModel('parent', { default: null });
 
@@ -31,9 +34,9 @@ const wide = (field) => !props.compact && (field.interface === 'textarea' || fie
 <template>
     <div :class="compact ? 'space-y-4' : 'space-y-6'">
         <div v-if="showParent && availableParents.length > 0" class="mb-6 pb-6 border-divider">
-            <label class="form-label">Parent</label>
+            <label class="form-label">{{ t('admin.db_table.parent') }}</label>
             <select v-model="parent" class="form-input">
-                <option :value="null">None (Root item)</option>
+                <option :value="null">{{ t('admin.db_table.root_item') }}</option>
                 <option v-for="item in availableParents" :key="item.id" :value="item.id">
                     {{ parentLabel(item) }}
                 </option>

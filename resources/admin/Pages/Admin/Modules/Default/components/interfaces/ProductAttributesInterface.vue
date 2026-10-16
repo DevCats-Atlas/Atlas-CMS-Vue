@@ -3,6 +3,7 @@ import { adminUrl, adminModuleHandle } from '@/utils/adminUrl';
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { useToast } from '@/composables/useToast.js';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const props = defineProps({
     field: {
@@ -14,6 +15,8 @@ const props = defineProps({
         default: () => ({}),
     },
 });
+
+const { t } = useTranslation();
 
 const page = usePage();
 const { showToast } = useToast();
@@ -130,8 +133,8 @@ const toggleAttribute = async (attributeId) => {
         });
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: 'Failed to toggle attribute' }));
-            throw new Error(errorData.error || 'Failed to toggle attribute');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || t('admin.interfaces.toggle_attribute_failed'));
         }
 
         const data = await response.json();
@@ -147,15 +150,15 @@ const toggleAttribute = async (attributeId) => {
 
         // Show success toast
         showToast({
-            title: 'Success',
-            message: `Attribute ${newSelected ? 'selected' : 'deselected'}`,
+            title: t('admin.common.success'),
+            message: t(newSelected ? 'admin.interfaces.attribute_selected' : 'admin.interfaces.attribute_deselected'),
             intent: 'success',
         });
     } catch (error) {
         console.error('Error toggling attribute:', error);
         showToast({
-            title: 'Error',
-            message: error.message || 'Failed to toggle attribute',
+            title: t('admin.common.error'),
+            message: error.message || t('admin.interfaces.toggle_attribute_failed'),
             intent: 'danger',
         });
     } finally {
@@ -182,15 +185,15 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-if="loading" class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-            Loading product attributes...
+            {{ t('admin.interfaces.loading_attributes') }}
         </div>
 
         <div v-else-if="!currentItemId" class="text-sm text-gray-500 dark:text-gray-400 py-4">
-            Item must be saved before managing product attributes.
+            {{ t('admin.interfaces.save_before_attributes') }}
         </div>
 
         <div v-else-if="categoriesData.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-4">
-            No categories with attributes available. Please assign categories to this product first.
+            {{ t('admin.interfaces.no_attribute_categories') }}
         </div>
 
         <div v-else class="space-y-4">
@@ -216,14 +219,14 @@ onBeforeUnmount(() => {
             <div v-for="category in categoriesData" :key="category.id">
                 <div v-if="activeTab === category.id" class="space-y-6">
                     <div v-if="category.groups.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-4">
-                        No attribute groups available for this category.
+                        {{ t('admin.interfaces.no_attribute_groups') }}
                     </div>
 
                     <div v-else v-for="group in category.groups" :key="group.id" class="space-y-3">
                         <h4 class="text-sm font-semibold text-gray-900 dark:text-white">{{ group.title }}</h4>
                         
                         <div v-if="group.attributes.length === 0" class="text-xs text-gray-400 dark:text-gray-500 pl-4">
-                            No attributes in this group.
+                            {{ t('admin.interfaces.no_attributes') }}
                         </div>
                         
                         <div v-else class="grid grid-cols-1 gap-3 ">

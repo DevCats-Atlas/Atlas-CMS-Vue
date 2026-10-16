@@ -2,7 +2,6 @@
 import { adminUrl } from '@/utils/adminUrl';
 import { Head, Link, router } from '@inertiajs/vue3';
 import SystemLayout from '@admin/Layouts/SystemLayout.vue';
-import ToastStack from '@/components/ToastStack.vue';
 import { useToast } from '@/composables/useToast.js';
 import { confirmDialog } from '@/utils/confirmDialog.js';
 import { useTranslation } from '@/utils/useTranslation.js';
@@ -26,7 +25,7 @@ const props = defineProps({
 });
 
 const { t } = useTranslation();
-const { toasts, showToast, dismissToast } = useToast();
+const { showToast } = useToast();
 
 const moduleForm = useModuleDataSourceForm(props);
 const { form, source, isDbTable } = moduleForm;
@@ -132,7 +131,5 @@ const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
                 </div>
             </div>
         </div>
-
-        <ToastStack :toasts="toasts" @dismiss="dismissToast" />
     </SystemLayout>
 </template>

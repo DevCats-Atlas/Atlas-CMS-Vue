@@ -1,8 +1,10 @@
 <script setup>
 import { computed, onMounted, onUnmounted } from 'vue';
 import { confirmDialogAccept, confirmDialogCancel, useConfirmDialogState } from '@/utils/confirmDialog.js';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const state = useConfirmDialogState();
+const { t } = useTranslation();
 
 const confirmClass = computed(() =>
     state.intent === 'danger'
@@ -41,10 +43,10 @@ onUnmounted(() => {
                 <div class="p-6 space-y-4">
                     <div class="space-y-1">
                         <h2 class="heading-2">
-                            {{ state.title }}
+                            {{ state.title ?? t('admin.common.confirm_title') }}
                         </h2>
-                        <p class="text-sm text-gray-600 dark:text-gray-300" v-if="state.message">
-                            {{ state.message }}
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                            {{ state.message ?? t('admin.common.confirm_message') }}
                         </p>
                     </div>
 
@@ -54,7 +56,7 @@ onUnmounted(() => {
                             class="inline-flex items-center rounded-md border border-transparent bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
                             @click="confirmDialogCancel"
                         >
-                            {{ state.cancelLabel }}
+                            {{ state.cancelLabel ?? t('admin.common.cancel') }}
                         </button>
                         <button
                             type="button"
@@ -62,7 +64,7 @@ onUnmounted(() => {
                             :class="confirmClass"
                             @click="confirmDialogAccept"
                         >
-                            {{ state.confirmLabel }}
+                            {{ state.confirmLabel ?? t('admin.common.confirm') }}
                         </button>
                     </div>
                 </div>

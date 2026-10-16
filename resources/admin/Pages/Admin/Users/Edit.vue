@@ -2,7 +2,6 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
 import { ref, computed, watch } from 'vue';
-import ToastStack from '@/components/ToastStack.vue';
 import { useToast } from '@/composables/useToast.js';
 import CustomFieldsTab from '@admin/Pages/Admin/Modules/Default/components/CustomFieldsTab.vue';
 import { useTranslation } from '@/utils/useTranslation.js';
@@ -56,7 +55,7 @@ const props = defineProps({
     },
 });
 
-const { toasts, showToast, dismissToast } = useToast();
+const { showToast } = useToast();
 const languages = computed(() => usePage().props.languages || []);
 const currentUser = computed(() => usePage().props.auth?.user ?? null);
 const isCurrentUserSuperadmin = computed(() => currentUser.value?.is_superadmin === true);
@@ -263,7 +262,7 @@ const selectTab = (tabId) => {
                 <section class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 space-y-4">
                     <div class="flex items-center justify-between mb-4">
                         <div>
-                            <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Module</p>
+                            <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ t('admin.items.module') }}</p>
                             <h1 class="heading-1">
                                 {{ module.title }} · {{ t('admin.users.edit_user') }}
                             </h1>
@@ -443,6 +442,5 @@ const selectTab = (tabId) => {
                 </section>
             </div>
         </div>
-        <ToastStack :toasts="toasts" @dismiss="dismissToast" />
     </AdminLayout>
 </template>

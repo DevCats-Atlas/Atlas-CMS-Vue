@@ -2,6 +2,7 @@
 import { adminUrl } from '@/utils/adminUrl';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import SystemLayout from '@admin/Layouts/SystemLayout.vue';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const props = defineProps({
     fieldOptions: {
@@ -9,6 +10,8 @@ const props = defineProps({
         default: () => [],
     },
 });
+
+const { t } = useTranslation();
 
 const form = useForm({
     code: '',
@@ -24,25 +27,25 @@ const submit = () => {
 
 <template>
     <SystemLayout>
-        <Head title="Create Item Type" />
+        <Head :title="t('admin.item_types.create_title')" />
 
         <div class="py-6">
             <div class="mx-auto max-w-3xl sm:px-6 lg:px-8 space-y-6">
                 <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6">
                     <div class="flex items-center justify-between mb-6">
                         <div>
-                            <h1 class="heading-1">Create item type</h1>
-                            <p class="text-gray-500 dark:text-gray-400 mt-1">Define a new polymorphic content type.</p>
+                            <h1 class="heading-1">{{ t('admin.item_types.create_title') }}</h1>
+                            <p class="text-gray-500 dark:text-gray-400 mt-1">{{ t('admin.item_types.create_hint') }}</p>
                         </div>
                         <Link :href="adminUrl('system/item-types')" class="btn-text">
-                            Back to list
+                            {{ t('admin.users.back_to_list') }}
                         </Link>
                     </div>
 
                     <form class="space-y-6" @submit.prevent="submit">
                         <div>
                             <label for="code" class="form-label">
-                                Code
+                                {{ t('admin.item_types.code') }}
                             </label>
                             <input
                                 id="code"
@@ -56,7 +59,7 @@ const submit = () => {
 
                         <div>
                             <label for="class_name" class="form-label">
-                                Bound class (optional)
+                                {{ t('admin.item_types.bound_class_optional') }}
                             </label>
                             <input
                                 id="class_name"
@@ -69,7 +72,7 @@ const submit = () => {
 
                         <fieldset>
                             <legend class="form-label mb-2">
-                                Basic fields
+                                {{ t('admin.item_types.basic_fields') }}
                             </legend>
                             <div class="space-y-3">
                                 <label
@@ -100,23 +103,23 @@ const submit = () => {
                                 class="form-checkbox mt-1"
                             />
                             <label for="slug_is_multilingual" class="form-label">
-                                Enable multilingual slugs for this type
+                                {{ t('admin.item_types.multilingual_slugs') }}
                                 <span class="block text-xs text-gray-500 dark:text-gray-400">
-                                    Stores language-specific slugs in the slug dictionary.
+                                    {{ t('admin.item_types.multilingual_slugs_hint') }}
                                 </span>
                             </label>
                         </div>
                     
                         <div class="actions-footer">
                             <Link :href="adminUrl('system/item-types')" class="btn-text">
-                                Cancel
+                                {{ t('admin.common.cancel') }}
                             </Link>
                             <button
                                 type="submit"
                                 class="btn btn-primary"
                                 :disabled="form.processing"
                             >
-                                {{ form.processing ? 'Saving...' : 'Create type' }}
+                                {{ form.processing ? t('admin.users.saving') : t('admin.item_types.create_type') }}
                             </button>
                         </div>
                     </form>

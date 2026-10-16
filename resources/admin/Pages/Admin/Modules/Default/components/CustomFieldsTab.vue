@@ -1,6 +1,7 @@
 <script setup>
 import { resolveInterfaceComponent } from './interfaces';
 import { usePage } from '@inertiajs/vue3';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const props = defineProps({
     tab: {
@@ -16,6 +17,8 @@ const props = defineProps({
         default: null,
     },
 });
+
+const { t } = useTranslation();
 
 const componentForField = (field) => resolveInterfaceComponent(field.type, field.config);
 
@@ -115,7 +118,7 @@ const ensureFieldModel = (field) => {
     <div class="space-y-4">
         <div>
             <p v-if="!(tab.fields || []).length" class="text-sm text-gray-500 dark:text-gray-400">
-                This tab does not contain any custom fields yet.
+                {{ t('admin.interfaces.empty_tab') }}
             </p>
         </div>
         <section v-if="(tab.fields || []).length" class="space-y-3">

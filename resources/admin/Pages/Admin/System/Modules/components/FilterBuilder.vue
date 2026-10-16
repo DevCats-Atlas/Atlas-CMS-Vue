@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import FilterModal from './FilterModal.vue';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const props = defineProps({
     filters: {
@@ -33,6 +34,8 @@ const props = defineProps({
         default: () => [],
     },
 });
+
+const { t } = useTranslation();
 
 const emit = defineEmits(['update:filters', 'update:defaultSearch']);
 
@@ -128,24 +131,19 @@ const getFilterDisplayName = (filter) => {
         return filter.label;
     }
     if (filter.type === 'search') {
-        return 'Search Filter';
+        return t('admin.filters.type_search');
     }
     if (filter.type === 'field' && filter.field) {
-        return `Field: ${filter.field}`;
+        return `${t('admin.filters.field')}: ${filter.field}`;
     }
     if (filter.type === 'relationship' && filter.relationship) {
-        return `Relationship: ${filter.relationship}`;
+        return `${t('admin.filters.relationship')}: ${filter.relationship}`;
     }
-    return 'Unnamed filter';
+    return t('admin.filters.unnamed');
 };
 
 const getFilterTypeLabel = (type) => {
-    const labels = {
-        search: 'Search',
-        field: 'Field',
-        relationship: 'Relationship',
-    };
-    return labels[type] || type;
+    return ['search', 'field', 'relationship'].includes(type) ? t(`admin.filters.type_label_${type}`) : type;
 };
 
 const handleFilterDragStart = (event, index) => {
@@ -196,9 +194,9 @@ const editingFilter = computed(() => {
         <div class="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between mb-4">
                 <div>
-                    <h5 class="text-sm font-semibold text-gray-900 dark:text-white">Default Search</h5>
+                    <h5 class="text-sm font-semibold text-gray-900 dark:text-white">{{ t('admin.filters.default_search') }}</h5>
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Configure the default search field that appears on the index page
+                        {{ t('admin.filters.default_search_hint') }}
                     </p>
                 </div>
                 <label class="inline-flex items-center">
@@ -207,33 +205,33 @@ const editingFilter = computed(() => {
                         type="checkbox"
                         class="form-checkbox"
                     />
-                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Enabled</span>
+                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ t('admin.filters.enabled') }}</span>
                 </label>
             </div>
             
             <div v-if="localDefaultSearch.enabled" class="grid gap-4 md:grid-cols-2">
                 <div>
-                    <label class="form-label">Label</label>
+                    <label class="form-label">{{ t('admin.filters.label') }}</label>
                     <input
                         v-model="localDefaultSearch.label"
                         type="text"
                         class="form-input"
-                        placeholder="Search"
+                        :placeholder="t('admin.common.search')"
                     />
                 </div>
                 <div>
-                    <label class="form-label">Placeholder</label>
+                    <label class="form-label">{{ t('admin.filters.placeholder') }}</label>
                     <input
                         v-model="localDefaultSearch.placeholder"
                         type="text"
                         class="form-input"
-                        placeholder="Search across all columns"
+                        :placeholder="t('admin.filters.default_search_placeholder')"
                     />
                 </div>
                 <div class="md:col-span-2">
-                    <label class="form-label">Columns to Search</label>
+                    <label class="form-label">{{ t('admin.filters.columns') }}</label>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                        Leave empty to search all columns. Select specific columns to limit the search scope.
+                        {{ t('admin.filters.default_columns_hint') }}
                     </p>
                     <div class="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2">
                         <label
@@ -265,9 +263,9 @@ const editingFilter = computed(() => {
         <!-- Filters List -->
         <div class="flex items-center justify-between mb-4">
             <div>
-                <h5 class="text-sm font-semibold text-gray-900 dark:text-white">Custom Filters</h5>
+                <h5 class="text-sm font-semibold text-gray-900 dark:text-white">{{ t('admin.filters.custom_filters') }}</h5>
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Add custom filters for the index page (search, field-based, or relationship filters)
+                    {{ t('admin.filters.custom_filters_hint') }}
                 </p>
             </div>
             <button
@@ -275,12 +273,12 @@ const editingFilter = computed(() => {
                 @click="openFilterModal()"
                 class="btn btn-sm btn-primary"
             >
-                Add Filter
+                {{ t('admin.filters.add') }}
             </button>
         </div>
         
         <div v-if="localFilters.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-4 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-            No filters defined. Click "Add Filter" to get started.
+            {{ t('admin.filters.empty') }}
         </div>
         
         <div v-else class="space-y-2">
@@ -316,18 +314,18 @@ const editingFilter = computed(() => {
                             {{ getFilterTypeLabel(filter.type) }}
                         </span>
                         <span v-if="!filter.enabled" class="text-xs px-2 py-0.5 bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 rounded">
-                            Disabled
+                            {{ t('admin.filters.disabled') }}
                         </span>
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         <span v-if="filter.type === 'search'">
-                            Searches: {{ filter.columns && filter.columns.length > 0 ? filter.columns.join(', ') : 'All columns' }}
+                            {{ t('admin.filters.searches', { columns: filter.columns?.length ? filter.columns.join(', ') : t('admin.filters.all_columns') }) }}
                         </span>
                         <span v-else-if="filter.type === 'field'">
-                            Field: {{ filter.field }} ({{ filter.operator || 'equals' }})
+                            {{ t('admin.filters.field_summary', { field: filter.field, operator: filter.operator || 'equals' }) }}
                         </span>
                         <span v-else-if="filter.type === 'relationship'">
-                            Relationship: {{ filter.relationship }} ({{ filter.operator || 'equals' }})
+                            {{ t('admin.filters.relationship_summary', { relationship: filter.relationship, operator: filter.operator || 'equals' }) }}
                         </span>
                     </p>
                 </div>
@@ -341,23 +339,23 @@ const editingFilter = computed(() => {
                             class="form-checkbox"
                             @change="toggleFilterEnabled(index)"
                         />
-                        <span class="ml-2 text-xs text-gray-600 dark:text-gray-400">Enabled</span>
+                        <span class="ml-2 text-xs text-gray-600 dark:text-gray-400">{{ t('admin.filters.enabled') }}</span>
                     </label>
                     <button
                         type="button"
                         @click="openFilterModal(index)"
                         class="btn btn-sm btn-outline"
-                        title="Edit filter"
+                        :title="t('admin.filters.edit_filter')"
                     >
-                        Edit
+                        {{ t('admin.common.edit') }}
                     </button>
                     <button
                         type="button"
                         @click="removeFilter(index)"
                         class="btn btn-sm btn-danger"
-                        title="Remove filter"
+                        :title="t('admin.filters.remove_filter')"
                     >
-                        Remove
+                        {{ t('admin.relationships.remove') }}
                     </button>
                 </div>
             </div>

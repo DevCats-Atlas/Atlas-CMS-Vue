@@ -3,6 +3,7 @@ import { adminUrl } from '@/utils/adminUrl';
 import { Head, Link, router } from '@inertiajs/vue3';
 import SystemLayout from '@admin/Layouts/SystemLayout.vue';
 import { confirmDialog } from '@/utils/confirmDialog.js';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const props = defineProps({
     title: {
@@ -15,11 +16,13 @@ const props = defineProps({
     },
 });
 
+const { t } = useTranslation();
+
 const deleteType = async (type) => {
     const confirmed = await confirmDialog({
-        title: 'Delete item type',
-        message: `Deleting "${type.code}" will remove its configuration and cannot be undone.`,
-        confirmLabel: 'Delete',
+        title: t('admin.item_types.delete_title'),
+        message: t('admin.item_types.delete_index_confirm', { code: type.code }),
+        confirmLabel: t('admin.common.delete'),
         intent: 'danger',
     });
 
@@ -40,13 +43,13 @@ const deleteType = async (type) => {
                 <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6">
                     <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <h1 class="heading-1">Item types</h1>
+                            <h1 class="heading-1">{{ t('admin.item_types.title') }}</h1>
                             <p class="text-gray-500 dark:text-gray-400 mt-2">
-                                View the polymorphic content types that power collections, languages, and CMS entities.
+                                {{ t('admin.item_types.index_hint') }}
                             </p>
                         </div>
                         <Link :href="adminUrl('system/item-types/create')" class="btn btn-outline">
-                            Add type
+                            {{ t('admin.item_types.add_type') }}
                         </Link>
                     </div>
                 </div>
@@ -56,16 +59,16 @@ const deleteType = async (type) => {
                         <thead class="bg-gray-50 dark:bg-gray-900/40">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                    Code
+                                    {{ t('admin.item_types.code') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                    Bound class
+                                    {{ t('admin.item_types.bound_class') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                    Slug mode
+                                    {{ t('admin.item_types.slug_mode') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                    Items
+                                    {{ t('admin.item_types.items_count') }}
                                 </th>
                                 <th class="px-6 py-3" />
                             </tr>
@@ -99,7 +102,7 @@ const deleteType = async (type) => {
                                             ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200'
                                             : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200'"
                                     >
-                                        {{ type.slugIsMultilingual ? 'Localized' : 'Single' }}
+                                        {{ type.slugIsMultilingual ? t('admin.item_types.slug_localized') : t('admin.item_types.slug_single') }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -107,7 +110,7 @@ const deleteType = async (type) => {
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-3">
                                     <button type="button" class="btn-text-danger" @click="deleteType(type)">
-                                        Delete
+                                        {{ t('admin.common.delete') }}
                                     </button>
                                 </td>
                             </tr>

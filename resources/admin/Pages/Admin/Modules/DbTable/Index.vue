@@ -492,7 +492,7 @@ const {
                         <div>
                             <h1 class="heading-1">{{ title }}</h1>
                             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                Table: <code class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">{{ tableName }}</code>
+                                {{ t('admin.db_table.table') }} <code class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">{{ tableName }}</code>
                             </p>
                         </div>
                         <button type="button" class="btn btn-primary" @click="router.visit(baseUrl + '/create')">
@@ -582,14 +582,14 @@ const {
                                                 v-model="filterValues[filter.id].from"
                                                 :type="uiConfig[filter.field]?.interface === 'datetime' ? 'datetime-local' : 'date'"
                                                 class="form-input text-sm flex-1"
-                                                placeholder="From"
+                                                :placeholder="t('admin.db_table.from')"
                                             />
                                             <input
                                                 v-if="filter.operator === 'range'"
                                                 v-model="filterValues[filter.id].to"
                                                 :type="uiConfig[filter.field]?.interface === 'datetime' ? 'datetime-local' : 'date'"
                                                 class="form-input text-sm flex-1"
-                                                placeholder="To"
+                                                :placeholder="t('admin.db_table.to')"
                                             />
                                             <input
                                                 v-else
@@ -605,9 +605,9 @@ const {
                                             v-model="filterValues[filter.id]"
                                             class="form-select text-sm"
                                         >
-                                            <option value="">Any</option>
-                                            <option value="1">Yes</option>
-                                            <option value="0">No</option>
+                                            <option value="">{{ t('admin.db_table.any') }}</option>
+                                            <option value="1">{{ t('admin.common.yes') }}</option>
+                                            <option value="0">{{ t('admin.common.no') }}</option>
                                         </select>
                                         
                                         <!-- Field Filter: Number/Text Range -->
@@ -616,13 +616,13 @@ const {
                                                 v-model="filterValues[filter.id].from"
                                                 type="number"
                                                 class="form-input text-sm flex-1"
-                                                placeholder="Min"
+                                                :placeholder="t('admin.db_table.min')"
                                             />
                                             <input
                                                 v-model="filterValues[filter.id].to"
                                                 type="number"
                                                 class="form-input text-sm flex-1"
-                                                placeholder="Max"
+                                                :placeholder="t('admin.db_table.max')"
                                             />
                                         </div>
                                         
@@ -713,7 +713,7 @@ const {
                                     </div>
                                 </div>
                                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    Search across all columns in the table
+                                    {{ t('admin.db_table.search_all_hint') }}
                                 </p>
                             </div>
                         </form>
@@ -882,7 +882,7 @@ const {
                                                     v-model="childFormFor(item[props.primaryKeyColumn]).title"
                                                     type="text"
                                                     class="form-input flex-1"
-                                                    placeholder="Child record title"
+                                                    :placeholder="t('admin.db_table.child_title')"
                                                     required
                                                     autofocus
                                                 />

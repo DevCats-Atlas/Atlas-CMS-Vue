@@ -176,7 +176,7 @@ onMounted(() => {
                 {{ t('admin.common.showing_all', { count: totalCount }) }}
             </p>
             <p v-if="searchQuery && !loading" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Searching for "{{ searchQuery }}"...
+                {{ t('admin.relationships.searching_for', { query: searchQuery }) }}
             </p>
         </div>
 
@@ -222,13 +222,13 @@ onMounted(() => {
             </div>
             
             <div v-if="availableRecords.length === 0" class="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
-                No records found.
+                {{ t('admin.common.no_results') }}
             </div>
         </div>
 
         <!-- Selected count -->
         <div v-if="selectedIds.length > 0" class="text-sm text-gray-600 dark:text-gray-400">
-            {{ selectedIds.length }} record(s) selected
+            {{ t('admin.relationships.selected_count', { count: selectedIds.length }) }}
         </div>
     </div>
 </template>

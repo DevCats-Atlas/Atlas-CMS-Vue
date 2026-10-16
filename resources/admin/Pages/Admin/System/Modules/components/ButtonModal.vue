@@ -1,5 +1,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue';
+import { useToast } from '@/composables/useToast.js';
+import { useTranslation } from '@/utils/useTranslation.js';
 
 const props = defineProps({
     open: {
@@ -11,6 +13,9 @@ const props = defineProps({
         default: null,
     },
 });
+
+const { t } = useTranslation();
+const { showToast } = useToast();
 
 const emit = defineEmits(['close', 'save']);
 
@@ -100,21 +105,21 @@ const methods = [
 ];
 
 const variants = [
-    { value: 'primary', label: 'Primary' },
-    { value: 'secondary', label: 'Secondary' },
-    { value: 'success', label: 'Success' },
-    { value: 'danger', label: 'Danger' },
-    { value: 'warning', label: 'Warning' },
-    { value: 'info', label: 'Info' },
-    { value: 'outline', label: 'Outline' },
+    { value: 'primary', label: t('admin.button_config.variants.primary') },
+    { value: 'secondary', label: t('admin.button_config.variants.secondary') },
+    { value: 'success', label: t('admin.button_config.variants.success') },
+    { value: 'danger', label: t('admin.button_config.variants.danger') },
+    { value: 'warning', label: t('admin.button_config.variants.warning') },
+    { value: 'info', label: t('admin.button_config.variants.info') },
+    { value: 'outline', label: t('admin.button_config.variants.outline') },
 ];
 
 const validateForm = () => {
     if (!formData.value.title || !formData.value.title.trim()) {
-        return { valid: false, error: 'Title is required' };
+        return { valid: false, error: t('admin.button_config.title_required') };
     }
     if (!formData.value.action || !formData.value.action.trim()) {
-        return { valid: false, error: 'Action class is required' };
+        return { valid: false, error: t('admin.button_config.action_required') };
     }
     return { valid: true };
 };
@@ -122,7 +127,7 @@ const validateForm = () => {
 const handleSave = () => {
     const validation = validateForm();
     if (!validation.valid) {
-        alert(validation.error);
+        showToast({ title: validation.error, intent: 'danger' });
         return;
     }
     
@@ -143,7 +148,7 @@ const handleClose = () => {
         <div class="w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-800 shadow-xl flex flex-col max-h-[90vh] overflow-hidden" @click.stop>
             <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                    {{ isEditMode ? 'Edit Button' : 'Add Button' }}
+                    {{ isEditMode ? t('admin.button_config.edit') : t('admin.button_config.add') }}
                 </h3>
                 <button
                     type="button"
@@ -158,48 +163,50 @@ const handleClose = () => {
                 <form @submit.prevent="handleSave" class="space-y-4">
                         <!-- Title -->
                         <div>
-                            <label class="form-label">Title <span class="text-red-500">*</span></label>
+                            <label class="form-label">{{ t('admin.common.title_label') }} <span class="text-red-500">*</span></label>
                             <input
                                 v-model="formData.title"
                                 type="text"
                                 class="form-input"
-                                placeholder="Approve Record"
+                                :placeholder="t('admin.button_config.title_placeholder')"
                                 required
                             />
                         </div>
 
                         <!-- Action Class -->
                         <div>
-                            <label class="form-label">Action Class <span class="text-red-500">*</span></label>
+                            <label class="form-label">{{ t('admin.button_config.action_class') }} <span class="text-red-500">*</span></label>
                             <input
                                 v-model="formData.action"
                                 type="text"
                                 class="form-input"
+                                translate="no"
                                 placeholder="App\Actions\Admin\Venues\ApproveVenueAction"
                                 required
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Fully qualified class name of the Action class (e.g., App\Actions\Admin\Venues\ApproveVenueAction)
+                                {{ t('admin.button_config.action_class_hint') }}
                             </p>
                         </div>
 
                         <!-- Method -->
                         <div>
-                            <label class="form-label">Method Name</label>
+                            <label class="form-label">{{ t('admin.button_config.method') }}</label>
                             <input
                                 v-model="formData.method"
                                 type="text"
                                 class="form-input"
+                                translate="no"
                                 placeholder="__invoke"
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Method name to call on the Action class (default: __invoke for single-action classes)
+                                {{ t('admin.button_config.method_hint') }}
                             </p>
                         </div>
 
                         <!-- Variant -->
                         <div>
-                            <label class="form-label">Button Variant</label>
+                            <label class="form-label">{{ t('admin.button_config.variant') }}</label>
                             <select v-model="formData.variant" class="form-select">
                                 <option v-for="variant in variants" :key="variant.value" :value="variant.value">
                                     {{ variant.label }}
@@ -209,29 +216,30 @@ const handleClose = () => {
 
                         <!-- Icon -->
                         <div>
-                            <label class="form-label">Icon (optional)</label>
+                            <label class="form-label">{{ t('admin.button_config.icon') }}</label>
                             <input
                                 v-model="formData.icon"
                                 type="text"
                                 class="form-input"
+                                translate="no"
                                 placeholder="check-circle"
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Icon name (e.g., check-circle, trash, edit)
+                                {{ t('admin.button_config.icon_hint') }}
                             </p>
                         </div>
 
                         <!-- Confirm Message -->
                         <div>
-                            <label class="form-label">Confirmation Message (optional)</label>
+                            <label class="form-label">{{ t('admin.button_config.confirm_message') }}</label>
                             <textarea
                                 v-model="formData.confirm_message"
                                 class="form-textarea"
                                 rows="2"
-                                placeholder="Are you sure you want to perform this action?"
+                                :placeholder="t('admin.button_config.confirm_placeholder')"
                             ></textarea>
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                If provided, a confirmation dialog will be shown before executing the action
+                                {{ t('admin.button_config.confirm_hint') }}
                             </p>
                         </div>
 
@@ -243,19 +251,20 @@ const handleClose = () => {
                                     type="checkbox"
                                     class="form-checkbox"
                                 />
-                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Requires Permission</span>
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ t('admin.button_config.requires_permission') }}</span>
                             </label>
                             
                             <div v-if="formData.requires_permission">
-                                <label class="form-label">Permission Name</label>
+                                <label class="form-label">{{ t('admin.button_config.permission') }}</label>
                                 <input
                                     v-model="formData.permission"
                                     type="text"
                                     class="form-input"
+                                    translate="no"
                                     placeholder="orders.approve"
                                 />
                                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    Permission name to check (e.g., orders.approve)
+                                    {{ t('admin.button_config.permission_hint') }}
                                 </p>
                             </div>
                         </div>
@@ -268,7 +277,7 @@ const handleClose = () => {
                                     type="checkbox"
                                     class="form-checkbox"
                                 />
-                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Enabled</span>
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ t('admin.filters.enabled') }}</span>
                             </label>
                         </div>
 
@@ -279,13 +288,13 @@ const handleClose = () => {
                                 @click="handleClose"
                                 class="btn btn-outline"
                             >
-                                Cancel
+                                {{ t('admin.common.cancel') }}
                             </button>
                             <button
                                 type="submit"
                                 class="btn btn-primary"
                             >
-                                {{ isEditMode ? 'Save Changes' : 'Create Button' }}
+                                {{ isEditMode ? t('admin.button_config.save_changes') : t('admin.button_config.create') }}
                             </button>
                         </div>
                 </form>

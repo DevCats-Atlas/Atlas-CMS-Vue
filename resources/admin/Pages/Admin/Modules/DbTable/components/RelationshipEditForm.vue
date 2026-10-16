@@ -112,7 +112,7 @@ onMounted(loadData);
                     class="btn btn-sm btn-primary"
                     :disabled="submitting"
                 >
-                    <span v-if="submitting">Updating...</span>
+                    <span v-if="submitting">{{ t('admin.db_table.updating') }}</span>
                     <span v-else>{{ t('admin.common.update') }}</span>
                 </button>
                 <button
