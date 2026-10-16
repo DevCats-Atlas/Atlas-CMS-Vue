@@ -13,7 +13,7 @@ The manifest is `private`, so there is no npm registry release. Install from the
 | Source | `package.json` dependency |
 | --- | --- |
 | Local checkout (`git submodule update --init --recursive` in Atlas CMS) | `"@devcats-atlas/atlas-cms-vue": "file:./packages/AtlasCMS-Vue"` |
-| Git, pinned to a release tag | `npm install '@devcats-atlas/atlas-cms-vue@git+https://github.com/DevCats-Atlas/Atlas-CMS-Vue.git#v1.3.2'` |
+| Git, pinned to a release tag | `npm install '@devcats-atlas/atlas-cms-vue@git+https://github.com/DevCats-Atlas/Atlas-CMS-Vue.git#v1.3.3'` |
 | Archive | `npm pack --ignore-scripts --pack-destination <dir>` in the package, then `npm install <dir>/devcats-atlas-atlas-cms-vue-<version>.tgz` |
 
 Commit the host `package-lock.json`; keep an archive at the path recorded in the lock. To build against another checkout without changing `package.json`, export `ATLAS_CMS_VUE_PATH` (or `ATLAS_SHOP_VUE_PATH`) before starting Vite; it must be a process variable, not only in `.env`. The package must still be declared and installed.
@@ -91,9 +91,44 @@ const save = () => form.post(adminUrl(`${props.moduleHandle}/create`));
 ```
 
 - Build every admin URL with `adminUrl()` (relative to the configured prefix); never hardcode `/admin`.
-- Shared props on every page: `auth`, `cmsNavigation`, `flash`, `translations`, `adminLocale`, `availableLanguages`, `adminPrefix`.
+- Shared props on every page: `auth`, `cmsNavigation`, `flash`, `translations`, `adminLocale`, `availableLanguages`, `adminPrefix`, `atlasVersion`.
 - Reuse `AdminLayout`, `ModalDialog`, `ConfirmDialog` / `confirmDialog()`, `useToast()`, the CSS component classes (`.btn-*`, `.form-input`, …) and their `dark:` variants.
+- Toasts: call `useToast().showToast({ title, message, intent })`. `AdminLayout` (and `SystemLayout`, which wraps it) renders the only `ToastStack`; a page inside it must not render its own, or every toast shows twice.
+- Texts go through `t()` with keys in AtlasCMS `admin.php` (see its `docs/i18n.md`); the host test `tests/Frontend/adminTranslations.test.mjs` rejects untranslated template text in this package.
 - Uploads on update: `form.post(url, { forceFormData: true })` with `_method: 'put'`.
+
+### Lists and column settings
+
+The built-in lists share these pieces; custom list pages can import them the same way (`@/` is `resources/admin/js`):
+
+| Import | What it does |
+| --- | --- |
+| `@/lists/useListSearch.js` | `useListSearch(url, initial, only)` → `{ form, perform, clear }`: the search box, reloading only the list props |
+| `@/lists/useSelection.js` | `useSelection(rows, { deletable, allIds, deleteUrl, confirm })` → selection, header checkbox state, `deleteSelected()` (one `DELETE` per row with `{ item_id }`, failed rows stay selected) |
+| `@/lists/useExpandedState.js` | `useExpandedState(storageKey)`: expanded tree branches, kept in `sessionStorage` when a key is given |
+| `@/lists/useTreeDragDrop.js`, `@/lists/tree.js` | Drag-and-drop state; pure tree helpers (`flatten`, `dropPlacement`, `moveInList`, …) |
+| `@/lists/useCreateChild.js` | Inline "add child" forms of a tree list |
+| `@/lists/ListToolbar.vue`, `ListSearch.vue`, `ListPagination.vue` | Heading with bulk delete, search box, Laravel paginator links |
+| `@/dbTable/listFilters.js`, `@/dbTable/uiConfig.js` | Pure helpers for db_table filters (URL ↔ values, chips) and the `ui_config` JSON |
+
+Column settings of a table (`ui_config`, format in AtlasCMS `docs/db-table.md`) are edited with `UiConfigEditor`, which reads the columns from the given connection and emits the JSON on every change:
+
+```vue
+<script setup>
+import UiConfigEditor from '@admin/Pages/Admin/System/Modules/components/UiConfigEditor.vue';
+</script>
+
+<template>
+    <UiConfigEditor
+        table-name="venues"
+        connection=""
+        :initial-ui-config="form.ui_config"
+        @update:ui-config="(json) => { form.ui_config = json; }"
+    />
+</template>
+```
+
+Props: `tableName`, `connection` (empty — the default connection), `moduleId` (columns through the module endpoint; without it the generic one), `initialUiConfig` (JSON string or object), `excludeColumns`, and the module-only parts `withFieldGroups` and `withCasts`. It replaces `DataSourceUiBuilder.vue` and `FieldConfigurationBuilder.vue`, removed in 1.3.3.
 
 Custom field interfaces (field type `custom`, setting `interface_path` such as `Posts/Analytics`) come from the `virtual:atlas-admin-interfaces` registry that `atlasPages()` builds with the page rules: host `resources/admin/Custom/Interfaces/` first, then AtlasCMS-Vue (which ships `LanguageLocaleData`), then other declared Vue packages; the first `{interface_path}.vue` wins. Without the `interfaceRoots` option each page root `…/admin/Pages` contributes `…/admin/Custom/Interfaces`; `loadAllPackages()` also returns `interfaceRoots` to pass explicitly. An interface receives `field` and `model` props like the built-in ones.
 
@@ -117,4 +152,4 @@ List `vite.config.mjs` and `resources/**/*` in the manifest's `files` so Git and
 
 ## Verification
 
-From the Atlas CMS host: `npm run build`, and `node --test tests/Frontend/*.test.mjs` (page registry, package discovery, packing and installing archives, DbTable form model). The package declares no license. Repository: [Atlas-CMS-Vue](https://github.com/DevCats-Atlas/Atlas-CMS-Vue).
+From the Atlas CMS host: `npm run build`, and `node --test tests/Frontend/*.test.mjs` (page registry, package discovery, packing and installing archives, DbTable form model and list filters, `ui_config`, list tree and selection, module settings form, admin translations). The package declares no license. Repository: [Atlas-CMS-Vue](https://github.com/DevCats-Atlas/Atlas-CMS-Vue).
