@@ -36,9 +36,11 @@ Installation, Vite integration, page resolution and aliases: [README.md](README.
 | `js/dbTable/` | Pure DbTable helpers, Node-tested in the host: `formModel.js` (record forms), `listFilters.js` (list filters), `uiConfig.js` (`ui_config` JSON) |
 | `js/lists/` | Shared list pieces: `tree.js`, `selection.js` (pure), `useListSearch`, `useSelection`, `useExpandedState`, `useTreeDragDrop`, `useCreateChild`, `ListToolbar` / `ListSearch` / `ListPagination` |
 | `js/modules/` | Module settings form: `moduleForm.js` (pure), `useModuleDataSourceForm.js` |
+| `js/localeData.js` | Locale data JSON of language items (pure, used by `Custom/Interfaces/LanguageLocaleData.vue`) |
 | `Layouts/` | `AdminLayout` (sidebar from `cmsNavigation`, dark mode toggle, the only `ToastStack`), `SystemLayout` |
 | `Pages/Admin/Modules/Default/` | Items modules: tree list, drag & drop, bulk delete, tabbed edit form, field interfaces |
 | `Pages/Admin/Modules/DbTable/` | Table modules: filters, tree, sorting, relationship manager, `DbTableRecordForm` |
+| `Pages/Admin/AccessDenied.vue`, `ModuleNotConfigured.vue` | Error pages rendered by AtlasCMS `AdminAccess` and `ModuleNotConfigured` |
 | `Pages/Admin/System/`, `Pages/Admin/Users/`, `Pages/Auth/` | System screens (module settings: `System/Modules/Show.vue` + `sections/`, column settings: `components/UiConfigEditor.vue`), users, login |
 | `Custom/Interfaces/` | Package custom field interfaces (`{ "type": "custom", "interface_path": "Posts/Analytics" }`); the `virtual:atlas-admin-interfaces` registry (`page-registry.mjs`) puts host interfaces first |
 | `css/app.css` | Component classes (`.btn-*`, `.form-input`, tables, modals) with `dark:` variants |
