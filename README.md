@@ -53,7 +53,8 @@ Shared props: `auth`, `cmsNavigation`, `flash`, `translations`, `adminLocale`, `
 | Path under `resources/admin/js/` | Responsibility |
 | --- | --- |
 | `lists/` | Search, selection, expanded state, tree drag-and-drop, child creation; toolbar/search/pagination components |
-| `dbTable/formModel.js`, `composables/useDbTableRecordForm.js` | Module and related-record forms; rendered by `DbTableRecordForm.vue` |
+| `dbTable/formModel.js`, `dbTable/recordTransport.js`, `composables/useDbTableRecordForm.js` | Module and related-record payloads, multipart and method spoofing; rendered by `DbTableRecordForm.vue` |
+| `composables/useRelationshipOptions.js` | Module-scoped relationship options, debounced search and stale-response protection |
 | `dbTable/listFilters.js`, `dbTable/uiConfig.js` | Filter URL values and column configuration |
 | `modules/` | Module settings model and data-source state |
 | `localeData.js` | Language JSON parsing and editing |
@@ -68,6 +69,8 @@ Column settings use `Pages/Admin/System/Modules/components/UiConfigEditor.vue`:
     @update:ui-config="form.ui_config = $event"
 />
 ```
+
+DbTable related forms submit independently in teleported modals. Option endpoints return `{id, label}`; related lists supply `record_key` so selections and editing use the related table’s key.
 
 DbTable cast previews render plain text with preserved line breaks; HTML and links in templates are shown literally.
 

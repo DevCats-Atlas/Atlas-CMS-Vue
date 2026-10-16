@@ -34,6 +34,7 @@ const { showToast } = useToast();
 
 const activeTab = ref(0);
 const relationshipData = ref({});
+const relationshipRecordKeys = ref({});
 const relationshipPagination = ref({}); // Store pagination info for each relationship
 const relationshipErrors = ref({}); // Store errors for each relationship
 const loading = ref({});
@@ -68,6 +69,7 @@ const loadRelationship = async (relationship, index, page = 1) => {
             params,
         });
         relationshipData.value[name] = response.data.records || [];
+        relationshipRecordKeys.value[name] = response.data.record_key || 'id';
         
         // Store pagination info if available
         if (response.data.pagination) {
@@ -143,11 +145,11 @@ const toggleSelector = (relationship) => {
     if (!editingRelationships.value[name]) {
         if (relationship.type === 'belongsToMany') {
             // For belongsToMany, start with existing relationships (user can add/remove)
-            editingRelationships.value[name] = [...(relationshipData.value[name] || []).map(r => r[props.primaryKeyColumn] ?? r.id)];
+            editingRelationships.value[name] = [...(relationshipData.value[name] || []).map(r => r[relationshipRecordKeys.value[name] || 'id'])];
         } else if (relationship.type === 'belongsTo') {
             // For belongsTo, start with current selection (single value)
             editingRelationships.value[name] = relationshipData.value[name]?.length > 0 
-                ? [relationshipData.value[name][0][props.primaryKeyColumn] ?? relationshipData.value[name][0].id]
+                ? [relationshipData.value[name][0][relationshipRecordKeys.value[name] || 'id']]
                 : [];
         }
     }
@@ -330,7 +332,7 @@ const handleRecordCreated = async (newRecordId, relationship) => {
                         :relationship="relationship"
                         :records="relationshipData[getRelationshipName(relationship)] || []"
                         :pagination="relationshipPagination[getRelationshipName(relationship)]"
-                        :primary-key-column="primaryKeyColumn"
+                        :primary-key-column="relationshipRecordKeys[getRelationshipName(relationship)] || 'id'"
                         :related-table-name="getRelatedTableName(relationship)"
                         :module-handle="moduleHandle"
                         :record-id="recordId"
@@ -374,7 +376,7 @@ const handleRecordCreated = async (newRecordId, relationship) => {
                         :relationship="relationship"
                         :selected-ids="editingRelationships[getRelationshipName(relationship)] || []"
                         :related-table-name="getRelatedTableName(relationship)"
-                        :primary-key-column="primaryKeyColumn"
+                        :primary-key-column="relationshipRecordKeys[getRelationshipName(relationship)] || 'id'"
                         :module-handle="moduleHandle"
                         @update:selected-ids="(ids) => editingRelationships[getRelationshipName(relationship)] = ids"
                     />
@@ -384,42 +386,43 @@ const handleRecordCreated = async (newRecordId, relationship) => {
     </div>
     
     <!-- Create Modal for hasMany and hasOne -->
-    <div
-        v-for="(relationship, index) in relationships"
-        :key="'create-modal-' + index"
-    >
+    <Teleport to="body">
         <div
-            v-if="shouldShowCreateForm(relationship) && createModalOpen[getRelationshipName(relationship)]"
-            class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 px-4"
-            @click.self="closeCreateModal(relationship)"
+            v-for="(relationship, index) in relationships"
+            :key="'create-modal-' + index"
         >
-            <div class="w-full max-w-4xl rounded-2xl bg-white dark:bg-gray-800 shadow-xl flex flex-col max-h-[90vh]">
-                <div class="modal-header">
-                    <h3 class="section-heading">
-                        {{ t('admin.relationships.create_new_record') }}
-                    </h3>
-                    <button
-                        type="button"
-                        class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                        @click="closeCreateModal(relationship)"
-                    >
-                        ✕
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <RelationshipCreateForm
-                        :relationship="relationship"
-                        :module-handle="moduleHandle"
-                        :record-id="recordId"
-                        :primary-key-column="primaryKeyColumn"
-                        @created="(newRecordId) => handleRecordCreated(newRecordId, relationship)"
-                        @cancel="closeCreateModal(relationship)"
-                    />
+            <div
+                v-if="shouldShowCreateForm(relationship) && createModalOpen[getRelationshipName(relationship)]"
+                class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 px-4"
+                @click.self="closeCreateModal(relationship)"
+            >
+                <div class="w-full max-w-4xl rounded-2xl bg-white dark:bg-gray-800 shadow-xl flex flex-col max-h-[90vh]">
+                    <div class="modal-header">
+                        <h3 class="section-heading">
+                            {{ t('admin.relationships.create_new_record') }}
+                        </h3>
+                        <button
+                            type="button"
+                            class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                            @click="closeCreateModal(relationship)"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <RelationshipCreateForm
+                            :relationship="relationship"
+                            :module-handle="moduleHandle"
+                            :record-id="recordId"
+                            :primary-key-column="relationshipRecordKeys[getRelationshipName(relationship)] || 'id'"
+                            @created="(newRecordId) => handleRecordCreated(newRecordId, relationship)"
+                            @cancel="closeCreateModal(relationship)"
+                        />
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     
-    <!-- Toast notifications -->
+    </Teleport>
 </template>
 

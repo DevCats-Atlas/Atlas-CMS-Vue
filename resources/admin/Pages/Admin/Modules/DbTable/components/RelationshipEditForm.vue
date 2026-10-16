@@ -3,7 +3,8 @@ import { adminUrl } from '@/utils/adminUrl';
 import { onMounted, reactive, ref } from 'vue';
 import axios from 'axios';
 import { useTranslation } from '@admin/js/utils/useTranslation';
-import { createModels, submitValues } from '@/dbTable/formModel.js';
+import { createModels } from '@/dbTable/formModel.js';
+import { postRecordForm } from '@/dbTable/recordTransport.js';
 import DbTableRecordForm from './DbTableRecordForm.vue';
 
 const { t } = useTranslation();
@@ -69,11 +70,10 @@ const submitForm = async () => {
     errors.value = {};
 
     try {
-        await axios.put(relationshipUrl('update'), {
+        await postRecordForm(relationshipUrl('update'), fields.value, models, {
             record_id: props.recordId,
             related_record_id: props.relatedRecordId,
-            ...submitValues(fields.value, models),
-        });
+        }, 'put');
         emit('updated', props.relatedRecordId);
     } catch (error) {
         console.error('Error updating record:', error);
@@ -102,7 +102,7 @@ onMounted(loadData);
         </div>
 
         <!-- Form -->
-        <form v-else @submit.prevent="submitForm" class="space-y-4">
+        <form v-else @submit.stop.prevent="submitForm" class="space-y-4">
             <DbTableRecordForm :fields="fields" :models="models" :errors="errors" compact />
 
             <!-- Form actions -->

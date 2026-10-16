@@ -1,6 +1,7 @@
 import { computed, reactive } from 'vue';
 import { useForm } from '@inertiajs/vue3';
-import { createModels, normalizeParent, submitValues } from '@/dbTable/formModel.js';
+import { createModels, normalizeParent } from '@/dbTable/formModel.js';
+import { recordFormPayload } from '@/dbTable/recordTransport.js';
 
 /**
  * Inertia form for DbTable create/edit pages.
@@ -22,13 +23,9 @@ export function useDbTableRecordForm(props, { recordId = null, parentId = null }
 
     const submit = (url, { method = 'post', ...options } = {}) => {
         form.transform((data) => {
-            const payload = { ...data, ...submitValues(fields.value, models) };
+            const payload = recordFormPayload(fields.value, models, data, method);
             if (usesParentSelector) {
                 payload[props.parentColumn] = normalizeParent(data[props.parentColumn]);
-            }
-            if (method === 'put') {
-                // Multipart requests cannot use PUT directly; Laravel reads the spoofed method
-                payload._method = 'put';
             }
 
             return payload;

@@ -1,7 +1,6 @@
 <script setup>
-import { adminUrl } from '@/utils/adminUrl';
-import { ref, onMounted, watch, computed } from 'vue';
-import axios from 'axios';
+import { computed } from 'vue';
+import { useRelationshipOptions } from '@/composables/useRelationshipOptions.js';
 import { useTranslation } from '@admin/js/utils/useTranslation';
 
 const { t } = useTranslation();
@@ -31,72 +30,9 @@ const props = defineProps({
 
 const emit = defineEmits(['update:selectedIds']);
 
-const availableRecords = ref([]);
-const loading = ref(false);
-const loadingCount = ref(false);
-const searchQuery = ref('');
-const totalCount = ref(null);
-const requiresSearch = ref(false);
-let searchTimeout = null;
-
-// Check total count and determine if search is required
-const checkRecordCount = async () => {
-    if (!props.relatedTableName || !props.relatedTableName.trim()) {
-        return;
-    }
-    
-    loadingCount.value = true;
-    try {
-        const response = await axios.get(adminUrl(`api/tables/${props.relatedTableName}/count`));
-        totalCount.value = response.data.count || 0;
-        requiresSearch.value = totalCount.value >= 100;
-        
-        // If less than 100 records, load them all immediately
-        if (!requiresSearch.value) {
-            loadAvailableRecords();
-        }
-    } catch (error) {
-        console.error('Error loading record count:', error);
-        // Default to requiring search if count fails
-        requiresSearch.value = true;
-    } finally {
-        loadingCount.value = false;
-    }
-};
-
-// Load available records from related table
-const loadAvailableRecords = async () => {
-    if (!props.relatedTableName || !props.relatedTableName.trim()) {
-        console.warn('Related table name is not provided:', props.relatedTableName);
-        availableRecords.value = [];
-        return;
-    }
-    
-    // If search is required and no query provided, don't load
-    if (requiresSearch.value && !searchQuery.value.trim()) {
-        availableRecords.value = [];
-        return;
-    }
-    
-    loading.value = true;
-    const url = adminUrl(`api/tables/${props.relatedTableName}/records`);
-    const params = {
-        search: searchQuery.value || '',
-        per_page: requiresSearch.value ? 50 : 100, // Limit results when searching
-    };
-    
-    try {
-        const response = await axios.get(url, { params });
-        availableRecords.value = response.data.records || [];
-    } catch (error) {
-        console.error('Error loading available records:', error);
-        console.error('URL:', url);
-        console.error('Error response:', error.response?.data || error.message);
-        availableRecords.value = [];
-    } finally {
-        loading.value = false;
-    }
-};
+const { records: availableRecords, loading, loadingCount, searchQuery, totalCount, requiresSearch } = useRelationshipOptions(
+    () => props.moduleHandle, () => props.relationship.name || props.relationship.related_table,
+);
 
 const isSingleSelection = computed(() => {
     return props.relationship.type === 'belongsTo' || props.relationship.type === 'hasOne';
@@ -141,22 +77,6 @@ const getRecordLabel = (record) => {
     return `Record #${record[props.primaryKeyColumn] ?? record.id}`;
 };
 
-// Debounce search to avoid too many requests
-watch(searchQuery, () => {
-    // Clear previous timeout
-    if (searchTimeout) {
-        clearTimeout(searchTimeout);
-    }
-    
-    // Set new timeout - wait 300ms after user stops typing
-    searchTimeout = setTimeout(() => {
-        loadAvailableRecords();
-    }, 300);
-});
-
-onMounted(() => {
-    checkRecordCount();
-});
 </script>
 
 <template>

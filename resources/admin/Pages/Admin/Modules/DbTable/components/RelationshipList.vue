@@ -1,6 +1,7 @@
 <script setup>
 import { adminUrl } from '@/utils/adminUrl';
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed } from 'vue';
+import { useRelationshipOptions } from '@/composables/useRelationshipOptions.js';
 import { Link } from '@inertiajs/vue3';
 import axios from 'axios';
 import { confirmDialog } from '@/utils/confirmDialog.js';
@@ -97,12 +98,10 @@ const editModalOpen = ref(false);
 const editingRecord = ref(null);
 
 // For belongsTo select dropdown
-const belongsToOptions = ref([]);
-const belongsToLoading = ref(false);
-const belongsToSearchQuery = ref('');
-const belongsToTotalCount = ref(null);
-const belongsToRequiresSearch = ref(false);
-let belongsToSearchTimeout = null;
+const {
+    records: belongsToOptions, loading: belongsToLoading, searchQuery: belongsToSearchQuery,
+    totalCount: belongsToTotalCount, requiresSearch: belongsToRequiresSearch, initialize: checkBelongsToCount,
+} = useRelationshipOptions(() => props.moduleHandle, () => props.relationship.name || props.relationship.related_table, { immediate: false });
 
 const showViewButton = computed(() => {
     // Don't show View button for belongsToMany and belongsTo
@@ -119,83 +118,7 @@ const isBelongsTo = computed(() => {
     return props.relationship.type === 'belongsTo';
 });
 
-// Check total count for belongsTo select
-const checkBelongsToCount = async () => {
-    if (!props.relatedTableName || !props.relatedTableName.trim()) {
-        return;
-    }
-    
-    try {
-        const response = await axios.get(adminUrl(`api/tables/${props.relatedTableName}/count`));
-        belongsToTotalCount.value = response.data.count || 0;
-        belongsToRequiresSearch.value = belongsToTotalCount.value >= 100;
-        
-        // If less than 100 records, load them all immediately
-        if (!belongsToRequiresSearch.value) {
-            loadBelongsToOptions();
-        }
-    } catch (error) {
-        console.error('Error loading record count:', error);
-        // Default to requiring search if count fails
-        belongsToRequiresSearch.value = true;
-    }
-};
-
-// Load options for belongsTo select
-const loadBelongsToOptions = async () => {
-    if (!props.relatedTableName || !props.relatedTableName.trim()) {
-        belongsToOptions.value = [];
-        return;
-    }
-    
-    // If search is required and no query provided, don't load
-    if (belongsToRequiresSearch.value && !belongsToSearchQuery.value.trim()) {
-        belongsToOptions.value = [];
-        return;
-    }
-    
-    belongsToLoading.value = true;
-    const url = adminUrl(`api/tables/${props.relatedTableName}/records`);
-    const params = {
-        search: belongsToSearchQuery.value || '',
-        per_page: belongsToRequiresSearch.value ? 50 : 100,
-    };
-    
-    try {
-        const response = await axios.get(url, { params });
-        belongsToOptions.value = response.data.records || [];
-    } catch (error) {
-        console.error('Error loading belongsTo options:', error);
-        belongsToOptions.value = [];
-    } finally {
-        belongsToLoading.value = false;
-    }
-};
-
-// Watch search query with debounce
-watch(belongsToSearchQuery, () => {
-    if (belongsToSearchTimeout) {
-        clearTimeout(belongsToSearchTimeout);
-    }
-    
-    belongsToSearchTimeout = setTimeout(() => {
-        if (belongsToRequiresSearch.value) {
-            loadBelongsToOptions();
-        }
-    }, 300);
-});
-
-const getBelongsToOptionLabel = (record) => {
-    // Try common title fields
-    const titleFields = ['title', 'name', 'label', 'email'];
-    for (const field of titleFields) {
-        if (record[field]) {
-            return record[field];
-        }
-    }
-    // Fallback to primary key
-    return `Record #${record[props.primaryKeyColumn]}`;
-};
+const getBelongsToOptionLabel = (record) => record.label;
 
 const startEdit = (recordId) => {
     // For hasMany and hasOne, open modal instead of inline edit
@@ -496,8 +419,8 @@ const formatValue = (value, column) => {
                                             <option :value="null">-- {{ t('admin.common.none') }} --</option>
                                             <option
                                                 v-for="option in belongsToOptions"
-                                                :key="option[primaryKeyColumn]"
-                                                :value="option[primaryKeyColumn]"
+                                                :key="option.id"
+                                                :value="option.id"
                                             >
                                                 {{ getBelongsToOptionLabel(option) }}
                                             </option>
@@ -625,8 +548,8 @@ const formatValue = (value, column) => {
                                 <option :value="null">{{ t('admin.relationships.none_option') }}</option>
                                 <option
                                     v-for="option in belongsToOptions"
-                                    :key="option[primaryKeyColumn]"
-                                    :value="option[primaryKeyColumn]"
+                                    :key="option.id"
+                                    :value="option.id"
                                 >
                                     {{ getBelongsToOptionLabel(option) }}
                                 </option>
@@ -733,38 +656,40 @@ const formatValue = (value, column) => {
         </div>
         
         <!-- Edit Modal for hasMany and hasOne -->
-        <div
-            v-if="editModalOpen && editingRecord && (relationship.type === 'hasMany' || relationship.type === 'hasOne')"
-            class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 px-4"
-            @click.self="closeEditModal"
-        >
-            <div class="w-full max-w-4xl rounded-2xl bg-white dark:bg-gray-800 shadow-xl flex flex-col max-h-[90vh]">
-                <div class="modal-header">
-                    <h3 class="section-heading">
-                        {{ t('admin.relationships.edit_relationship') }}
-                    </h3>
-                    <button
-                        type="button"
-                        class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                        @click="closeEditModal"
-                    >
-                        ✕
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <RelationshipEditForm
-                        :relationship="relationship"
-                        :module-handle="moduleHandle"
-                        :record-id="recordId"
-                        :related-record-id="getRecordId(editingRecord)"
-                        :primary-key-column="primaryKeyColumn"
-                        :related-table-name="relatedTableName"
-                        @updated="handleUpdated"
-                        @cancel="closeEditModal"
-                    />
+        <Teleport to="body">
+            <div
+                v-if="editModalOpen && editingRecord && (relationship.type === 'hasMany' || relationship.type === 'hasOne')"
+                class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 px-4"
+                @click.self="closeEditModal"
+            >
+                <div class="w-full max-w-4xl rounded-2xl bg-white dark:bg-gray-800 shadow-xl flex flex-col max-h-[90vh]">
+                    <div class="modal-header">
+                        <h3 class="section-heading">
+                            {{ t('admin.relationships.edit_relationship') }}
+                        </h3>
+                        <button
+                            type="button"
+                            class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                            @click="closeEditModal"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <RelationshipEditForm
+                            :relationship="relationship"
+                            :module-handle="moduleHandle"
+                            :record-id="recordId"
+                            :related-record-id="getRecordId(editingRecord)"
+                            :primary-key-column="primaryKeyColumn"
+                            :related-table-name="relatedTableName"
+                            @updated="handleUpdated"
+                            @cancel="closeEditModal"
+                        />
+                    </div>
                 </div>
             </div>
-        </div>
+        </Teleport>
     </div>
 </template>
 

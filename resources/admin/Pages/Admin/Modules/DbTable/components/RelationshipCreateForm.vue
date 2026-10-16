@@ -3,7 +3,8 @@ import { adminUrl } from '@/utils/adminUrl';
 import { onMounted, reactive, ref } from 'vue';
 import axios from 'axios';
 import { useTranslation } from '@admin/js/utils/useTranslation';
-import { createModels, submitValues } from '@/dbTable/formModel.js';
+import { createModels } from '@/dbTable/formModel.js';
+import { postRecordForm } from '@/dbTable/recordTransport.js';
 import DbTableRecordForm from './DbTableRecordForm.vue';
 
 const { t } = useTranslation();
@@ -63,9 +64,8 @@ const submitForm = async () => {
     errors.value = {};
 
     try {
-        const response = await axios.post(relationshipUrl('create'), {
+        const response = await postRecordForm(relationshipUrl('create'), fields.value, models, {
             record_id: props.recordId,
-            ...submitValues(fields.value, models),
         });
         emit('created', response.data.record_id);
         resetModels();
@@ -96,7 +96,7 @@ onMounted(loadStructure);
         </div>
 
         <!-- Form -->
-        <form v-else @submit.prevent="submitForm" class="space-y-4">
+        <form v-else @submit.stop.prevent="submitForm" class="space-y-4">
             <DbTableRecordForm :fields="fields" :models="models" :errors="errors" compact />
 
             <!-- Form actions -->
