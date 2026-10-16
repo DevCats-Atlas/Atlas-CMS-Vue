@@ -1,13 +1,11 @@
 <script setup>
 import { adminUrl } from '@/utils/adminUrl';
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@admin/Layouts/AdminLayout.vue';
 import { confirmDialog } from '@admin/js/utils/confirmDialog.js';
 import { useTranslation } from '@admin/js/utils/useTranslation';
-import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/components/interfaces';
-import MultiSelect from './components/MultiSelect.vue';
-import RelationshipFilterSelect from './components/RelationshipFilterSelect.vue';
+import DbTableFilters from './components/DbTableFilters.vue';
 import axios from 'axios';
 import { dropPlacement, flatten } from '@admin/js/lists/tree.js';
 import { useCreateChild } from '@admin/js/lists/useCreateChild.js';
@@ -99,162 +97,9 @@ const props = defineProps({
 
 const baseUrl = computed(() => adminUrl(`${props.moduleHandle}`));
 
-// Filter state management
-const hasFilterConfig = computed(() => {
-    return props.filterConfig && props.filterConfig.filters && props.filterConfig.filters.length > 0;
-});
-
-// Initialize filter values from query parameters
-const filterValues = ref({});
-const defaultSearchValue = ref(props.search || '');
-
-// Filter values from the URL (links, reloads): `filter[id]`, `filter[id][]` / `filter[id][0]` lists, `filter[id][from|to]` ranges
-const initializeFilters = () => {
-    const params = new URLSearchParams(window.location.search);
-    defaultSearchValue.value = params.get('search') || '';
-    const values = {};
-
-    for (const filter of props.filterConfig?.filters ?? []) {
-        if (!filter.enabled) {
-            continue;
-        }
-        const key = `filter[${filter.id}]`;
-        const list = [...params.entries()]
-            .filter(([name]) => name.startsWith(key) && /^\[\d*\]$/.test(name.slice(key.length)))
-            .map(([, value]) => value);
-        const from = params.get(`${key}[from]`);
-        const to = params.get(`${key}[to]`);
-        const single = params.get(key);
-
-        if (list.length > 0) {
-            values[filter.id] = filter.multiple ? list : list[0];
-        } else if (from !== null || to !== null) {
-            values[filter.id] = { from: from ?? '', to: to ?? '' };
-        } else if (single !== null) {
-            values[filter.id] = filter.multiple ? [single] : single;
-        } else if (filter.operator === 'range') {
-            values[filter.id] = { from: '', to: '' };
-        }
-    }
-
-    filterValues.value = values;
-};
-
-// Initialize on mount
-initializeFilters();
-
-// Watch for filter config changes
-watch(() => props.filterConfig, () => {
-    initializeFilters();
-}, { deep: true });
-
-// Build query parameters from filter values
-const buildFilterParams = () => {
-    const params = {};
-    
-    // Add default search if enabled and has value
-    if (props.filterConfig?.default_search?.enabled && defaultSearchValue.value && defaultSearchValue.value.trim() !== '') {
-        params.search = defaultSearchValue.value.trim();
-    }
-    
-    // Add custom filter values
-    Object.keys(filterValues.value).forEach(filterId => {
-        const value = filterValues.value[filterId];
-        
-        // Check if value is not empty
-        const isEmpty = value === null || value === undefined || value === '' || 
-                       (Array.isArray(value) && value.length === 0) ||
-                       (typeof value === 'object' && !Array.isArray(value) && !value.from && !value.to);
-        
-        if (!isEmpty) {
-            // Handle array values (for multiple select)
-            if (Array.isArray(value) && value.length > 0) {
-                // For arrays, use indexed notation: filter[filterId][0], filter[filterId][1], etc.
-                // This is how Laravel expects array parameters
-                const filteredArray = value.filter(v => v !== null && v !== undefined && v !== '');
-                if (filteredArray.length > 0) {
-                    filteredArray.forEach((v, index) => {
-                        params[`filter[${filterId}][${index}]`] = String(v);
-                    });
-                }
-            } 
-            // Handle range values
-            else if (typeof value === 'object' && !Array.isArray(value) && (value.from || value.to)) {
-                if (value.from && value.from.toString().trim() !== '') {
-                    params[`filter[${filterId}][from]`] = value.from.toString().trim();
-                }
-                if (value.to && value.to.toString().trim() !== '') {
-                    params[`filter[${filterId}][to]`] = value.to.toString().trim();
-                }
-            }
-            // Handle single values
-            else if (!Array.isArray(value)) {
-                params[`filter[${filterId}]`] = String(value).trim();
-            }
-        }
-    });
-    
-    return params;
-};
-
-// Apply filters
-const applyFilters = () => {
-    router.get(baseUrl.value, buildFilterParams(), {
-        preserveState: false,
-        preserveScroll: true,
-        only: ['items', 'search', 'pagination', 'filterConfig'],
-    });
-};
-
-// Clear specific filter
-const clearFilter = (filterId) => {
-    delete filterValues.value[filterId];
-    applyFilters();
-};
-
-// Clear all filters
-const clearAllFilters = () => {
-    filterValues.value = {};
-    defaultSearchValue.value = '';
-    router.get(baseUrl.value, {}, {
-        preserveState: true,
-        preserveScroll: true,
-        only: ['items', 'search', 'pagination', 'filterConfig'],
-    });
-};
-
-// Plain search box (modules without filter config)
+// Filter form (module filter config) or, without it, the plain search box
+const hasFilterConfig = computed(() => Boolean(props.filterConfig?.filters?.length));
 const { form: searchForm, perform: performSearch, clear: clearSearch } = useListSearch(() => baseUrl.value, props.search);
-
-// Get active filters count
-const activeFiltersCount = computed(() => {
-    let count = 0;
-    if (defaultSearchValue.value) count++;
-    Object.keys(filterValues.value).forEach(key => {
-        const value = filterValues.value[key];
-        if (value !== null && value !== undefined && value !== '') {
-            if (Array.isArray(value) && value.length > 0) {
-                count++;
-            } else if (typeof value === 'object' && (value.from || value.to)) {
-                count++;
-            } else if (typeof value !== 'object') {
-                count++;
-            }
-        }
-    });
-    return count;
-});
-
-// Initialize range values properly
-watch(() => props.filterConfig, (newConfig) => {
-    if (newConfig && newConfig.filters) {
-        newConfig.filters.forEach(filter => {
-            if (filter.type === 'field' && filter.operator === 'range' && !filterValues.value[filter.id]) {
-                filterValues.value[filter.id] = { from: '', to: '' };
-            }
-        });
-    }
-}, { deep: true, immediate: true });
 
 const formatValue = (value, column) => {
     if (value === null || value === undefined) {
@@ -262,7 +107,7 @@ const formatValue = (value, column) => {
     }
     
     if (column.interface === 'checkbox') {
-        return value ? 'Yes' : 'No';
+        return value ? t('admin.common.yes') : t('admin.common.no');
     }
     
     if (column.interface === 'datetime') {
@@ -275,138 +120,6 @@ const formatValue = (value, column) => {
     
     return String(value);
 };
-
-// Get select options for a field
-const getSelectOptions = (fieldName) => {
-    const fieldConfig = props.uiConfig[fieldName];
-    if (!fieldConfig) return [];
-    
-    // If options is already an array (from backend), use it directly
-    const optionsData = fieldConfig.options || fieldConfig.config?.options;
-    if (Array.isArray(optionsData)) {
-        return optionsData.map(opt => {
-            if (typeof opt === 'string') {
-                return { key: opt, label: opt };
-            }
-            return {
-                key: opt.key || opt.value || String(opt),
-                label: opt.label || opt.name || opt.key || opt.value || String(opt),
-            };
-        });
-    }
-    
-    // Parse options from string
-    const optionsString = optionsData || '';
-    if (!optionsString || typeof optionsString !== 'string') return [];
-    
-    // Auto-detect format if it looks like value_label format (contains = and newlines)
-    const hasEquals = optionsString.includes('=');
-    const hasNewlines = optionsString.includes('\n');
-    const looksLikeValueLabel = hasEquals && hasNewlines;
-    
-    // Handle different option formats
-    if (fieldConfig.select_type === 'static') {
-        let inputType = fieldConfig.select_input_type || 'comma';
-        
-        // Auto-detect: if string has = and newlines, treat as value_label
-        if (looksLikeValueLabel && inputType === 'comma') {
-            inputType = 'value_label';
-        }
-        
-        if (inputType === 'comma') {
-            return optionsString.split(',').map(opt => {
-                const trimmed = opt.trim();
-                return { key: trimmed, label: trimmed };
-            }).filter(opt => opt.key);
-        } else if (inputType === 'newline') {
-            return optionsString.split('\n').map(opt => {
-                const trimmed = opt.trim();
-                return { key: trimmed, label: trimmed };
-            }).filter(opt => opt.key);
-        } else if (inputType === 'value_label') {
-            // Handle both = and : separators
-            return optionsString.split('\n').map(opt => {
-                const trimmed = opt.trim();
-                if (!trimmed) return null;
-                
-                // Try = first (most common), then :
-                if (trimmed.includes('=')) {
-                    const parts = trimmed.split('=');
-                    if (parts.length >= 2) {
-                        const key = parts[0].trim();
-                        const label = parts.slice(1).join('=').trim(); // Join in case label contains '='
-                        return { key, label: label || key };
-                    }
-                } else if (trimmed.includes(':')) {
-                    const parts = trimmed.split(':');
-                    if (parts.length >= 2) {
-                        const key = parts[0].trim();
-                        const label = parts.slice(1).join(':').trim(); // Join in case label contains ':'
-                        return { key, label: label || key };
-                    }
-                }
-                
-                // If no separator found, use the whole line as both key and label
-                return { key: trimmed, label: trimmed };
-            }).filter(opt => opt !== null && opt.key);
-        }
-    }
-    
-    return [];
-};
-
-// Get display text for select field
-const getSelectDisplayText = (filterId, fieldName) => {
-    const value = filterValues.value[filterId];
-    if (!value || value === '') return '';
-    
-    const options = getSelectOptions(fieldName);
-    if (Array.isArray(value)) {
-        // Multiple select - show comma-separated labels
-        return value.map(v => {
-            const option = options.find(opt => String(opt.key) === String(v));
-            return option ? option.label : v;
-        }).filter(Boolean).join(', ');
-    } else {
-        // Single select - show label
-        const option = options.find(opt => String(opt.key) === String(value));
-        return option ? option.label : String(value);
-    }
-};
-
-// Format filter value for display
-const formatFilterValue = (value, filter) => {
-    if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
-        return '';
-    }
-    if (typeof value === 'object' && !Array.isArray(value) && !value.from && !value.to) {
-        return ''; // empty range
-    }
-
-    // Select fields show option labels, not stored keys
-    if (filter?.type === 'field' && filter.field && getSelectOptions(filter.field).length > 0) {
-        return getSelectDisplayText(filter.id, filter.field);
-    }
-
-    if (Array.isArray(value)) {
-        return value.join(', ');
-    }
-    
-    if (typeof value === 'object' && (value.from || value.to)) {
-        const parts = [];
-        if (value.from) parts.push(`From: ${value.from}`);
-        if (value.to) parts.push(`To: ${value.to}`);
-        return parts.join(', ');
-    }
-    
-    // Format based on filter type
-    if (filter && filter.type === 'field' && filter.field && props.uiConfig[filter.field]?.interface === 'checkbox') {
-        return value === '1' || value === 1 || value === true ? 'Yes' : 'No';
-    }
-    
-    return String(value);
-};
-
 
 const confirmDelete = async (item) => {
     // Use the primary key column passed from backend
@@ -500,190 +213,16 @@ const {
                         </button>
                     </div>
 
-                    <!-- Filter Form -->
-                    <div v-if="hasFilterConfig" class="mb-6 pb-4 border-divider">
-                        <form @submit.prevent="applyFilters">
-                            <!-- Compact Grid Layout -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                                <!-- Default Search -->
-                                <div v-if="props.filterConfig?.default_search?.enabled" class="md:col-span-2 lg:col-span-3 xl:col-span-4">
-                                    <div class="flex items-center gap-2">
-                                        <div class="flex-1">
-                                            <input
-                                                v-model="defaultSearchValue"
-                                                type="text"
-                                                class="form-input"
-                                                :placeholder="props.filterConfig.default_search.placeholder || t('admin.common.search')"
-                                            />
-                                        </div>
-                                        <button type="submit" class="btn btn-primary whitespace-nowrap">
-                                            {{ t('admin.common.search') }}
-                                        </button>
-                                        <button
-                                            v-if="activeFiltersCount > 0"
-                                            type="button"
-                                            class="btn btn-outline whitespace-nowrap"
-                                            @click="clearAllFilters"
-                                        >
-                                            {{ t('admin.common.clear_all') }}
-                                        </button>
-                                    </div>
-                                </div>
+                    <DbTableFilters
+                        v-if="hasFilterConfig"
+                        :filter-config="filterConfig"
+                        :ui-config="uiConfig"
+                        :relationships="relationships"
+                        :module-handle="moduleHandle"
+                        :url="baseUrl"
+                    />
 
-                                <!-- Custom Filters -->
-                                <div
-                                    v-for="filter in (props.filterConfig?.filters || [])"
-                                    :key="filter.id"
-                                    v-show="filter && filter.enabled"
-                                    class="flex items-start gap-2"
-                                >
-                                    <div class="flex-1 min-w-0">
-                                        <label class="form-label text-xs mb-1">{{ filter.label }}</label>
-                                        
-                                        <!-- Search Filter -->
-                                        <input
-                                            v-if="filter.type === 'search'"
-                                            v-model="filterValues[filter.id]"
-                                            type="text"
-                                            class="form-input text-sm"
-                                            :placeholder="filter.placeholder || filter.label"
-                                        />
-                                        
-                                        <!-- Field Filter: Select (Single) -->
-                                        <div v-else-if="filter.type === 'field' && uiConfig[filter.field]?.interface === 'select' && !filter.multiple" class="relative">
-                                            <select
-                                                v-model="filterValues[filter.id]"
-                                                class="form-select text-sm"
-                                            >
-                                                <option value="">{{ filter.placeholder || 'Select...' }}</option>
-                                                <option
-                                                    v-for="option in getSelectOptions(filter.field)"
-                                                    :key="option.key"
-                                                    :value="option.key"
-                                                >
-                                                    {{ option.label }}
-                                                </option>
-                                            </select>
-                                        </div>
-                                        
-                                        <!-- Field Filter: Select (Multiple) -->
-                                        <MultiSelect
-                                            v-else-if="filter.type === 'field' && uiConfig[filter.field]?.interface === 'select' && filter.multiple"
-                                            :options="getSelectOptions(filter.field)"
-                                            :model-value="Array.isArray(filterValues[filter.id]) ? filterValues[filter.id] : (filterValues[filter.id] ? [filterValues[filter.id]] : [])"
-                                            :placeholder="filter.placeholder || filter.label"
-                                            @update:model-value="(val) => { filterValues[filter.id] = val; }"
-                                        />
-                                        
-                                        <!-- Field Filter: Date/DateTime -->
-                                        <div v-else-if="filter.type === 'field' && (uiConfig[filter.field]?.interface === 'date' || uiConfig[filter.field]?.interface === 'datetime')" class="flex gap-1">
-                                            <input
-                                                v-if="filter.operator === 'range'"
-                                                v-model="filterValues[filter.id].from"
-                                                :type="uiConfig[filter.field]?.interface === 'datetime' ? 'datetime-local' : 'date'"
-                                                class="form-input text-sm flex-1"
-                                                :placeholder="t('admin.db_table.from')"
-                                            />
-                                            <input
-                                                v-if="filter.operator === 'range'"
-                                                v-model="filterValues[filter.id].to"
-                                                :type="uiConfig[filter.field]?.interface === 'datetime' ? 'datetime-local' : 'date'"
-                                                class="form-input text-sm flex-1"
-                                                :placeholder="t('admin.db_table.to')"
-                                            />
-                                            <input
-                                                v-else
-                                                v-model="filterValues[filter.id]"
-                                                :type="uiConfig[filter.field]?.interface === 'datetime' ? 'datetime-local' : 'date'"
-                                                class="form-input text-sm"
-                                            />
-                                        </div>
-                                        
-                                        <!-- Field Filter: Checkbox -->
-                                        <select
-                                            v-else-if="filter.type === 'field' && uiConfig[filter.field]?.interface === 'checkbox'"
-                                            v-model="filterValues[filter.id]"
-                                            class="form-select text-sm"
-                                        >
-                                            <option value="">{{ t('admin.db_table.any') }}</option>
-                                            <option value="1">{{ t('admin.common.yes') }}</option>
-                                            <option value="0">{{ t('admin.common.no') }}</option>
-                                        </select>
-                                        
-                                        <!-- Field Filter: Number/Text Range -->
-                                        <div v-else-if="filter.type === 'field' && filter.operator === 'range'" class="flex gap-1">
-                                            <input
-                                                v-model="filterValues[filter.id].from"
-                                                type="number"
-                                                class="form-input text-sm flex-1"
-                                                :placeholder="t('admin.db_table.min')"
-                                            />
-                                            <input
-                                                v-model="filterValues[filter.id].to"
-                                                type="number"
-                                                class="form-input text-sm flex-1"
-                                                :placeholder="t('admin.db_table.max')"
-                                            />
-                                        </div>
-                                        
-                                        <!-- Field Filter: Number/Text -->
-                                        <input
-                                            v-else-if="filter.type === 'field'"
-                                            v-model="filterValues[filter.id]"
-                                            type="text"
-                                            class="form-input text-sm"
-                                            :placeholder="filter.placeholder || filter.label"
-                                        />
-                                        
-                                        <!-- Relationship Filter -->
-                                        <RelationshipFilterSelect
-                                            v-else-if="filter.type === 'relationship'"
-                                            :filter="filter"
-                                            :relationships="relationships"
-                                            :module-handle="moduleHandle"
-                                            v-model="filterValues[filter.id]"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Active Filters Display -->
-                            <div v-if="activeFiltersCount > 0" class="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                                <span class="text-sm text-gray-600 dark:text-gray-400">{{ t('admin.common.active_filters') }}:</span>
-                                <span
-                                    v-if="defaultSearchValue"
-                                    class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 rounded text-sm"
-                                >
-                                    {{ props.filterConfig?.default_search?.label || t('admin.common.search') }}: {{ defaultSearchValue }}
-                                    <button
-                                        type="button"
-                                        @click="defaultSearchValue = ''; applyFilters()"
-                                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
-                                    >
-                                        ×
-                                    </button>
-                                </span>
-                                <template v-if="props.filterConfig && props.filterConfig.filters">
-                                    <template v-for="filter in props.filterConfig.filters" :key="filter.id">
-                                    <span
-                                        v-if="filter && filter.enabled && formatFilterValue(filterValues[filter.id], filter) !== ''"
-                                        class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 rounded text-sm"
-                                    >
-                                        {{ filter.label }}: {{ formatFilterValue(filterValues[filter.id], filter) }}
-                                        <button
-                                            type="button"
-                                            @click="clearFilter(filter.id)"
-                                            class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
-                                        >
-                                            ×
-                                        </button>
-                                    </span>
-                                    </template>
-                                </template>
-                            </div>
-                        </form>
-                    </div>
-
+                    <!-- Plain search (modules without filter config) -->
                     <!-- Legacy Search Form (backward compatibility) -->
                     <div v-else class="mb-6 pb-6 border-divider">
                         <form @submit.prevent="performSearch" class="space-y-4">
