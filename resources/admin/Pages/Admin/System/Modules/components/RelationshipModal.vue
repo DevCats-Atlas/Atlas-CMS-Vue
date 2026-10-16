@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch, computed } from 'vue';
-import FieldConfigurationBuilder from './FieldConfigurationBuilder.vue';
+import UiConfigEditor from './UiConfigEditor.vue';
 
 const props = defineProps({
     open: {
@@ -14,6 +14,11 @@ const props = defineProps({
     moduleId: {
         type: [Number, String],
         default: null,
+    },
+    // Connection chosen in the module form: related tables live on the module's connection
+    connection: {
+        type: String,
+        default: '',
     },
 });
 
@@ -89,17 +94,22 @@ watch(
 // Apply related table name change (just updates local state to trigger table fetch)
 const applyRelatedTable = () => {
     // Simply update formData.related_table to match the input
-    // The FieldConfigurationBuilder component will automatically fetch the table structure
+    // UiConfigEditor fetches the table structure itself
     // because it watches the tableName prop and has :key binding
     formData.value.related_table = relatedTableInput.value;
 };
 
-// Watch for UI config changes from FieldConfigurationBuilder
+// Watch for UI config changes from UiConfigEditor
 watch(relatedTableUiConfig, (newConfig) => {
     formData.value.ui_config = newConfig;
 });
 
 const isEditMode = computed(() => !!props.relationship);
+
+// hasMany/hasOne related forms never show the foreign key: the server fills it (DbTableRelationshipContext)
+const serverFilledColumns = computed(() => (['hasMany', 'hasOne'].includes(formData.value.type) && formData.value.foreign_key
+    ? [formData.value.foreign_key]
+    : []));
 
 const submit = () => {
     // Sync related_table input to formData before submitting
@@ -314,12 +324,12 @@ const close = () => {
                         <!-- Field Configuration for Related Table -->
                         <div v-if="formData.related_table && formData.related_table.trim() !== ''" class="md:col-span-2">
                             <label class="form-label">Field Configuration <span class="text-gray-400 text-xs">(optional)</span></label>
-                            <FieldConfigurationBuilder
+                            <UiConfigEditor
                                 :table-name="formData.related_table"
+                                :connection="connection"
                                 :module-id="moduleId"
                                 :initial-ui-config="relatedTableUiConfig"
-                                :show-editable="true"
-                                :show-show-in-list="true"
+                                :exclude-columns="serverFilledColumns"
                                 :key="formData.related_table"
                                 @update:ui-config="(config) => { relatedTableUiConfig = config; formData.ui_config = config; }"
                             />

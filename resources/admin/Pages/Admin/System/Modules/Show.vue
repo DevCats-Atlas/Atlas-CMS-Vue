@@ -7,7 +7,7 @@ import ToastStack from '@/components/ToastStack.vue';
 import { useToast } from '@/composables/useToast.js';
 import { confirmDialog } from '@/utils/confirmDialog.js';
 import { resolveInterfaceComponent } from '@admin/Pages/Admin/Modules/Default/components/interfaces';
-import DataSourceUiBuilder from './components/DataSourceUiBuilder.vue';
+import UiConfigEditor from './components/UiConfigEditor.vue';
 import RelationshipModal from './components/RelationshipModal.vue';
 import FilterBuilder from './components/FilterBuilder.vue';
 import ButtonBuilder from './components/ButtonBuilder.vue';
@@ -726,7 +726,7 @@ watch(
 // Apply data source table name change (just updates local state to trigger table fetch)
 const applyDataSourceTable = () => {
     // Simply update moduleForm.data_source_table to match the input
-    // The DataSourceUiBuilder component will automatically fetch the table structure
+    // UiConfigEditor fetches the table structure itself
     // because it watches the tableName prop and has :key binding
     moduleForm.data_source_table = dataSourceTableInput.value;
     
@@ -1111,9 +1111,12 @@ const reorderAction = (action, direction) => {
                             <!-- Field Configuration Section -->
                             <div v-if="moduleForm.data_source_table && moduleForm.data_source_table.trim() !== ''" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                                 <h4 class="heading-4 mb-4">Field Configuration</h4>
-                                <DataSourceUiBuilder
+                                <UiConfigEditor
                                     :table-name="moduleForm.data_source_table"
+                                    :connection="dbTableConnection"
                                     :module-id="props.module.id"
+                                    with-field-groups
+                                    with-casts
                                     :initial-ui-config="currentUiConfig"
                                     :key="moduleForm.data_source_table"
                                     @update:ui-config="(config) => { currentUiConfig = config; moduleForm.data_source_ui = config; }"
@@ -1483,6 +1486,7 @@ const reorderAction = (action, direction) => {
             :open="relationshipModalOpen"
             :relationship="editingRelationshipIndex !== null ? dbTableRelationships.relationships[editingRelationshipIndex] : null"
             :module-id="props.module.id"
+            :connection="dbTableConnection"
             @close="closeRelationshipModal"
             @save="saveRelationship"
         />
