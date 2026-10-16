@@ -66,7 +66,8 @@ export function settingsTabFields(tabs) {
     return tab?.fields ?? [];
 }
 
-const DEFAULT_SEARCH = { enabled: true, label: 'Search', placeholder: 'Search across all columns', columns: [] };
+// Empty label and placeholder: the list shows translated defaults
+const DEFAULT_SEARCH = { enabled: true, label: '', placeholder: '', columns: [] };
 
 const parseJson = (value, fallback) => {
     if (!value) {

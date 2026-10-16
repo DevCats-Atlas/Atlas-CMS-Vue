@@ -73,7 +73,7 @@ const asList = (value) => (Array.isArray(value) ? value : (value ? [value] : [])
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 <div v-if="searchEnabled" class="md:col-span-2 lg:col-span-3 xl:col-span-4">
                     <div class="flex items-center gap-2">
-                        <input v-model="search" type="text" class="form-input flex-1" :placeholder="filterConfig.default_search.placeholder || t('admin.common.search')" />
+                        <input v-model="search" type="text" class="form-input flex-1" :placeholder="filterConfig.default_search.placeholder || t('admin.db_table.search_all_placeholder')" />
                         <button type="submit" class="btn btn-primary whitespace-nowrap">{{ t('admin.common.search') }}</button>
                         <button v-if="activeCount > 0" type="button" class="btn btn-outline whitespace-nowrap" @click="clearAll">
                             {{ t('admin.common.clear_all') }}

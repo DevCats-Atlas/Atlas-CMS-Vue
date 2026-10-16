@@ -12,8 +12,8 @@ const props = defineProps({
         type: Object,
         default: () => ({
             enabled: true,
-            label: 'Search',
-            placeholder: 'Search across all columns',
+            label: '',
+            placeholder: '',
             columns: [],
         }),
     },
