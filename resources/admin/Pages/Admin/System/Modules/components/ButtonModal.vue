@@ -19,90 +19,24 @@ const { showToast } = useToast();
 
 const emit = defineEmits(['close', 'save']);
 
-const formData = ref({
-    id: '',
-    title: '',
-    action: '',
-    method: '__invoke',
-    enabled: true,
-    order_index: 0,
-    icon: '',
-    variant: 'primary',
-    confirm_message: '',
-    requires_permission: false,
-    permission: '',
+const buttonValues = (button = {}) => ({
+    id: button.id || 'button_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9),
+    title: button.title || '',
+    action: button.action || '',
+    enabled: button.enabled ?? true,
+    order_index: button.order_index ?? 0,
+    icon: button.icon || '',
+    variant: button.variant || 'primary',
+    confirm_message: button.confirm_message || '',
+    requires_permission: button.requires_permission || false,
+    permission: button.permission || '',
 });
-
-// Track if we've initialized to prevent unnecessary resets
-let isInitialized = false;
-let lastButtonId = null;
-
-// Initialize form only when modal opens
-watch(() => props.open, (isOpen, wasOpen) => {
-    // Only initialize when modal is opening (was closed, now open)
-    if (isOpen && !wasOpen) {
-        const button = props.button;
-        
-        if (button) {
-            // Edit mode - populate with existing data
-            const buttonId = button.id || JSON.stringify(button);
-            // Only reset if it's a different button
-            if (buttonId !== lastButtonId) {
-                formData.value = {
-                    id: button.id || generateButtonId(),
-                    title: button.title || '',
-                    action: button.action || button.route || '', // Support both for migration
-                    method: button.method || '__invoke',
-                    enabled: button.enabled !== undefined ? button.enabled : true,
-                    order_index: button.order_index ?? 0,
-                    icon: button.icon || '',
-                    variant: button.variant || 'primary',
-                    confirm_message: button.confirm_message || '',
-                    requires_permission: button.requires_permission || false,
-                    permission: button.permission || '',
-                };
-                lastButtonId = buttonId;
-            }
-        } else {
-            // Create mode - reset to defaults
-            formData.value = {
-                id: generateButtonId(),
-                title: '',
-                action: '',
-                method: '__invoke',
-                enabled: true,
-                order_index: 0,
-                icon: '',
-                variant: 'primary',
-                confirm_message: '',
-                requires_permission: false,
-                permission: '',
-            };
-            lastButtonId = null;
-        }
-        isInitialized = true;
-    } else if (!isOpen && wasOpen) {
-        // Reset flag when modal closes
-        isInitialized = false;
-        lastButtonId = null;
-    }
+const formData = ref(buttonValues());
+watch(() => props.open, (open) => {
+    if (open) formData.value = buttonValues(props.button || {});
 }, { immediate: true });
 
-const generateButtonId = () => {
-    return 'button_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-};
-
 const isEditMode = computed(() => !!props.button);
-
-// Note: HTTP method is no longer used for Action-based buttons
-// Keeping for backward compatibility if route-based buttons are still supported
-const methods = [
-    { value: 'get', label: 'GET' },
-    { value: 'post', label: 'POST' },
-    { value: 'put', label: 'PUT' },
-    { value: 'patch', label: 'PATCH' },
-    { value: 'delete', label: 'DELETE' },
-];
 
 const variants = [
     { value: 'primary', label: t('admin.button_config.variants.primary') },
@@ -186,21 +120,6 @@ const handleClose = () => {
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                 {{ t('admin.button_config.action_class_hint') }}
-                            </p>
-                        </div>
-
-                        <!-- Method -->
-                        <div>
-                            <label class="form-label">{{ t('admin.button_config.method') }}</label>
-                            <input
-                                v-model="formData.method"
-                                type="text"
-                                class="form-input"
-                                translate="no"
-                                placeholder="__invoke"
-                            />
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                {{ t('admin.button_config.method_hint') }}
                             </p>
                         </div>
 

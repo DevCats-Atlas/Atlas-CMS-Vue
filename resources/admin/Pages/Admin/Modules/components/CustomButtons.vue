@@ -1,6 +1,6 @@
 <script setup>
 import { adminUrl } from '@/utils/adminUrl';
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import axios from 'axios';
 import { confirmDialog } from '@/utils/confirmDialog.js';
 import { useToast } from '@/composables/useToast.js';
@@ -31,7 +31,6 @@ const loadingButtons = ref(new Set());
 const { showToast } = useToast();
 
 const handleButtonClick = async (button) => {
-    console.log('Button clicked:', button);
     
     // Show confirmation if required
     if (button.confirm_message) {
@@ -43,7 +42,6 @@ const handleButtonClick = async (button) => {
         });
 
         if (!confirmed) {
-            console.log('Action cancelled by user');
             return;
         }
     }
@@ -59,49 +57,12 @@ const executeButtonAction = async (button) => {
         return;
     }
 
-    console.log('Executing button action:', {
-        buttonId,
-        moduleHandle: props.moduleHandle,
-        recordId: props.recordId,
-        dataSource: props.dataSource,
-        button,
-    });
-
     loadingButtons.value.add(buttonId);
 
     try {
-        // For Action-based buttons, always use POST (Action method name is handled on backend)
-        // For backward compatibility with route-based buttons, check if method is a valid HTTP method
-        const method = (button.method || 'post').toLowerCase();
-        const isHttpMethod = ['get', 'post', 'put', 'patch', 'delete'].includes(method);
-        const httpMethod = isHttpMethod ? method : 'post'; // Default to POST for Action methods like '__invoke'
-        
-        const url = adminUrl(`${props.moduleHandle}/button/${buttonId}`);
-        
-        const payload = {
+        const response = await axios.post(adminUrl(`${props.moduleHandle}/button/${buttonId}`), {
             [props.dataSource === 'items' ? 'item' : 'id']: props.recordId,
-        };
-
-        // Use axios to make the request and handle JSON responses
-        let response;
-        const config = {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
-            },
-        };
-
-        if (httpMethod === 'get') {
-            response = await axios.get(url, { ...config, params: payload });
-        } else if (httpMethod === 'post') {
-            response = await axios.post(url, payload, config);
-        } else if (httpMethod === 'put') {
-            response = await axios.put(url, payload, config);
-        } else if (httpMethod === 'patch') {
-            response = await axios.patch(url, payload, config);
-        } else if (httpMethod === 'delete') {
-            response = await axios.delete(url, { ...config, data: payload });
-        }
+        }, { headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } });
 
         // Handle response - check if it's JSON or redirect
         if (response && response.data) {
@@ -162,10 +123,7 @@ const executeButtonAction = async (button) => {
             duration: 6000,
         });
     } finally {
-        // Remove loading state after a short delay to show feedback
-        setTimeout(() => {
-            loadingButtons.value.delete(buttonId);
-        }, 500);
+        loadingButtons.value.delete(buttonId);
     }
 };
 
@@ -198,6 +156,7 @@ const hasIcon = (iconName) => {
 <template>
     <div v-if="buttons && buttons.length > 0" class="flex items-center gap-2 flex-wrap">
         <button
+            type="button"
             v-for="button in buttons"
             :key="button.id"
             :class="getButtonClasses(button)"

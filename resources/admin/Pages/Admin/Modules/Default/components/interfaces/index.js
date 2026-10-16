@@ -7,7 +7,6 @@ import SelectInterface from './SelectInterface.vue';
 import CheckboxInterface from './CheckboxInterface.vue';
 import ChildrenInterface from './ChildrenInterface.vue';
 import CategoriesInterface from './CategoriesInterface.vue';
-import ProductAttributesInterface from './ProductAttributesInterface.vue';
 import UnknownInterface from './UnknownInterface.vue';
 import { defineAsyncComponent } from 'vue';
 import customInterfaces from 'virtual:atlas-admin-interfaces';
@@ -24,7 +23,6 @@ const interfaceComponents = {
     checkbox: CheckboxInterface,
     children: ChildrenInterface,
     categories: CategoriesInterface,
-    'product_attributes': ProductAttributesInterface,
 };
 
 // Custom interfaces come from the atlasPages() registry: host resources/admin/Custom/Interfaces first,

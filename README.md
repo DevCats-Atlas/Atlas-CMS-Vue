@@ -80,6 +80,8 @@ DbTable cast previews render plain text with preserved line breaks; HTML and lin
 
 Built-ins are registered in `Pages/Admin/Modules/Default/components/interfaces/index.js`. Interfaces receive `field` and `model`; write `model.default` or `model.translations[lang]`. File interfaces set `model.delete_default` when clearing a stored file.
 
+The host owns the example interface; Shop supplies `Shop/ProductAttributes` through AtlasShop-Vue.
+
 For type `custom`, `interface_path: 'Posts/Analytics'` selects `Custom/Interfaces/Posts/Analytics.vue`. The `virtual:atlas-admin-interfaces` registry uses the same host-first priority as pages. Roots default to `Custom/Interfaces` beside each `Pages` directory; `interfaceRoots` can be passed explicitly.
 
 ## Verification

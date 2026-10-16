@@ -183,11 +183,8 @@ const editingButton = computed(() => {
                         <span class="text-sm font-medium text-gray-900 dark:text-white">
                             {{ button.title || t('admin.button_config.untitled') }}
                         </span>
-                        <span class="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
-                            {{ button.method?.toUpperCase() || 'POST' }}
-                        </span>
                         <span class="text-xs px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 rounded">
-                            {{ button.route }}
+                            {{ button.action }}
                         </span>
                         <span v-if="!button.enabled" class="text-xs px-2 py-0.5 bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 rounded">
                             {{ t('admin.filters.disabled') }}
