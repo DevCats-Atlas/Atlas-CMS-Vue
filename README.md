@@ -46,7 +46,7 @@ Aliases: `@admin` / `@atlas-cms/admin` → this package's `resources/admin`; `@`
 - Texts use `t()` from `@/utils/useTranslation`; keys belong in AtlasCMS `admin.php` ([translations](https://github.com/DevCats-Atlas/Atlas-CMS/blob/main/docs/i18n.md)).
 - Upload updates use `form.post(url, { forceFormData: true })` with `_method: 'put'` in the form.
 
-Shared props: `auth`, `cmsNavigation`, `flash`, `translations`, `adminLocale`, `availableLanguages`, `adminPrefix`, `atlasVersion`. Items forms additionally receive content `languages`.
+Shared props: `auth`, `cmsNavigation`, `flash`, `translations`, `adminLocale`, `availableLanguages`, `adminPrefix`, `atlasVersion`. Items forms additionally receive content `languages`. Child modals keep the originating module, submit `parent_id` and `field_id`, and open newly created records from `flash.created_item_id`. Their forms render outside the parent form and stop submit propagation.
 
 ### Shared form and list code
 

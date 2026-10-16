@@ -175,12 +175,11 @@ const submitCreateChild = () => {
             fetchChildren();
             
             // Check if we have a created item ID to open in modal
-            const createdItemId = responsePage.props?.created_item_id;
-            const childModuleHandle = responsePage.props?.child_module_handle;
+            const createdItemId = responsePage.props?.flash?.created_item_id;
             
             if (createdItemId) {
                 // Fetch edit data and open modal, passing field_id for validation
-                openEditModal(childModuleHandle || moduleHandle.value, createdItemId, props.field.id);
+                openEditModal(moduleHandle.value, createdItemId, props.field.id);
             } else if (responsePage.props?.redirect) {
                 // Fallback to redirect if no module handle
                 window.location.href = responsePage.props.redirect;
@@ -203,10 +202,11 @@ const openEditModal = async (itemModuleHandle, itemId, fieldId = null) => {
 
     try {
         // Build URL with field_id if provided
-        const url = new URL(adminUrl(`${itemModuleHandle}/item-edit-data`), window.location.origin);
+        const url = new URL(adminUrl(`${moduleHandle.value}/item-edit-data`), window.location.origin);
         url.searchParams.set('item', itemId.toString());
         if (fieldId) {
             url.searchParams.set('field_id', fieldId.toString());
+            url.searchParams.set('parent_id', currentItemId.value.toString());
         }
 
         const response = await fetch(url.toString(), {
@@ -711,32 +711,35 @@ const { draggedItem, draggedOverIndex, handleDragStart, handleDragEnd, handleDra
         </div>
 
         <!-- Edit Modal -->
-        <ModalDialog
-            :open="editModalOpen"
-            :title="t('admin.interfaces.edit_item', { type: editModalData?.itemType?.label || t('admin.interfaces.item') })"
-            size="xl"
-            @close="closeEditModal"
-        >
-            <div v-if="loadingEditData" class="py-8 text-center text-gray-500 dark:text-gray-400">
-                {{ t('admin.common.loading') }}
-            </div>
-            <EditForm
-                v-else-if="editModalData"
-                :title="editModalData.title"
-                :module-handle="editModalData.moduleHandle"
-                :module="editModalData.module"
-                :item-type="editModalData.itemType"
-                :fields="editModalData.fields"
-                :custom-field-tabs="editModalData.customFieldTabs"
-                :item="editModalData.item"
-                :update-url="editModalData.updateUrl"
-                :index-url="editModalData.indexUrl"
-                :inline="true"
-                :field-id="editModalData.fieldId"
-                :parent-item-id="editModalData.item.id"
-                @saved="handleEditFormSaved"
-                @cancel="closeEditModal"
-            />
-        </ModalDialog>
+        <Teleport to="body">
+            <ModalDialog
+                :open="editModalOpen"
+                :title="t('admin.interfaces.edit_item', { type: editModalData?.itemType?.label || t('admin.interfaces.item') })"
+                size="xl"
+                @close="closeEditModal"
+            >
+                <div v-if="loadingEditData" class="py-8 text-center text-gray-500 dark:text-gray-400">
+                    {{ t('admin.common.loading') }}
+                </div>
+                <EditForm
+                    v-else-if="editModalData"
+                    :title="editModalData.title"
+                    :module-handle="editModalData.moduleHandle"
+                    :module="editModalData.module"
+                    :item-type="editModalData.itemType"
+                    :fields="editModalData.fields"
+                    :custom-field-tabs="editModalData.customFieldTabs"
+                    :item="editModalData.item"
+                    :update-url="editModalData.updateUrl"
+                    :index-url="editModalData.indexUrl"
+                    :inline="true"
+                    :field-id="editModalData.fieldId"
+                    :parent-id="editModalData.parentId"
+                    :parent-item-id="editModalData.item.id"
+                    @saved="handleEditFormSaved"
+                    @cancel="closeEditModal"
+                />
+            </ModalDialog>
+        </Teleport>
     </div>
 </template>

@@ -49,6 +49,10 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    parentId: {
+        type: Number,
+        default: null,
+    },
     fieldId: {
         type: Number,
         default: null,
@@ -204,6 +208,7 @@ editForm.transform((data) => {
     // Include field_id if provided (for child item updates)
     if (props.fieldId) {
         payload.field_id = props.fieldId;
+        payload.parent_id = props.parentId;
     }
 
     payload._method = 'put';
@@ -277,7 +282,7 @@ watch(
 
 <template>
     <div :class="{ 'space-y-6': !inline }" class="relative">
-        <form id="edit-form" class="space-y-6" @submit.prevent="submit">
+        <form id="edit-form" class="space-y-6" @submit.stop.prevent="submit">
             <CustomFieldsTabs
                 :fields="fields"
                 :form="editForm"
