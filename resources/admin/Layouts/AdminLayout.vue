@@ -13,6 +13,11 @@ const page = usePage();
 const user = computed(() => page.props.auth?.user ?? null);
 // Interface language selector; hidden while only one language is configured.
 const availableLanguages = computed(() => page.props.availableLanguages ?? []);
+// `1.3.2` → `Atlas CMS v1.3.2`; branch checkouts (`dev-main`) are shown as they are
+const atlasVersionLabel = computed(() => {
+    const version = page.props.atlasVersion;
+    return version ? `Atlas CMS ${/^\d/.test(version) ? `v${version}` : version}` : 'Atlas CMS';
+});
 const changeLanguage = (event) => {
     router.post(adminUrl('language/set'), { language: event.target.value }, { preserveScroll: true });
 };
@@ -186,7 +191,7 @@ onMounted(() => {
                 <!-- Footer -->
                 <div class="p-4 border-t border-gray-200 dark:border-gray-700">
                     <div class="text-sm text-gray-500 dark:text-gray-400">
-                        Atlas CMS v1.0.<br>
+                        {{ atlasVersionLabel }}<br>
                         <div class="flex items-end gap-2">
                             Powered by 
                             <a href="https://devcats.co/" target="_blank" class="text-blue-500 hover:text-blue-600">

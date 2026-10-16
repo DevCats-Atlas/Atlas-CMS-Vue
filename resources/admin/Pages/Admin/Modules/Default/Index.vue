@@ -133,6 +133,9 @@ const loadExpandedItems = () => {
 };
 
 const saveExpandedItems = () => {
+    if (props.search) {
+        return; // search results open every branch; keep the user's own expansion for the full list
+    }
     try {
         sessionStorage.setItem(`expandedItems_${props.moduleHandle}`, JSON.stringify(Array.from(expandedItems.value)));
     } catch (e) {
@@ -140,7 +143,13 @@ const saveExpandedItems = () => {
     }
 };
 
-const expandedItems = ref(loadExpandedItems());
+// Search results come with the path to each match: open every branch that has children
+const parentIds = (items) => items.flatMap((item) => (item.children?.length ? [item.id, ...parentIds(item.children)] : []));
+const expandedItems = ref(props.search ? new Set(parentIds(props.items)) : loadExpandedItems());
+// Search and clear keep the page state, so the expansion follows the new results
+watch(() => props.search, () => {
+    expandedItems.value = props.search ? new Set(parentIds(props.items)) : loadExpandedItems();
+});
 const showCreateChildForm = ref({}); // { [parentId]: boolean }
 const childForms = ref({}); // { [parentId]: useForm }
 
