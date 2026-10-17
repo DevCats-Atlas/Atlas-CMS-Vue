@@ -105,8 +105,8 @@ export function selectOptions(columnConfig) {
         return data.map((option) => (typeof option === 'string'
             ? { key: option, label: option }
             : {
-                key: option.key || option.value || String(option),
-                label: option.label || option.name || option.key || option.value || String(option),
+                key: option.key ?? option.value ?? String(option),
+                label: option.label || option.name || (option.key ?? option.value ?? String(option)),
             }));
     }
     if (typeof data !== 'string' || data === '' || columnConfig.select_type !== 'static') {

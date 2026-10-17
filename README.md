@@ -52,11 +52,7 @@ Shared props: `auth`, `cmsNavigation`, `flash`, `translations`, `adminLocale`, `
 
 Column settings use `UiConfigEditor.vue` (`Pages/Admin/System/Modules/components/`): pass `table-name`, `connection` (empty = default), `initial-ui-config`; store `update:ui-config`. Optional props: `moduleId`, `excludeColumns`, `withFieldGroups`, `withCasts`. JSON follows the [DbTable contract](../AtlasCMS/docs/db-table.md#dbtable-ui-json-contract).
 
-Clearing filters retains empty range objects, so date/numeric inputs remain usable while navigation is pending. Apply and Clear All remain available when global search is disabled. Record buttons require JSON with boolean `success` and an optional string `message`; malformed responses show an error.
-
-Related forms use independent teleported modals. Options contain `{id, label}`; related lists supply `record_key`. Cast previews display plain text, including literal HTML.
-
-Children lists and galleries save drag order immediately. If validation rejects the reorder, they show an error toast and reload the saved order.
+Backend contracts: [DbTable forms, filters and relationships](../AtlasCMS/docs/db-table.md), [button responses](../AtlasCMS/docs/buttons.md), [session errors and access](../AtlasCMS/docs/access.md). Related forms use independent teleported modals; cast previews are plain text. Child lists/galleries save drag order immediately, show a toast and reload saved order on validation failure.
 
 ### Field interfaces
 
@@ -66,4 +62,4 @@ For `custom`, `interface_path: 'Posts/Analytics'` selects `Custom/Interfaces/Pos
 
 ## Verification
 
-From the host: `node --test tests/Frontend/*.test.mjs` and `npm run build`. Helpers/contracts are automated; screen interaction, dragging and dark mode need browser verification.
+[Host verification](../../README.md#testing): `node --test tests/Frontend/*.test.mjs` and `npm run build`. Screen interaction, dragging and dark mode need browser checks.

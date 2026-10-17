@@ -45,30 +45,17 @@ const shouldShowSearch = computed(() => {
 });
 
 const filteredOptions = computed(() => {
-    console.log('MultiSelect - filteredOptions computed:', {
-        optionsCount: props.options.length,
-        shouldShowSearch: shouldShowSearch.value,
-        searchTerm: searchTerm.value,
-        options: props.options
-    });
-    
     if (!shouldShowSearch.value || !searchTerm.value.trim()) {
         return props.options;
     }
-    
+
     const term = searchTerm.value.toLowerCase().trim();
     const filtered = props.options.filter(option => {
         const label = String(option.label || option.title || option.name || '').toLowerCase();
-        const key = String(option.key || option.id || option.value || '').toLowerCase();
+        const key = String(option.key ?? option.id ?? option.value ?? '').toLowerCase();
         return label.includes(term) || key.includes(term);
     });
-    
-    console.log('MultiSelect - filtered options:', {
-        term,
-        filteredCount: filtered.length,
-        filtered
-    });
-    
+
     return filtered;
 });
 
@@ -76,55 +63,29 @@ const selectedValues = computed(() => {
     if (Array.isArray(props.modelValue)) {
         return props.modelValue.map(v => String(v));
     }
-    return props.modelValue ? [String(props.modelValue)] : [];
-});
-
-const displayValue = computed(() => {
-    if (selectedValues.value.length === 0) {
-        return props.placeholder || t('admin.common.select_placeholder');
-    }
-    
-    // Get labels for all selected values
-    const labels = selectedValues.value.map(val => {
-        const option = props.options.find(opt => String(opt.key || opt.id || opt.value) === val);
-        return option?.label || option?.title || option?.name || val;
-    }).filter(Boolean);
-    
-    // Show comma-separated labels
-    return labels.join(', ');
+    return props.modelValue !== null && props.modelValue !== undefined && props.modelValue !== ''
+        ? [String(props.modelValue)] : [];
 });
 
 const toggleDropdown = async () => {
     const wasOpen = isOpen.value;
-    
+
     // If closing, just close
     if (wasOpen) {
         isOpen.value = false;
         return;
     }
-    
+
     // Opening dropdown
     isOpen.value = true;
-    
-    console.log('MultiSelect - toggleDropdown (opening):', {
-        optionsCount: props.options.length,
-        filteredOptionsCount: filteredOptions.value.length,
-        hasOnSearch: !!props.onSearch
-    });
-    
+
     // Only call onSearch if we have no options yet (for async loading)
     // If options are already loaded, don't call onSearch again
     if (props.onSearch && props.options.length === 0 && !searchTerm.value) {
-        console.log('MultiSelect - No options, calling onSearch callback');
         await props.onSearch('');
     }
-    
+
     nextTick(() => {
-        console.log('MultiSelect - Dropdown opened:', {
-            isOpen: isOpen.value,
-            filteredOptionsCount: filteredOptions.value.length,
-            filteredOptions: filteredOptions.value.slice(0, 3) // Show first 3 for debugging
-        });
         if (searchInputRef.value && shouldShowSearch.value) {
             searchInputRef.value.focus();
         }
@@ -137,21 +98,21 @@ const closeDropdown = () => {
 };
 
 const toggleOption = (option) => {
-    const value = String(option.key || option.id || option.value);
+    const value = String(option.key ?? option.id ?? option.value);
     const currentValues = [...selectedValues.value];
-    
+
     const index = currentValues.indexOf(value);
     if (index > -1) {
         currentValues.splice(index, 1);
     } else {
         currentValues.push(value);
     }
-    
+
     emit('update:modelValue', currentValues.length > 0 ? currentValues : []);
 };
 
 const isSelected = (option) => {
-    const value = String(option.key || option.id || option.value);
+    const value = String(option.key ?? option.id ?? option.value);
     return selectedValues.value.includes(value);
 };
 
@@ -167,25 +128,15 @@ const removeOption = (value) => {
 // Watch search term for async loading
 let searchTimeout = null;
 watch(searchTerm, async (newTerm) => {
-    console.log('MultiSelect - searchTerm changed:', newTerm);
     if (props.onSearch) {
         if (searchTimeout) {
             clearTimeout(searchTimeout);
         }
         searchTimeout = setTimeout(async () => {
-            console.log('MultiSelect - Calling onSearch after debounce:', newTerm);
             await props.onSearch(newTerm);
         }, 300);
     }
 });
-
-// Watch options prop changes
-watch(() => props.options, (newOptions) => {
-    console.log('MultiSelect - options prop changed:', {
-        count: newOptions.length,
-        options: newOptions
-    });
-}, { deep: true, immediate: true });
 
 // Close dropdown when clicking outside
 const handleClickOutside = (event) => {
@@ -220,7 +171,7 @@ onUnmounted(() => {
                         :key="value"
                         class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-200 rounded text-xs"
                     >
-                        {{ options.find(opt => String(opt.key || opt.id || opt.value) === value)?.label || options.find(opt => String(opt.key || opt.id || opt.value) === value)?.title || value }}
+                        {{ options.find(opt => String(opt.key ?? opt.id ?? opt.value) === value)?.label || options.find(opt => String(opt.key ?? opt.id ?? opt.value) === value)?.title || value }}
                         <button
                             type="button"
                             @click.stop="removeOption(value)"
@@ -238,7 +189,7 @@ onUnmounted(() => {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
         </button>
-        
+
         <!-- Dropdown -->
         <div
             v-if="isOpen"
@@ -256,7 +207,7 @@ onUnmounted(() => {
                     @keydown.escape="closeDropdown"
                 />
             </div>
-            
+
             <!-- Options list -->
             <div ref="optionsListRef" class="overflow-y-auto max-h-80">
                 <div
@@ -267,7 +218,7 @@ onUnmounted(() => {
                 </div>
                 <button
                     v-for="option in filteredOptions"
-                    :key="option.key || option.id || option.value || option.label"
+                    :key="option.key ?? option.id ?? option.value ?? option.label"
                     type="button"
                     @click.stop="toggleOption(option)"
                     class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
@@ -280,10 +231,10 @@ onUnmounted(() => {
                         @click.stop.prevent
                         tabindex="-1"
                     />
-                    <span>{{ option.label || option.title || option.name || option.key || option.id || option.value }}</span>
+                    <span>{{ option.label || option.title || option.name || (option.key ?? option.id ?? option.value) }}</span>
                 </button>
             </div>
-            
+
             <!-- Results count -->
             <div v-if="searchTerm && filteredOptions.length > 0" class="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
                 {{ t('admin.interfaces.options_shown', { shown: filteredOptions.length, total: options.length }) }}
