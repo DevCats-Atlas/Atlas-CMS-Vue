@@ -23,8 +23,7 @@ export default {
     
     // Path aliases for this package
     aliases: {
-        '@atlas-cms/admin': path.resolve(__dirname, 'resources/admin'),
-        '@admin': path.resolve(__dirname, 'resources/admin'), // Legacy alias
+        '@admin': path.resolve(__dirname, 'resources/admin'),
         '@': path.resolve(__dirname, 'resources/admin/js'),
     },
 };

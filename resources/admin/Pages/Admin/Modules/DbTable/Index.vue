@@ -83,8 +83,7 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
-    // relationships prop removed - relationships are managed on Edit page only
-    // Keeping prop for backward compatibility but not using it
+    // Relationship definitions for DbTableFilters; records are managed on the Edit page
     relationships: {
         type: Array,
         default: () => [],
@@ -223,7 +222,6 @@ const {
                     />
 
                     <!-- Plain search (modules without filter config) -->
-                    <!-- Legacy Search Form (backward compatibility) -->
                     <div v-else class="mb-6 pb-6 border-divider">
                         <form @submit.prevent="performSearch" class="space-y-4">
                             <div>

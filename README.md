@@ -31,7 +31,7 @@ Unknown names reject with `Page not found: <name>`. Undeclared/Composer packages
 
 ## Writing admin pages
 
-Aliases: `@admin` / `@atlas-cms/admin` → `resources/admin`; `@` → `resources/admin/js`.
+Aliases: `@admin` → `resources/admin`; `@` → `resources/admin/js`.
 
 - Use `<script setup>`, JavaScript, Inertia `useForm()` and `form.errors`.
 - Build URLs with `adminUrl()` from `@/utils/adminUrl`, passing paths relative to the admin prefix.

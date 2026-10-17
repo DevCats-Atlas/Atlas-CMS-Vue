@@ -245,7 +245,7 @@ const getDisplayColumns = () => {
         }
     }
     
-    // Fallback to display_columns (old format) for backward compatibility
+    // Without ui_config, display_columns lists the columns (comma-separated)
     const displayColumns = props.relationship.display_columns;
     if (displayColumns && displayColumns.trim()) {
         return displayColumns.split(',').map(col => col.trim()).filter(col => col).map(col => ({
