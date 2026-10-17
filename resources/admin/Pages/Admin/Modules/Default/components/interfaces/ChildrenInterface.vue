@@ -63,25 +63,14 @@ const currentItemId = computed(() => {
     return itemParam ? parseInt(itemParam, 10) : null;
 });
 
-// Get module handle - prefer from parentItemId context, fallback to URL path
-const moduleHandle = computed(() => {
-    // If we have a parentItemId prop and are in a modal, we might need to use a different module handle
-    // For now, still use URL-based module handle, but this could be enhanced if needed
-    return adminModuleHandle();
-});
-
-// Get module handle for children requests - use parent module or child module based on context
-const childrenModuleHandle = computed(() => {
-    // For nested children, we might need to use a different module handle
-    // For now, use the current module handle, but the backend should handle field resolution
-    return moduleHandle.value;
-});
+// Children are loaded and edited through the module in the current admin URL; the backend resolves the field.
+const moduleHandle = computed(() => adminModuleHandle());
 
 const baseUrl = computed(() => {
-    if (!childrenModuleHandle.value) {
+    if (!moduleHandle.value) {
         return '';
     }
-    return adminUrl(`${childrenModuleHandle.value}`);
+    return adminUrl(`${moduleHandle.value}`);
 });
 
 const fetchChildren = async () => {
