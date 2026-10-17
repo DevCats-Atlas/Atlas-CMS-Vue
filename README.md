@@ -2,9 +2,23 @@
 
 Admin Inertia pages, layouts, field interfaces and Vite utilities. [AtlasCMS](../AtlasCMS/README.md) supplies controllers and props; the Laravel host builds this package.
 
-## Vite integration
+## Requirements
 
-The host declares `"@devcats-atlas/atlas-cms-vue": "file:./packages/AtlasCMS-Vue"`. After initializing submodules, run `npm ci` and `npm run build` from the host. There is no package-local build.
+The AtlasCMS backend of the same release. The consumer's Vite toolchain builds the pages: declare `vite`, `laravel-vite-plugin`, `@vitejs/plugin-vue`, `tailwindcss` and `@tailwindcss/vite` in the consumer (versions: [host package.json](../../package.json)). `vue`, `@inertiajs/vue3` and CKEditor are this package's own dependencies. There is no package-local build or test script.
+
+## Installation
+
+The manifest is `private`, so there is no registry release. Declare one source in the consumer `package.json` and run `npm install`:
+
+| Source | `dependencies` entry | Use |
+| --- | --- | --- |
+| Git tag | `"@devcats-atlas/atlas-cms-vue": "git+https://github.com/DevCats-Atlas/Atlas-CMS-Vue.git#v1.3.4"` | Projects on a release; use the tag of the installed Composer packages |
+| Local checkout | `"@devcats-atlas/atlas-cms-vue": "file:./packages/AtlasCMS-Vue"` | Package development; this host uses the submodule |
+| Archive | `"@devcats-atlas/atlas-cms-vue": "file:./devcats-atlas-atlas-cms-vue-1.3.4.tgz"` from `npm pack` | Offline installs |
+
+A Git tag is not a semver range: change it together with `composer update 'devcats-atlas/*' -W` and rebuild. In this host a missing `file:` source falls back to the Git tag pinned in `scripts/install-packages-fallback.js`; initialize submodules first. Then add the Vite plugins below and run `npm run build`.
+
+## Vite integration
 
 [Host Vite config](../../vite.config.js) imports `loadAllPackages()` and `atlasPages()` from this package's `vite-utils.mjs`:
 
