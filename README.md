@@ -54,7 +54,7 @@ Aliases: `@admin` → `resources/admin`; `@` → `resources/admin/js`.
 - Use `t()` from `@/utils/useTranslation`; [translation keys](../AtlasCMS/docs/i18n.md) belong in AtlasCMS.
 - Upload updates use multipart POST with `_method: 'put'`. Child forms retain module, `parent_id` and `field_id`; render them outside the parent form and stop submit propagation. `flash.created_item_id` opens a new child.
 
-Shared props: `auth`, `cmsNavigation`, `flash`, `translations`, `adminLocale`, `availableLanguages`, `adminPrefix`, `atlasVersion`. Items forms additionally receive content `languages`.
+Shared props under the admin prefix: `auth`, `cmsNavigation` (empty for guests), `flash`, `translations`, `adminLocale`, `availableLanguages`, `adminPrefix`, `atlasVersion`. Pages outside the prefix do not receive them. Items forms additionally receive content `languages`.
 
 | Under `resources/admin/js/` | Responsibility |
 | --- | --- |
