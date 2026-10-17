@@ -9,7 +9,14 @@ import { useTranslation } from '@admin/js/utils/useTranslation';
 
 const { t } = useTranslation();
 // One toast stack for every admin page: pages and components only call showToast()
-const { toasts, dismissToast } = useToast();
+const { toasts, dismissToast, showToast } = useToast();
+const sessionExpired = ref(false);
+const requestListeners = [];
+let networkToastId = null;
+const clearNetworkError = () => {
+    if (networkToastId !== null) dismissToast(networkToastId);
+    networkToastId = null;
+};
 
 const isSidebarOpen = ref(false);
 const userToggled = ref(false); // Track if user manually toggled
@@ -69,6 +76,8 @@ const checkScreenSize = () => {
 
 onUnmounted(() => {
     window.removeEventListener('resize', checkScreenSize);
+    requestListeners.forEach((remove) => remove());
+    clearNetworkError();
 });
 
 const toggleSidebar = () => {
@@ -126,6 +135,23 @@ const toggleTheme = () => {
 };
 
 onMounted(() => {
+    requestListeners.push(
+        router.on('networkError', (event) => {
+            event.preventDefault();
+            clearNetworkError();
+            networkToastId = showToast({ message: t('admin.errors.network_failed'), intent: 'danger', duration: 0 });
+        }),
+        router.on('httpException', (event) => {
+            if ([401, 419].includes(event.detail.response.status)) {
+                event.preventDefault();
+                sessionExpired.value = true;
+            }
+        }),
+        router.on('success', () => {
+            sessionExpired.value = false;
+            clearNetworkError();
+        }),
+    );
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
     initTheme();
@@ -299,6 +325,10 @@ onMounted(() => {
 
             <!-- Page content -->
             <main>
+                <div v-if="sessionExpired" role="alert" class="m-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+                    <p>{{ t('admin.errors.session_expired') }}</p>
+                    <a :href="adminUrl('login')" target="_blank" rel="noopener" class="mt-2 inline-block underline">{{ t('admin.auth.sign_in') }}</a>
+                </div>
                 <slot />
             </main>
         </div>
