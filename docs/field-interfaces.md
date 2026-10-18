@@ -101,7 +101,7 @@ function update(key, value) {
 
 Then point a field at it with the interface path, the file's path under `Custom/Interfaces/` without `.vue`:
 
-- in **System → Item Types**: interface **Custom**, **Interface Path** `Seo/MetaDescription`;
+- in **System → Item Types**: interface **Custom**, **Interface Path** `Seo/MetaDescription`, keeping the node `meta_description` and **Multilanguage**;
 - or in code with [`ContentStructure`](https://github.com/DevCats-Atlas/Atlas-CMS/blob/main/docs/structure.md#types-and-fields):
 
 ```php

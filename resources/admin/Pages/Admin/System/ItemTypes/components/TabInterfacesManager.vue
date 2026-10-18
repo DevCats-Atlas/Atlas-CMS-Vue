@@ -7,8 +7,8 @@ import { confirmDialog } from '@/utils/confirmDialog.js';
 import { useTranslation } from '@/utils/useTranslation.js';
 
 // Interfaces stored under a node, and those that may hold one value per language (ItemTypesController).
-const NODE_TYPES = ['text', 'file', 'date', 'select', 'textarea', 'wysiwyg', 'checkbox'];
-const MULTILANGUAGE_TYPES = ['text', 'file', 'date', 'select', 'textarea', 'wysiwyg'];
+const NODE_TYPES = ['text', 'file', 'date', 'select', 'textarea', 'wysiwyg', 'checkbox', 'custom'];
+const MULTILANGUAGE_TYPES = ['text', 'file', 'date', 'select', 'textarea', 'wysiwyg', 'custom'];
 
 const props = defineProps({
     itemTypeId: {
