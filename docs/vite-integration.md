@@ -33,7 +33,7 @@ Public-site assets use a separate entry in Laravel's inputs (`resources/css/site
 
 ## Package discovery
 
-`loadAllPackages()` reads the consumer `package.json` and loads every declared `@devcats-atlas/*-vue` or `@devcats/*-vue` dependency. Each package supplies a `vite.config.mjs`:
+`loadAllPackages()` reads the consumer `package.json` and loads every declared `@devcats-atlas/*-vue` dependency. Each package supplies a `vite.config.mjs`:
 
 ```js
 // vite.config.mjs of a Vue package

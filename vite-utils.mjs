@@ -95,9 +95,9 @@ export function getVuePackagesFromPackageJson(projectRoot) {
             ...packageJson.devDependencies,
         };
 
-        // Filter for @devcats/*-vue and @devcats-atlas/*-vue packages
+        // Filter for @devcats-atlas/*-vue packages
         const vuePackages = Object.entries(allDeps)
-            .filter(([name]) => (name.startsWith('@devcats/') || name.startsWith('@devcats-atlas/')) && name.includes('-vue'))
+            .filter(([name]) => name.startsWith('@devcats-atlas/') && name.includes('-vue'))
             .map(([name, version]) => ({
                 name,
                 path: version, // This will be the version or file: path
@@ -124,7 +124,7 @@ export async function loadAllPackages(projectRoot) {
     const vuePackages = getVuePackagesFromPackageJson(projectRoot);
 
     if (vuePackages.length === 0) {
-        console.warn('⚠️  No @devcats/*-vue or @devcats-atlas/*-vue packages found in package.json');
+        console.warn('⚠️  No @devcats-atlas/*-vue packages found in package.json');
     }
 
     // Load each package
@@ -162,7 +162,7 @@ export async function loadAllPackages(projectRoot) {
             }
         } catch (error) {
             // Skip optional packages, but warn
-            if (pkg.name === '@devcats/atlas-cms-vue' || pkg.name === '@devcats-atlas/atlas-cms-vue') {
+            if (pkg.name === '@devcats-atlas/atlas-cms-vue') {
                 // AtlasCMS-Vue is required
                 console.error(`⚠️  ${pkg.name}:`, error.message);
                 throw error;
@@ -177,7 +177,7 @@ export async function loadAllPackages(projectRoot) {
     aliases['@packages'] = path.resolve(projectRoot, 'packages');
     aliases['@vendor'] = path.resolve(projectRoot, 'vendor');
 
-    const isCms = name => name === '@devcats/atlas-cms-vue' || name === '@devcats-atlas/atlas-cms-vue';
+    const isCms = name => name === '@devcats-atlas/atlas-cms-vue';
     const pageRoots = [
         ...pagePackages.filter(pkg => isCms(pkg.name)),
         ...pagePackages.filter(pkg => !isCms(pkg.name)),

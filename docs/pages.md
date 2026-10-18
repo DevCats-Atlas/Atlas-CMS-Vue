@@ -68,7 +68,6 @@ Each row is a page of this package, the code that renders it and the props it de
 | `Admin/System/Modules/Show` | `ModulesController` | `title`, `module`, `actions`, `itemTypes`, `collections`, `collectionCreateValue`, `customFieldTabs`, `dbConnections` |
 | `Admin/System/CmsMenu/Index` | `CmsMenuController` | `title`, `groups`, `modules`, `roles` |
 | `Admin/System/AccessRoles/Index` | `AccessRolesController` | `title`, `roles`, `modules` |
-| `Index` | Nothing ([backlog](https://github.com/DevCats-Atlas/Development-Atlas-CMS-Full/blob/main/docs/backlog.md)) | — |
 
 Controllers are in AtlasCMS `src/Http/Controllers/Admin/`. Shop pages (`Admin/Orders/*`, `Admin/Baskets/Index`) live in [AtlasShop-Vue](https://github.com/DevCats-Atlas/Atlas-Shop-Vue/blob/main/README.md).
 
