@@ -11,7 +11,7 @@ A field interface is the editor of one custom field in an Items form: the module
 | `text`, `textarea`, `wysiwyg` | `TextInterface`, `TextareaInterface`, `WysiwygInterface` | A string; WYSIWYG stores HTML |
 | `date`, `datetime`, `datetime-local` | `DateInterface` | A date string |
 | `checkbox` | `CheckboxInterface` | `'1'` or `'0'` |
-| `select` | `SelectInterface` | The selected value; options come from the field's `options` |
+| `select` | `SelectInterface` | The selected option key, one per language for a multilanguage field; options come from the field's `options` |
 | `file` | `FileInterface` | An upload path on the upload disk |
 | `children` | `ChildrenInterface` | Nothing: lists or galleries of child Items with their own forms |
 | `categories` | `CategoriesInterface` | Nothing: typed relationships to Items under a root |
