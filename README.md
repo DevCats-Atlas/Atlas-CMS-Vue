@@ -50,7 +50,7 @@ Aliases: `@admin` → `resources/admin`; `@` → `resources/admin/js`.
 - Use `<script setup>`, JavaScript, Inertia `useForm()` and `form.errors`.
 - Build URLs with `adminUrl()` from `@/utils/adminUrl`, passing paths relative to the admin prefix.
 - Reuse `AdminLayout` / `SystemLayout`, dialogs and `.btn-*` / `.form-input` classes with dark variants.
-- `useToast().showToast({ title, message, intent })` uses the single `ToastStack` in `AdminLayout`.
+- `useToast().showToast({ title, message, intent })` and `confirmDialog()` use the single `ToastStack` and `ConfirmDialog` in `AdminLayout` ([shared components](#shared-components)).
 - Use `t()` from `@/utils/useTranslation`; [translation keys](../AtlasCMS/docs/i18n.md) belong in AtlasCMS.
 - Upload updates use multipart POST with `_method: 'put'`. Child forms retain module, `parent_id` and `field_id`; render them outside the parent form and stop submit propagation. `flash.created_item_id` opens a new child.
 
@@ -67,6 +67,35 @@ Shared props under the admin prefix: `auth`, `cmsNavigation` (empty for guests),
 Column settings use `UiConfigEditor.vue` (`Pages/Admin/System/Modules/components/`): pass `table-name`, `connection` (empty = default), `initial-ui-config`; store `update:ui-config`. Optional props: `moduleId`, `excludeColumns`, `withFieldGroups`, `withCasts`. JSON follows the [DbTable contract](../AtlasCMS/docs/db-table.md#dbtable-ui-json-contract).
 
 Backend contracts: [DbTable forms, filters and relationships](../AtlasCMS/docs/db-table.md), [button responses](../AtlasCMS/docs/buttons.md), [session errors and access](../AtlasCMS/docs/access.md). Related forms use independent teleported modals; cast previews are plain text. Child lists/galleries save drag order immediately, show a toast and reload saved order on validation failure.
+
+### Shared components
+
+`AdminLayout` (and `SystemLayout`, which wraps it) mounts the only `ConfirmDialog` and `ToastStack`; pages call them through helpers.
+
+| Import | Contract |
+| --- | --- |
+| `ModalDialog` from `@/components/ModalDialog.vue` | Props `open` (Boolean), `title`, `size` (`sm`, `md` (default), `lg`, `xl`, `full`); emits `close` from the backdrop or the close button; the default slot is the body. Render it outside the parent form |
+| `confirmDialog(options)` from `@/utils/confirmDialog.js` | Returns a Promise of `true` (confirmed) or `false`. Options `title`, `message`, `confirmLabel`, `cancelLabel` (omitted texts get translated defaults) and `intent` (`primary` or `danger`). Escape and the backdrop cancel; a new call cancels the open dialog |
+| `useToast()` from `@/composables/useToast.js` | `showToast({ title, message, intent, duration })` returns an ID; `intent` is `default`, `success`, `danger`, `warning` or `info`; `duration` is in ms (4000), `0` keeps the toast until `dismissToast(id)` |
+| `Toggle` from `@/components/Toggle.vue` | `v-model` accepts a boolean, `'1'` / `'true'` / `'on'` or `1`, and emits a boolean; props `disabled`, `size` (`sm`, `md`, `lg`) |
+| `WysiwigEditor` from `@/components/WysiwigEditor.vue` | CKEditor bound to an HTML string with `v-model`; the file name is spelled `Wysiwig` |
+
+```js
+import { router } from '@inertiajs/vue3';
+import { adminUrl } from '@/utils/adminUrl';
+import { confirmDialog } from '@/utils/confirmDialog.js';
+import { useToast } from '@/composables/useToast.js';
+import { useTranslation } from '@/utils/useTranslation';
+
+const { t } = useTranslation();
+const { showToast } = useToast();
+
+async function deleteRecord(url) {
+    if (await confirmDialog({ intent: 'danger', title: t('admin.lists.delete_selected', { count: 1 }) })) {
+        router.delete(adminUrl(url), { onSuccess: () => showToast({ intent: 'success', title: t('admin.common.success') }) });
+    }
+}
+```
 
 ### Field interfaces
 
