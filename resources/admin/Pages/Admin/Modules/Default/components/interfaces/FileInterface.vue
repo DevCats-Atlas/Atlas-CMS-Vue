@@ -19,6 +19,8 @@ const props = defineProps({
 const languages = computed(() => usePage().props.languages || []);
 const hasTranslations = computed(() => props.field.multilanguage && languages.value.length > 0);
 const hideTitle = computed(() => props.field.config?.hide_title === true);
+// A rejected upload (for example a disallowed file type) is reported for the whole field
+const uploadError = computed(() => usePage().props.errors?.[`custom_fields.${props.field.id}`]);
 
 const languageKey = (language, index) => language?.id ?? language?.slug ?? language?.code ?? index;
 const languageLabel = (language) => language?.title || language?.name || language?.label || language?.slug || '';
@@ -259,5 +261,6 @@ const selectedFileName = (languageCode = null) => {
                 {{ t('admin.file.file_will_be_removed') }}
             </p>
         </div>
+        <p v-if="uploadError" class="text-sm text-red-600 dark:text-red-400">{{ uploadError }}</p>
     </div>
 </template>

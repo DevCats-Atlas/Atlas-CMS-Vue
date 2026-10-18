@@ -373,6 +373,7 @@ const hasMultilingualCustomField = (fieldKey) => {
                     class="form-input"
                     @change="handleFileInput($event, 'item_file')"
                 />
+                <p v-if="form.errors.item_file" class="text-sm text-red-600 dark:text-red-400">{{ form.errors.item_file }}</p>
                 <div v-if="hasSelectedFile('item_file')" class="flex items-center justify-between gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
                     <div class="flex-1 min-w-0">
                         <span class="text-gray-500 dark:text-gray-400">{{ t('admin.interfaces.selected_file') }} </span>
