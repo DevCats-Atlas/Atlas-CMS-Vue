@@ -6,6 +6,10 @@ import ModalDialog from '@/components/ModalDialog.vue';
 import { confirmDialog } from '@/utils/confirmDialog.js';
 import { useTranslation } from '@/utils/useTranslation.js';
 
+// Interfaces stored under a node, and those that may hold one value per language (ItemTypesController).
+const NODE_TYPES = ['text', 'file', 'date', 'select', 'textarea', 'wysiwyg', 'checkbox'];
+const MULTILANGUAGE_TYPES = ['text', 'file', 'date', 'select', 'textarea', 'wysiwyg'];
+
 const props = defineProps({
     itemTypeId: {
         type: Number,
@@ -80,8 +84,11 @@ watch(
             form.view_type = 'list';
         }
 
-        if (!['text', 'file', 'date', 'select', 'textarea', 'wysiwyg'].includes(type)) {
+        if (!NODE_TYPES.includes(type)) {
             form.node = '';
+        }
+
+        if (!MULTILANGUAGE_TYPES.includes(type)) {
             form.multilanguage = false;
         }
 
@@ -327,7 +334,7 @@ const deleteInterface = async (field) => {
                 </select>
                 <p v-if="form.errors.type" class="mt-1 text-sm text-red-600">{{ form.errors.type }}</p>
             </div>
-            <div v-if="['text', 'file', 'date', 'select', 'textarea', 'wysiwyg'].includes(form.type)">
+            <div v-if="NODE_TYPES.includes(form.type)">
                 <label class="form-label">{{ t('admin.item_types.node') }}</label>
                 <input v-model="form.node" type="text" class="form-input" required />
                 <p v-if="form.errors.node" class="mt-1 text-sm text-red-600">{{ form.errors.node }}</p>
@@ -338,7 +345,7 @@ const deleteInterface = async (field) => {
                     <span class="ml-2">{{ t('admin.items.visible') }}</span>
                 </label>
                 <label
-                    v-if="['text', 'file', 'date', 'select', 'textarea', 'wysiwyg'].includes(form.type)"
+                    v-if="MULTILANGUAGE_TYPES.includes(form.type)"
                     class="inline-flex items-center text-sm text-gray-700 dark:text-gray-300"
                 >
                     <input v-model="form.multilanguage" type="checkbox" class="form-checkbox" />
