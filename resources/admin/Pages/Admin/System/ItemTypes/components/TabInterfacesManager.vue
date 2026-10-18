@@ -6,8 +6,10 @@ import ModalDialog from '@/components/ModalDialog.vue';
 import { confirmDialog } from '@/utils/confirmDialog.js';
 import { useTranslation } from '@/utils/useTranslation.js';
 
-// Interfaces stored under a node, and those that may hold one value per language (ItemTypesController).
-const NODE_TYPES = ['text', 'file', 'date', 'select', 'textarea', 'wysiwyg', 'checkbox', 'custom'];
+// Interfaces stored under a node (required), those with an optional node that ContentStructure finds them by,
+// and those that may hold one value per language (ItemTypesController).
+const REQUIRED_NODE_TYPES = ['text', 'file', 'date', 'select', 'textarea', 'wysiwyg', 'checkbox', 'custom'];
+const NODE_TYPES = [...REQUIRED_NODE_TYPES, 'children', 'categories'];
 const MULTILANGUAGE_TYPES = ['text', 'file', 'date', 'select', 'textarea', 'wysiwyg', 'custom'];
 
 const props = defineProps({
@@ -336,7 +338,7 @@ const deleteInterface = async (field) => {
             </div>
             <div v-if="NODE_TYPES.includes(form.type)">
                 <label class="form-label">{{ t('admin.item_types.node') }}</label>
-                <input v-model="form.node" type="text" class="form-input" required />
+                <input v-model="form.node" type="text" class="form-input" :required="REQUIRED_NODE_TYPES.includes(form.type)" />
                 <p v-if="form.errors.node" class="mt-1 text-sm text-red-600">{{ form.errors.node }}</p>
             </div>
             <div class="flex gap-3">
