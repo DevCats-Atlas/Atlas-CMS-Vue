@@ -1,10 +1,10 @@
 # AtlasCMS-Vue
 
-Admin Inertia pages, layouts, field interfaces and Vite utilities. [AtlasCMS](../AtlasCMS/README.md) supplies controllers and props; the Laravel host builds this package.
+Admin Inertia pages, layouts, field interfaces and Vite utilities. [AtlasCMS](https://github.com/DevCats-Atlas/Atlas-CMS/blob/main/README.md) supplies controllers and props; the Laravel host builds this package.
 
 ## Requirements
 
-The AtlasCMS backend of the same release. The consumer's Vite toolchain builds the pages: declare `vite`, `laravel-vite-plugin`, `@vitejs/plugin-vue`, `tailwindcss` and `@tailwindcss/vite` in the consumer (versions: [host package.json](../../package.json)). `vue`, `@inertiajs/vue3` and CKEditor are this package's own dependencies. There is no package-local build or test script.
+The AtlasCMS backend of the same release. The consumer's Vite toolchain builds the pages: declare `vite`, `laravel-vite-plugin`, `@vitejs/plugin-vue`, `tailwindcss` and `@tailwindcss/vite` in the consumer (versions: [host package.json](https://github.com/DevCats-Atlas/Development-Atlas-CMS-Full/blob/main/package.json)). `vue`, `@inertiajs/vue3` and CKEditor are this package's own dependencies. There is no package-local build or test script.
 
 ## Installation
 
@@ -20,7 +20,7 @@ A Git tag is not a semver range: change it together with `composer update 'devca
 
 ## Vite integration
 
-[Host Vite config](../../vite.config.js) imports `loadAllPackages()` and `atlasPages()` from this package's `vite-utils.mjs`:
+[Host Vite config](https://github.com/DevCats-Atlas/Development-Atlas-CMS-Full/blob/main/vite.config.js) imports `loadAllPackages()` and `atlasPages()` from this package's `vite-utils.mjs`:
 
 ```js
 const { inputs, aliases, pageRoots } = await loadAllPackages(projectRoot);
@@ -51,7 +51,7 @@ Aliases: `@admin` → `resources/admin`; `@` → `resources/admin/js`.
 - Build URLs with `adminUrl()` from `@/utils/adminUrl`, passing paths relative to the admin prefix.
 - Reuse `AdminLayout` / `SystemLayout`, dialogs and `.btn-*` / `.form-input` classes with dark variants.
 - `useToast().showToast({ title, message, intent })` and `confirmDialog()` use the single `ToastStack` and `ConfirmDialog` in `AdminLayout` ([shared components](#shared-components)).
-- Use `t()` from `@/utils/useTranslation`; [translation keys](../AtlasCMS/docs/i18n.md) belong in AtlasCMS.
+- Use `t()` from `@/utils/useTranslation`; [translation keys](https://github.com/DevCats-Atlas/Atlas-CMS/blob/main/docs/i18n.md) belong in AtlasCMS.
 - Upload updates use multipart POST with `_method: 'put'`. Child forms retain module, `parent_id` and `field_id`; render them outside the parent form and stop submit propagation. `flash.created_item_id` opens a new child.
 
 Shared props under the admin prefix: `auth`, `cmsNavigation` (empty for guests), `flash`, `translations`, `adminLocale`, `availableLanguages`, `adminPrefix`, `atlasVersion`. Pages outside the prefix do not receive them. Items forms additionally receive content `languages`.
@@ -64,9 +64,9 @@ Shared props under the admin prefix: `auth`, `cmsNavigation` (empty for guests),
 | `dbTable/listFilters.js`, `dbTable/uiConfig.js` | Filter query values and column settings |
 | `modules/`, `localeData.js` | Module settings and language JSON |
 
-Column settings use `UiConfigEditor.vue` (`Pages/Admin/System/Modules/components/`): pass `table-name`, `connection` (empty = default), `initial-ui-config`; store `update:ui-config`. Optional props: `moduleId`, `excludeColumns`, `withFieldGroups`, `withCasts`. JSON follows the [DbTable contract](../AtlasCMS/docs/db-table.md#dbtable-ui-json-contract).
+Column settings use `UiConfigEditor.vue` (`Pages/Admin/System/Modules/components/`): pass `table-name`, `connection` (empty = default), `initial-ui-config`; store `update:ui-config`. Optional props: `moduleId`, `excludeColumns`, `withFieldGroups`, `withCasts`. JSON follows the [DbTable contract](https://github.com/DevCats-Atlas/Atlas-CMS/blob/main/docs/db-table.md#dbtable-ui-json-contract).
 
-Backend contracts: [DbTable forms, filters and relationships](../AtlasCMS/docs/db-table.md), [button responses](../AtlasCMS/docs/buttons.md), [session errors and access](../AtlasCMS/docs/access.md). Related forms use independent teleported modals; cast previews are plain text. Child lists/galleries save drag order immediately, show a toast and reload saved order on validation failure.
+Backend contracts: [DbTable forms, filters and relationships](https://github.com/DevCats-Atlas/Atlas-CMS/blob/main/docs/db-table.md), [button responses](https://github.com/DevCats-Atlas/Atlas-CMS/blob/main/docs/buttons.md), [session errors and access](https://github.com/DevCats-Atlas/Atlas-CMS/blob/main/docs/access.md). Related forms use independent teleported modals; cast previews are plain text. Child lists/galleries save drag order immediately, show a toast and reload saved order on validation failure.
 
 ### Shared components
 
@@ -105,4 +105,4 @@ For `custom`, `interface_path: 'Posts/Analytics'` selects `Custom/Interfaces/Pos
 
 ## Verification
 
-[Host verification](../../README.md#testing): `node --test tests/Frontend/*.test.mjs` and `npm run build`. Screen interaction, dragging and dark mode need browser checks.
+[Host verification](https://github.com/DevCats-Atlas/Development-Atlas-CMS-Full/blob/main/README.md#testing): `node --test tests/Frontend/*.test.mjs` and `npm run build`. Screen interaction, dragging and dark mode need browser checks.
