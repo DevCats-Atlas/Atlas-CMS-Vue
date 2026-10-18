@@ -12,11 +12,11 @@ The manifest is `private`, so there is no registry release. Declare one source i
 
 | Source | `dependencies` entry | Use |
 | --- | --- | --- |
-| Git tag | `"@devcats-atlas/atlas-cms-vue": "git+https://github.com/DevCats-Atlas/Atlas-CMS-Vue.git#v1.3.4"` | Projects on a release; use the tag of the installed Composer packages |
+| Git | `"@devcats-atlas/atlas-cms-vue": "git+https://github.com/DevCats-Atlas/Atlas-CMS-Vue.git#{ref}"` | Other projects; use the same ref as the Composer packages |
 | Local checkout | `"@devcats-atlas/atlas-cms-vue": "file:./packages/AtlasCMS-Vue"` | Package development; this host uses the submodule |
-| Archive | `"@devcats-atlas/atlas-cms-vue": "file:./devcats-atlas-atlas-cms-vue-1.3.4.tgz"` from `npm pack` | Offline installs |
+| Archive | `"@devcats-atlas/atlas-cms-vue": "file:./devcats-atlas-atlas-cms-vue-{version}.tgz"` from `npm pack` | Offline installs |
 
-A Git tag is not a semver range: change it together with `composer update 'devcats-atlas/*' -W` and rebuild. In this host a missing `file:` source falls back to the Git tag pinned in `scripts/install-packages-fallback.js`; initialize submodules first. Then add the Vite plugins ([Vite integration](docs/vite-integration.md)) and run `npm run build`.
+A Git ref is not a semver range: change it together with `composer update 'devcats-atlas/*' -W` and rebuild. In this host a missing `file:` source falls back to the Git ref pinned in `scripts/install-packages-fallback.js`; initialize submodules first. Then add the Vite plugins ([Vite integration](docs/vite-integration.md)) and run `npm run build`.
 
 ## Guides
 
