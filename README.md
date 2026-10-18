@@ -16,92 +16,18 @@ The manifest is `private`, so there is no registry release. Declare one source i
 | Local checkout | `"@devcats-atlas/atlas-cms-vue": "file:./packages/AtlasCMS-Vue"` | Package development; this host uses the submodule |
 | Archive | `"@devcats-atlas/atlas-cms-vue": "file:./devcats-atlas-atlas-cms-vue-1.3.4.tgz"` from `npm pack` | Offline installs |
 
-A Git tag is not a semver range: change it together with `composer update 'devcats-atlas/*' -W` and rebuild. In this host a missing `file:` source falls back to the Git tag pinned in `scripts/install-packages-fallback.js`; initialize submodules first. Then add the Vite plugins below and run `npm run build`.
+A Git tag is not a semver range: change it together with `composer update 'devcats-atlas/*' -W` and rebuild. In this host a missing `file:` source falls back to the Git tag pinned in `scripts/install-packages-fallback.js`; initialize submodules first. Then add the Vite plugins ([Vite integration](docs/vite-integration.md)) and run `npm run build`.
 
-## Vite integration
+## Guides
 
-[Host Vite config](https://github.com/DevCats-Atlas/Development-Atlas-CMS-Full/blob/main/vite.config.js) imports `loadAllPackages()` and `atlasPages()` from this package's `vite-utils.mjs`:
-
-```js
-const { inputs, aliases, pageRoots } = await loadAllPackages(projectRoot);
-// inputs → laravel({ input: inputs }); aliases → resolve.alias
-// Add atlasPages({ projectRoot, pageRoots }) alongside vue() and tailwindcss().
-```
-
-The loader discovers declared `@devcats-atlas/*-vue` and `@devcats/*-vue` dependencies. Paths resolve from `{NAME}_PATH` → `file:` dependency → `node_modules`; each package supplies `vite.config.mjs`. To use another CMS checkout, export `ATLAS_CMS_VUE_PATH` in the Vite process environment; a `.env` entry alone is insufficient. The dependency must remain declared and installed.
-
-Public-site assets use a separate host entry in Laravel's Vite inputs and the site's Blade `@vite` directive.
-
-## Page resolution
-
-`atlasPages()` creates `virtual:atlas-admin-pages`. `Admin/Reports/Index` matches `Admin/Reports/Index.vue` exactly, with lazy imports and first-match priority:
-
-1. Host `resources/admin/Pages/`.
-2. This package's `resources/admin/Pages/`.
-3. Other declared Vue dependencies, in manifest order.
-4. Explicit extra `pageRoots`.
-
-Unknown names reject with `Page not found: <name>`. Undeclared/Composer packages need explicit roots. Dev additions/removals refresh the registry; edits use HMR. Restart Vite for dependency, environment, plugin-option or installed `node_modules` changes. Production needs a rebuild.
-
-## Writing admin pages
-
-Aliases: `@admin` → `resources/admin`; `@` → `resources/admin/js`.
-
-- Use `<script setup>`, JavaScript, Inertia `useForm()` and `form.errors`.
-- Build URLs with `adminUrl()` from `@/utils/adminUrl`, passing paths relative to the admin prefix.
-- Reuse `AdminLayout` / `SystemLayout`, dialogs and `.btn-*` / `.form-input` classes with dark variants.
-- `useToast().showToast({ title, message, intent })` and `confirmDialog()` use the single `ToastStack` and `ConfirmDialog` in `AdminLayout` ([shared components](#shared-components)).
-- Use `t()` from `@/utils/useTranslation`; [translation keys](https://github.com/DevCats-Atlas/Atlas-CMS/blob/main/docs/i18n.md) belong in AtlasCMS.
-- Upload updates use multipart POST with `_method: 'put'`. Child forms retain module, `parent_id` and `field_id`; render them outside the parent form and stop submit propagation. `flash.created_item_id` opens a new child.
-
-Shared props under the admin prefix: `auth`, `cmsNavigation` (empty for guests), `flash`, `translations`, `adminLocale`, `availableLanguages`, `adminPrefix`, `atlasVersion`. Pages outside the prefix do not receive them. Items forms additionally receive content `languages`.
-
-| Under `resources/admin/js/` | Responsibility |
+| Guide | Contents |
 | --- | --- |
-| `lists/` | Search, selection, expanded state, tree dragging, child creation, pagination |
-| `dbTable/formModel.js`, `dbTable/recordTransport.js`, `composables/useDbTableRecordForm.js` | Main/related form state and multipart transport; rendered by `DbTableRecordForm.vue` |
-| `composables/useRelationshipOptions.js` | Scoped options, debounced search, stale-response protection |
-| `dbTable/listFilters.js`, `dbTable/uiConfig.js` | Filter query values and column settings |
-| `modules/`, `localeData.js` | Module settings and language JSON |
+| [Vite integration](docs/vite-integration.md) | `loadAllPackages()`, `atlasPages()`, aliases, package discovery and path overrides, development and production builds |
+| [Pages](docs/pages.md) | Page resolution, writing a page, shared props, every built-in page with its props, overriding a built-in page |
+| [Components](docs/components.md) | Layouts, dialogs, toasts, toggles, the editor; list and DbTable helpers; the column settings editor |
+| [Field interfaces](docs/field-interfaces.md) | Built-in interfaces, the interface contract, writing and registering a custom interface |
 
-Column settings use `UiConfigEditor.vue` (`Pages/Admin/System/Modules/components/`): pass `table-name`, `connection` (empty = default), `initial-ui-config`; store `update:ui-config`. Optional props: `moduleId`, `excludeColumns`, `withFieldGroups`, `withCasts`. JSON follows the [DbTable contract](https://github.com/DevCats-Atlas/Atlas-CMS/blob/main/docs/db-table.md#dbtable-ui-json-contract).
-
-Backend contracts: [DbTable forms, filters and relationships](https://github.com/DevCats-Atlas/Atlas-CMS/blob/main/docs/db-table.md), [button responses](https://github.com/DevCats-Atlas/Atlas-CMS/blob/main/docs/buttons.md), [session errors and access](https://github.com/DevCats-Atlas/Atlas-CMS/blob/main/docs/access.md). Related forms use independent teleported modals; cast previews are plain text. Child lists/galleries save drag order immediately, show a toast and reload saved order on validation failure.
-
-### Shared components
-
-`AdminLayout` (and `SystemLayout`, which wraps it) mounts the only `ConfirmDialog` and `ToastStack`; pages call them through helpers.
-
-| Import | Contract |
-| --- | --- |
-| `ModalDialog` from `@/components/ModalDialog.vue` | Props `open` (Boolean), `title`, `size` (`sm`, `md` (default), `lg`, `xl`, `full`); emits `close` from the backdrop or the close button; the default slot is the body. Render it outside the parent form |
-| `confirmDialog(options)` from `@/utils/confirmDialog.js` | Returns a Promise of `true` (confirmed) or `false`. Options `title`, `message`, `confirmLabel`, `cancelLabel` (omitted texts get translated defaults) and `intent` (`primary` or `danger`). Escape and the backdrop cancel; a new call cancels the open dialog |
-| `useToast()` from `@/composables/useToast.js` | `showToast({ title, message, intent, duration })` returns an ID; `intent` is `default`, `success`, `danger`, `warning` or `info`; `duration` is in ms (4000), `0` keeps the toast until `dismissToast(id)` |
-| `Toggle` from `@/components/Toggle.vue` | `v-model` accepts a boolean, `'1'` / `'true'` / `'on'` or `1`, and emits a boolean; props `disabled`, `size` (`sm`, `md`, `lg`) |
-| `WysiwigEditor` from `@/components/WysiwigEditor.vue` | CKEditor bound to an HTML string with `v-model`; the file name is spelled `Wysiwig` |
-
-```js
-import { router } from '@inertiajs/vue3';
-import { adminUrl } from '@/utils/adminUrl';
-import { confirmDialog } from '@/utils/confirmDialog.js';
-import { useToast } from '@/composables/useToast.js';
-import { useTranslation } from '@/utils/useTranslation';
-
-const { t } = useTranslation();
-const { showToast } = useToast();
-
-async function deleteRecord(url) {
-    if (await confirmDialog({ intent: 'danger', title: t('admin.lists.delete_selected', { count: 1 }) })) {
-        router.delete(adminUrl(url), { onSuccess: () => showToast({ intent: 'success', title: t('admin.common.success') }) });
-    }
-}
-```
-
-### Field interfaces
-
-Built-ins are registered in `Pages/Admin/Modules/Default/components/interfaces/index.js`. They receive `field` and `model`; write `model.default` or `model.translations[lang]`. Files use `model.delete_default` to clear a stored file.
-
-For `custom`, `interface_path: 'Posts/Analytics'` selects `Custom/Interfaces/Posts/Analytics.vue` from `virtual:atlas-admin-interfaces`, with the same priority as pages. Roots default beside each `Pages` directory; override with `interfaceRoots`. The host's `Custom/Interfaces/Example.vue` is an extension example.
+The [admin screen recipe](https://github.com/DevCats-Atlas/Development-Atlas-CMS-Full/blob/main/docs/recipes/admin-screen.md) builds a page with a form end to end.
 
 ## Verification
 

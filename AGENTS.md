@@ -4,7 +4,7 @@ Owns admin Vue screens and Vite integration; backend contracts belong to AtlasCM
 
 ## Work rules
 
-- Read [README](README.md) for page/interface resolution and shared UI contracts. Use `<script setup>`, JavaScript, Inertia forms and existing CSS classes with dark variants.
+- Read the guides before changing their area: [Vite integration](docs/vite-integration.md), [pages](docs/pages.md), [components](docs/components.md), [field interfaces](docs/field-interfaces.md). Adding, removing a page or changing its `defineProps()` means updating the [built-in pages](docs/pages.md#built-in-pages) table; host `tests/Frontend/docsExamples.test.mjs` compares them. Use `<script setup>`, JavaScript, Inertia forms and existing CSS classes with dark variants.
 - Pair props, field metadata and validation payloads with AtlasCMS. Reuse layouts, dialogs, translations and `useToast()`; `AdminLayout` owns the only `ToastStack`.
 - URLs use `adminUrl()` with relative paths; extract module handles with `adminModuleHandle()`. Preserve configurable prefixes.
 - Main and related DbTable forms share `js/dbTable/formModel.js`, `recordTransport.js`, `js/composables/useDbTableRecordForm.js` and `DbTableRecordForm.vue`. Fields carry `options` as an array. Test model changes in host `tests/Frontend/dbTableFormModel.test.mjs`.
