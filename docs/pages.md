@@ -60,6 +60,7 @@ Each row is a page of this package, the code that renders it and the props it de
 | `Admin/Modules/DbTable/Edit` | `ModuleBaseController::edit()`, `db_table` modules | `title`, `moduleHandle`, `module`, `tableName`, `recordId`, `primaryKeyColumn`, `fields`, `uiConfig`, `record`, `hasDeepStructure`, `parentColumn`, `availableParents`, `relationships`, `customButtons`, `dataSource` |
 | `Admin/Users/Index` | `UsersController` | `title`, `moduleHandle`, `module`, `action`, `menuItem`, `crud`, `availableActions`, `itemType`, `fields`, `items`, `hasSortingEnabled`, `hasDeepStructureEnabled`, `search`, `pagination` |
 | `Admin/Users/Edit` | `UsersController` | `title`, `moduleHandle`, `module`, `itemType`, `fields`, `customFieldTabs`, `systemFields`, `item`, `user`, `updateUrl`, `indexUrl` |
+| `Admin/System/Structure/Index` | `StructureController` | `title`, `modules` |
 | `Admin/System/Overview` | `OverviewController` | `title`, `stats`, `environment` |
 | `Admin/System/ItemTypes/Index` | `ItemTypesController` | `title`, `itemTypes` |
 | `Admin/System/ItemTypes/Create` | `ItemTypesController` | `fieldOptions` |

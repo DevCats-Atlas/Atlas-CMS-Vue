@@ -15,6 +15,7 @@ const systemNavigation = computed(() => [
             { id: 'cms-menu', title: t('admin.layout.nav_cms_menu'), href: adminUrl('system/cms-menu') },
             { id: 'modules', title: t('admin.layout.nav_modules'), href: adminUrl('system/modules') },
             { id: 'access-roles', title: t('admin.layout.nav_access_roles'), href: adminUrl('system/access-roles') },
+            { id: 'structure', title: t('admin.structure.title'), href: adminUrl('system/structure') },
             { id: 'item-types', title: t('admin.layout.nav_item_types'), href: adminUrl('system/item-types') },
         ],
     },

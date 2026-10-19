@@ -30,7 +30,10 @@ defineProps({
                 </div>
 
                 <section class="bg-white dark:bg-gray-800 shadow rounded-xl p-6">
-                    <h2 class="heading-4 mb-4">{{ t('admin.system_overview.contents') }}</h2>
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                        <h2 class="heading-4">{{ t('admin.system_overview.contents') }}</h2>
+                        <Link :href="adminUrl('system/structure')" class="btn btn-outline">{{ t('admin.structure.title') }}</Link>
+                    </div>
                     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <Link
                             v-for="stat in stats"
